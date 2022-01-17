@@ -1,3 +1,3 @@
 # Numerical Bootstrap
 
-This is my bachelor thesis. 
+毕设：数值boostrap
