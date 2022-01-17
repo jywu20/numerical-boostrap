@@ -1,12 +1,15 @@
 复现2006.06002中对Hubbard模型的处理
 ======
 
+Created on 2022.1.17.
+
 我们这里尝试复现2006.06002中对Hubbard模型的处理，并且为更多的模型提供一个原型。
 
+模型是
 $$
 H=-\sum_{\langle x y\rangle \sigma} c_{x \sigma}^{\dagger} c_{y \sigma}+U \sum_{x} n_{x \uparrow} n_{x \downarrow}
 $$
-在正方晶格上面。
+在二维正方晶格上面。
 
 # 理论
 
@@ -25,13 +28,53 @@ $$
 
 为了避免double counting，应当始终使用正规序。
 
+2022.1.17 各点的排序方式应该是怎样的？
+
 ## 泛函$\mathcal{F}$的表示
 
 泛函$\mathcal{F}[O] := \langle \rho O \rangle$是一个线性泛函。按照前述$C_1$和$C_2$的构造，我们可以将$\mathcal{F}$看成线性映射$\mathcal{C}_2 \times \mathcal{C}_2 \to \Complex$。
 最为朴素的实现是将$\mathcal{F}$当成一个列矢量，其基底是$\mathcal{C}_2 \times \mathcal{C}_2$。
 
+Poor man's OPE: 用反对易关系把一个算符串重排成一系列正规序算符的线性组合然后代入$\mathcal{F}$中；一个费米算符出现两次就认为是零（因为不可能有两个一样的费米子）。
+
 ## 晶格
 
+由于在无穷大的晶格上工作（远处的算符平移到原点附近来求值），不使用任何基于有限晶格的库。看起来，将每个格点都标上号是没有意义的，于是我们使用坐标$(x, y)$来标记格点。
 
+哈密顿量中的各项也是平移到原点附近求值，最后整个哈密顿量正比于格点总数$N$，把$N$扔掉以后对能量做最优化。
+$$
+H=-\sum_{\langle x y\rangle \sigma} c_{x \sigma}^{\dagger} c_{y \sigma}+U \sum_{x} n_{x \uparrow} n_{x \downarrow}
+$$
+的第一项正比于$2N$，第二项正比于$N$，即
+$$
+\begin{aligned}
+    \langle H \rangle &= - 2 N t \sum_\sigma \langle c^\dagger_{0 \sigma} c_{\hat{\boldsymbol{x}} \sigma} \rangle + U N \lang n_{0\uparrow} n_{0\downarrow} \rang  \\
+    &= - 2 N t \sum_\sigma \langle c^\dagger_{0 \sigma} c_{\hat{\boldsymbol{x}} \sigma} \rangle + U N \lang c^\dagger_{0 \uparrow} c^\dagger_{0 \downarrow} c_{0 \downarrow} c_{0 \uparrow} \rang .
+\end{aligned}
+$$
+类似的，
+$$
+\lang N \rangle = N \sum_\sigma \lang c^\dag_{0 \sigma} c_{0 \sigma} \rang,
+$$
+以及
+$$
+\lang S_z \rang = N (\lang c^\dag_{0 \uparrow} c_{0 \uparrow} \rang - \lang c^\dag_{0 \downarrow} c_{0 \downarrow} \rang).
+$$
+
+## 施加对称性
+
+有待解决的问题：是否有把握
+- 或者所有约束条件中涉及的算符序列都可以通过Poor man's OPE划归到$\mathcal{C}_2$中，或是
+- 所有约束条件都能够化归为对$\mathcal{F}$的约束？
+
+- 平移对称性：
+- 旋转对称性：
+- 复共轭：似乎可以将$\mathcal{C}_2$集合中互为共轭转置的算符配对
+
+## 正定性
+
+我怀疑这才是真的关键的地方……这里的约束看起来是不能够通过限制$\mathcal{F}$的形式引入的
+
+2022.1.17 感觉应该先做一个toy model感觉一下情况；应该看一下2004.10212那篇文章
 
 # 实验记录
