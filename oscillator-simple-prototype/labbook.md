@@ -115,3 +115,5 @@ $$
 
 目前的版本遇到的麻烦是，高阶$\lang x^n \rang$含有很多包含$E$和别的$\lang x^n \rang$乘在一起的项的约束。
 似乎`Convex.jl`不支持这个东西。
+
+Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
