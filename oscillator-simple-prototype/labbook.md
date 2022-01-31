@@ -117,3 +117,7 @@ $$
 似乎`Convex.jl`不支持这个东西。
 
 Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
+
+## 2022.1.31
+
+在`operators.jl`中做对易子自动计算。而且好像还搞错了……

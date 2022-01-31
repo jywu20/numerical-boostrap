@@ -77,4 +77,14 @@ $$
 
 2022.1.17 感觉应该先做一个toy model感觉一下情况；应该看一下2004.10212那篇文章
 
+2022.1.30 目前的计划：
+- 使用$\lang c^\dag_{i \sigma} c_{j \sigma} \rang$和$\lang n_{i \uparrow} n_{i \downarrow} \rang$做变量
+- 优化目标$E$的表达式是显然的
+- 通过$\lang H \mathcal{O} \rang$可以制造出适当的OPE
+- 这样的问题是，无法在$\lang c^\dag_{i \sigma} c_{j \sigma} \rang$和$\lang n_{i \uparrow} n_{i \downarrow} \rang$之间建立联系……
+  - 我需要一个Hubbard模型版本的位力定理，
+  - 或者说要仅仅使用$\lang c^\dag_{i \sigma} c_{j \sigma} \rang$和$\lang n_{i \uparrow} n_{i \downarrow} \rang$构造一个方程
+
+最好是拿mathematica算一算对易子
+
 # 实验记录
