@@ -1,5 +1,5 @@
 using SparseArrays
-import Base.setindex!, Base.getindex, Base.*, Base.+, Base.^, Base.show
+import Base.setindex!, Base.getindex, Base.*, Base.+, Base.-, Base.^, Base.show
 
 struct OneDimXOperator 
 end
@@ -20,7 +20,7 @@ struct XPOpString
     coefficient::SparseMatrixCSC{ComplexF64}
 end
 
-const default_maximal_power = 10
+const default_maximal_power = 20
 
 function XPOpString(K::Int)
     XPOpString(K, spzeros(K, K))
@@ -86,32 +86,34 @@ end
     XPOpString(o1.K, new_coefficient)
 end
 
-mul(::Type{OneDimXOperator}, ::Type{OneDimXOperator}) = begin
+-(o1::XPOpString, o2::XPOpString) = o1 + (-1) * o2
+
+*(::Type{OneDimXOperator}, ::Type{OneDimXOperator}) = begin
     mat = spzeros(ComplexF64, default_maximal_power, default_maximal_power)
     mat[number_to_index(2), number_to_index(0)] = 1.0
     XPOpString(default_maximal_power, mat)
 end
 
-mul(::Type{OneDimPOperator}, ::Type{OneDimPOperator}) = begin
+*(::Type{OneDimPOperator}, ::Type{OneDimPOperator}) = begin
     mat = spzeros(ComplexF64, default_maximal_power, default_maximal_power)
     mat[number_to_index(0), number_to_index(2)] = 1.0
     XPOpString(default_maximal_power, mat)
 end
 
-mul(::Type{OneDimXOperator}, ::Type{OneDimPOperator}) = begin
+*(::Type{OneDimXOperator}, ::Type{OneDimPOperator}) = begin
     mat = spzeros(ComplexF64, default_maximal_power, default_maximal_power)
     mat[number_to_index(1), number_to_index(1)] = 1.0
     XPOpString(default_maximal_power, mat)
 end
 
-mul(::Type{OneDimPOperator}, ::Type{OneDimXOperator}) = begin
+*(::Type{OneDimPOperator}, ::Type{OneDimXOperator}) = begin
     mat = spzeros(ComplexF64, default_maximal_power, default_maximal_power)
     mat[number_to_index(0), number_to_index(0)] = - im
     mat[number_to_index(1), number_to_index(1)] = 1.0
     XPOpString(default_maximal_power, mat)
 end
 
-function mul(::Type{OneDimXOperator}, o2::XPOpString)
+function *(::Type{OneDimXOperator}, o2::XPOpString)
     K = o2.K
     XPOpString(K, [
         spzeros(1, K) ;
@@ -119,15 +121,12 @@ function mul(::Type{OneDimXOperator}, o2::XPOpString)
     ])
 end
 
-function mul(o1::XPOpString, ::Type{OneDimPOperator})
+function *(o1::XPOpString, ::Type{OneDimPOperator})
     K = o1.K
     XPOpString(K, [
         spzeros(K, 1)   o1.coefficient[:, 1 : end - 1] 
     ])
 end
-
-*(o1::Union{XPOpString, Type{OneDimXOperator}, Type{OneDimPOperator}}, 
-    o2::Union{XPOpString, Type{OneDimXOperator}, Type{OneDimPOperator}}) = mul(o1, o2)
 
 *(x::Number, o::XPOpString) = XPOpString(o.K, x * o.coefficient)
 *(o::XPOpString, x::Number) = XPOpString(o.K, x * o.coefficient)
@@ -179,46 +178,21 @@ function show(io::IO, ::MIME"text/plain", ops::XPOpString)
     print(io, join(terms, " + "))
 end
 
-comm(::Type{OneDimXOperator}, ::Type{OneDimPOperator}) = im * XPOpString(default_maximal_power, number_to_index(0), number_to_index(0))
-comm(::Type{OneDimPOperator}, ::Type{OneDimXOperator}) = - im * XPOpString(default_maximal_power, number_to_index(0), number_to_index(0))
-comm(::Type{OneDimXOperator}, ::Type{OneDimXOperator}) = 0 * XPOpString(default_maximal_power, number_to_index(0), number_to_index(0))
-comm(::Type{OneDimPOperator}, ::Type{OneDimPOperator}) = 0 * XPOpString(default_maximal_power, number_to_index(0), number_to_index(0))
-
 op_sequence(x_number, p_number) = [repeat([x], x_number) ; repeat([p], p_number) ]
 
-function comm(op_string_1::AbstractVector{O}, op_string_2::AbstractVector{O}; times = *, term_type = O) where {O}
-    len1 = length(op_string_1)
-    len2 = length(op_string_2)
+function *(ops1::XPOpString, ops2::XPOpString)
+    row_idxs1, col_idxs1, entries1 = findnz(ops1.coefficient)
+    row_idxs2, col_idxs2, entries2 = findnz(ops2.coefficient)
 
-    terms = term_type[]
+    K = max(ops1.K, ops2.K)
+    result = XPOpString(K, number_to_index(0), number_to_index(0))
 
-    for i in 1 : len1, j in 1 : len2
-        head1 = op_string_1[1 : i - 1]
-        head2 = op_string_2[1 : j - 1]
-        tail1 = op_string_1[i + 1 : end]
-        tail2 = op_string_2[j + 1 : end] 
-        o1 = op_string_1[i]
-        o2 = op_string_2[j]
-        term_ij = reduce(times, [head1 ; head2 ; [comm(o1, o2)] ; tail2 ; tail1])
-        push!(terms, term_ij)
+    for i in 1 : length(row_idxs1), j in 1 : length(row_idxs2)
+        x_num_1 = index_to_number(row_idxs1[i])
+        p_num_1 = index_to_number(col_idxs1[i])
+        x_num_2 = index_to_number(row_idxs2[j])
+        p_num_2 = index_to_number(col_idxs2[j])
+
+        
     end
-
-    sum(terms)
-end
-
-function comm(ops1::XPOpString, ops2::XPOpString)
-    row_idxs_1, col_idxs_1, coefficients_1 = findnz(ops1.coefficient)
-    row_idxs_2, col_idxs_2, coefficients_2 = findnz(ops2.coefficient)
-    len1 = length(row_idxs_1)
-    len2 = length(row_idxs_2)
-
-    terms = []
-
-    for i in 1 : len1, j in 1 : len2
-        opseq1 = op_sequence(index_to_number(row_idxs_1[i]), index_to_number(col_idxs_1[i]))
-        opseq2 = op_sequence(index_to_number(row_idxs_2[j]), index_to_number(col_idxs_2[j]))
-        push!(terms, coefficients_1[i] * coefficients_2[j] * comm(opseq1, opseq2, term_type = XPOpString))
-    end
-
-    sum(terms)
 end

@@ -121,3 +121,11 @@ Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
 ## 2022.1.31
 
 在`operators.jl`中做对易子自动计算。而且好像还搞错了……
+
+## 2022.2.1
+
+算了我还是老老实实解析算吧……
+$$
+p^m x^n = x^n p^m + \sum_{k=1}^{\min(m, n)} \frac{(- \ii)^k n! m!}{k! (n-k)! (m-k)!} x^{n-k} p^{m-k}
+$$
+结果见
