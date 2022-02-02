@@ -128,4 +128,9 @@ Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
 $$
 p^m x^n = x^n p^m + \sum_{k=1}^{\min(m, n)} \frac{(- \ii)^k n! m!}{k! (n-k)! (m-k)!} x^{n-k} p^{m-k}
 $$
-结果见
+结果见`labbook.md`。
+
+## 2022.2.2
+
+新建虚拟环境`optimization`，在其中安装了`https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/`。
+单元测试出现问题。正在和开发者了解情况……
