@@ -2,7 +2,7 @@
 
 # Test cases of semidefinite programming
 using NonconvexSemidefinite, NonconvexIpopt, LinearAlgebra, Test
-using Distributions, ChainRulesTestUtils, Random
+using Distributions, DistributionsAD, ChainRulesTestUtils, Random
 Random.seed!(1)
 
 # Test setting
