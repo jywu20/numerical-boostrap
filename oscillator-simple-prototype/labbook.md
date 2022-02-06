@@ -134,3 +134,9 @@ $$
 
 新建虚拟环境`optimization`，在其中安装了`https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/`。
 单元测试出现问题。正在和开发者了解情况……
+
+## 2022.2.6
+
+单元测试问题解决。在`oscillator-simple-prototype\nonconvex-sdp-approach.jl`中尝试数值计算最优化。
+
+眼下的问题似乎是`add_sd_constraint!`没有起到应有的效果，计算结束后`m_mat_minimizer`压根不是正定的。
