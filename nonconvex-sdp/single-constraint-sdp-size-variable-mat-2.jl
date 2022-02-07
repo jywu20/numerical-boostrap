@@ -21,9 +21,7 @@ Mij(x⁴, x², n) = begin
         return x⁴
     end
     
-    t = n - 3
-    # According to (6) in 2004.10212
-    (4t * (2x² + 3 * g * x⁴) * Mij(x⁴, x², t - 1) + t * (t - 1) * (t - 2) * Mij(x⁴, x², t - 3) - 4 * (t + 1) * Mij(x⁴, x², t + 1)) / (4g * (t + 2))
+    (n - 4) * Mij(x⁴, x², n - 2) * x² + Mij(x⁴, x², n - 4)
 end
 
 sd_constraint((x⁴, x²)) = [Mij(x⁴, x², i + j) for i in 0 : K, j in 0 : K]
