@@ -160,3 +160,6 @@ $$
 
 在获得了以上结论后，在`nonconvex-sdp\my-task-oscillator-prototype-2.jl`中重新尝试。
 1. 尝试将优化变量改成x²和x⁴，其余不变——然后发现还是啥玩意都是零……
+2. 为了分析是不是递归的原因，我们在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`中测试一个不那么平凡，但是所有东西的定义都没有使用递归的例子，然后发现似乎正定性约束仍然没有起作用
+3. 正在和作者联系……
+4. 和作者联系并且更新了版本，现在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`已经能够跑了，但是好像无法优化，就是说无法收敛。
