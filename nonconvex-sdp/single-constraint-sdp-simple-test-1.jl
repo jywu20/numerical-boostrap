@@ -23,7 +23,7 @@ addvar!(model, lbs, ubs)
 add_sd_constraint!(model, sd_constraint)
 
 alg = SDPBarrierAlg(sub_alg=IpoptAlg())
-options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=200))
+options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=400))
 result = optimize(model, alg, x0, options = options)
 
 minimum, minimizer, optimal_ind = result.minimum, result.minimizer, result.optimal_ind

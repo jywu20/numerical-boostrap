@@ -163,3 +163,17 @@ $$
 2. 为了分析是不是递归的原因，我们在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`中测试一个不那么平凡，但是所有东西的定义都没有使用递归的例子，然后发现似乎正定性约束仍然没有起作用
 3. 正在和作者联系……
 4. 和作者联系并且更新了版本，现在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`已经能够跑了，但是好像无法优化，就是说无法收敛。
+5. 实际上并没有那么没法收敛，因为`nonconvex-sdp\2022-2-6.nb`中解析计算的结果是`x2 -> 0.666667, E0 -> 1.66667`，而另一方面，使用`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`没完全收敛的结果则是`[x4, x2]`=
+   ```
+    0.11111277779546458
+    0.666669166649511
+   ```
+6. 我们尝试将迭代步数增大，来看是不是能够最终收敛。将
+   ```julia
+   options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=200))
+   ```
+   改成
+   ```julia
+   options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=400))
+   ```
+   仍然没有收敛……比较这里的结果1.6666766666854158和解析计算出来的1.6666667242418427，相对误差5.965465937786967e-6。还算能够接受。这里的问题似乎在于，Ipopt会让需要保持为正定的矩阵的最小本征值非常解决零但是不是零。我不知道这个是bug还是feature，就是说如果极小值点是优化边界确定的，那正常结果是收敛还是不是。
