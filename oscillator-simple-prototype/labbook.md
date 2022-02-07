@@ -128,7 +128,7 @@ Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
 $$
 p^m x^n = x^n p^m + \sum_{k=1}^{\min(m, n)} \frac{(- \ii)^k n! m!}{k! (n-k)! (m-k)!} x^{n-k} p^{m-k}
 $$
-结果见`labbook.md`。
+结果见`oscillator-simple-prototype\commutation.jl`。
 
 ## 2022.2.2
 
@@ -162,13 +162,18 @@ $$
 1. 尝试将优化变量改成x²和x⁴，其余不变——然后发现还是啥玩意都是零……
 2. 为了分析是不是递归的原因，我们在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`中测试一个不那么平凡，但是所有东西的定义都没有使用递归的例子，然后发现似乎正定性约束仍然没有起作用
 3. 正在和作者联系……
-4. 和作者联系并且更新了版本，现在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`已经能够跑了，但是好像无法优化，就是说无法收敛。
-5. 实际上并没有那么没法收敛，因为`nonconvex-sdp\2022-2-6.nb`中解析计算的结果是`x2 -> 0.666667, E0 -> 1.66667`，而另一方面，使用`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`没完全收敛的结果则是`[x4, x2]`=
+
+## 2022.2.7
+
+续上表。
+
+1. 和作者联系并且更新了版本，现在`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`已经能够跑了，但是好像无法优化，就是说无法收敛。
+2. 实际上并没有那么没法收敛，因为`nonconvex-sdp\2022-2-6.nb`中解析计算的结果是`x2 -> 0.666667, E0 -> 1.66667`，而另一方面，使用`nonconvex-sdp\single-constraint-sdp-simple-test-1.jl`没完全收敛的结果则是`[x4, x2]`=
    ```
     0.11111277779546458
     0.666669166649511
    ```
-6. 我们尝试将迭代步数增大，来看是不是能够最终收敛。将
+3. 我们尝试将迭代步数增大，来看是不是能够最终收敛。将
    ```julia
    options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=200))
    ```
@@ -177,3 +182,40 @@ $$
    options = SDPBarrierOptions(sub_options=IpoptOptions(max_iter=400))
    ```
    仍然没有收敛……比较这里的结果1.6666766666854158和解析计算出来的1.6666667242418427，相对误差5.965465937786967e-6。还算能够接受。这里的问题似乎在于，Ipopt会让需要保持为正定的矩阵的最小本征值非常解决零但是不是零。我不知道这个是bug还是feature，就是说如果极小值点是优化边界确定的，那正常结果是收敛还是不是。
+
+下一个需要解决的问题来自`oscillator-simple-prototype\nonconvex-sdp-approach.jl`。使用目前版本的约束矩阵，即
+```julia
+sd_constraint((E, x²)) = [expected_xn(E, x², i + j) for i in 0 : K, j in 0 : K]
+```
+会导致如下报错：
+```
+ERROR: LoadError: MethodError: no method matching getindex(::Nothing, ::Int64)
+```
+被标红的行为
+```julia
+result = optimize(model, alg, x0, options = options)
+```
+以及
+```julia
+sd_constraint((E, x²)) = [expected_xn(E, x², i + j) for i in 0 : K, j in 0 : K]
+```
+不是很确定这到底是怎么回事。数组推导是不能用还是？？
+
+Hubbard模型的bootstrap还tm遥遥无期……理论推导先试试吧……
+
+在`nonconvex-sdp\single-constraint-sdp-size-variable-mat-1.jl`中观察大小任意的约束矩阵是不是会出问题。
+好像并没有什么问题，优化结果是完全正确的。那就奇了怪了，哪儿出问题了
+
+在`nonconvex-sdp\single-constraint-sdp-size-variable-mat-2.jl`中尝试融合`nonconvex-sdp\single-constraint-sdp-size-variable-mat-1.jl`和`nonconvex-sdp\my-task-oscillator-prototype-2.jl`，看哪儿可能会出问题。
+
+似乎已经发现了会出问题的地方：将
+```julia
+Mij(x⁴, x², n - 2) * x² + Mij(x⁴, x², n - 4)
+```
+替换成
+```julia
+t = n - 3
+    # According to (6) in 2004.10212
+    (4t * (2x² + 3 * g * x⁴) * Mij(x⁴, x², t - 1) + t * (t - 1) * (t - 2) * Mij(x⁴, x², t - 3) - 4 * (t + 1) * Mij(x⁴, x², t + 1)) / (4g * (t + 2))
+```
+就会有问题出现。在新的REPL中重新运行程序，同样的问题再次出现，说明不是来自不同优化任务的冲突。
