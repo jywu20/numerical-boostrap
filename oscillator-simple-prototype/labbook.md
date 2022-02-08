@@ -254,4 +254,9 @@ t = n - 3
 
 尝试在`nonconvex-sdp\my-task-oscillator-prototype-3.jl`中按照一样的方式解决这个问题。
 
-可以跑起来但是没有得到预期的结果。奇了怪了。
+可以跑起来但是没有得到预期的结果。奇了怪了。能量似乎比允许的更低，奇怪……
+
+然后发现好像正定性约束又失效了。啊……
+
+我除了我是个弱智以外真的是一无所知。为了算对易子我耗了两天在`oscillator-simple-prototype\commutation.jl`上面，然后一分钟不到的`oscillator-simple-prototype\2022-2-8.nb`就把问题完全解决了。
+真的是弱智，反正也不需要把程序弄得多自动化，最优化算法八字没一撇，我是脑子进了什么水要拿julia写完整个程序？？？

@@ -88,3 +88,7 @@ $$
 最好是拿mathematica算一算对易子
 
 # 实验记录
+
+## 2022.2.8
+
+在`hubbard-simple-prototype\2022-2-8.nb`中计算费米子对易子。
