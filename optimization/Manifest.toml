@@ -6,6 +6,12 @@ git-tree-sha1 = "370cafc70604b2522f2c7cf9915ebcd17b4cd38b"
 uuid = "ae81ac8f-d209-56e5-92de-9978fef736f9"
 version = "0.1.2+0"
 
+[[AbstractDifferentiation]]
+deps = ["Compat", "ExprTools", "LinearAlgebra", "Requires"]
+git-tree-sha1 = "010af267d7c3bfe83fe554de1f38bfbb0701bc09"
+uuid = "c29ec348-61ec-40c8-8164-b8c60e9d9f3d"
+version = "0.4.0"
+
 [[AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
 git-tree-sha1 = "6f1d9bc1c08f9f4a8fa92e3ea3cb50153a1b40d4"
@@ -244,6 +250,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "1402e52fcda25064f51c77a9655ce8680b76acf0"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.2.7+6"
+
+[[ExprTools]]
+git-tree-sha1 = "56559bbef6ca5ea0c0818fa5c90320398a6fbf8d"
+uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
+version = "0.1.8"
 
 [[FFMPEG]]
 deps = ["FFMPEG_jll"]

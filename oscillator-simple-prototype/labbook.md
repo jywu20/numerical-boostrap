@@ -245,3 +245,13 @@ t = n - 3
    ```julia
    (n - 4) * Mij(x⁴, x², n - 2) * x² + Mij(x⁴, x², n - 4)
    ```
+   出错。错误定位。
+
+## 2022.2.8
+
+提了[issue](https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/issues/6)。
+使用作者提供的暂时解决方案后，`nonconvex-sdp\single-constraint-sdp-size-variable-mat-3.jl`中没有出现错误；预期的结果出现了。
+
+尝试在`nonconvex-sdp\my-task-oscillator-prototype-3.jl`中按照一样的方式解决这个问题。
+
+可以跑起来但是没有得到预期的结果。奇了怪了。
