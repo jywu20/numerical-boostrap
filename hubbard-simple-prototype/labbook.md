@@ -92,3 +92,9 @@ $$
 ## 2022.2.8
 
 在`hubbard-simple-prototype\2022-2-8.nb`中计算费米子对易子。
+
+下面要写一个程序弄一个类似于`hubbard-simple-prototype\2d-square-lattice-indexing.pdf`的格点编码。
+
+## 2022.2.9
+
+完成格点编码。准备构造$\mathcal{O}_2$集合。
