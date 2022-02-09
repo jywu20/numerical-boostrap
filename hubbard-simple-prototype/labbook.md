@@ -97,4 +97,4 @@ $$
 
 ## 2022.2.9
 
-完成格点编码。准备构造$\mathcal{O}_2$集合。
+完成格点编码。准备构造$\mathcal{O}_2$集合。在`hubbard-simple-prototype\2022-2-9.nb`中做这件事。
