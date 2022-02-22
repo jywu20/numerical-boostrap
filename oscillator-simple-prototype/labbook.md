@@ -276,3 +276,10 @@ t = n - 3
 - 提`nonconvex-sdp\my-task-oscillator-prototype-4.jl`涉及的新的正定性失效的漏洞
 
 尝试在`oscillator-simple-prototype\jump-oscillator-1.jl`中用JuMP做优化。
+重命名`optimization`环境为`nonconvex`环境；新建`jump`环境用于存放JuMP有关内容。
+
+装CDCS还tm没法预编译，，，改用CSDP
+
+我敢肯定`oscillator-simple-prototype\jump-oscillator-1.jl`中有东西写错了（约束位置不对，等等），不过我先跑一遍看看吧。
+
+可以发现，CSDP支持linear SDP，不支持nonlinear constraints；反之，Ipopt支持nonlinear constraints，但是不支持SDP。
