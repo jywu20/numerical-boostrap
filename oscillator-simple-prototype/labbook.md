@@ -283,3 +283,6 @@ t = n - 3
 我敢肯定`oscillator-simple-prototype\jump-oscillator-1.jl`中有东西写错了（约束位置不对，等等），不过我先跑一遍看看吧。
 
 可以发现，CSDP支持linear SDP，不支持nonlinear constraints；反之，Ipopt支持nonlinear constraints，但是不支持SDP。
+
+看起来，使用JuMP可能能写出更加清楚的代码（并且更不容易因为自动微分的问题而惹上麻烦），但是靠直接调包是做不成这个问题的。
+阅读韩希之的代码似乎无法避免，，，
