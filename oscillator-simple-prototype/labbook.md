@@ -260,3 +260,10 @@ t = n - 3
 
 我除了我是个弱智以外真的是一无所知。为了算对易子我耗了两天在`oscillator-simple-prototype\commutation.jl`上面，然后一分钟不到的`oscillator-simple-prototype\2022-2-8.nb`就把问题完全解决了。
 真的是弱智，反正也不需要把程序弄得多自动化，最优化算法八字没一撇，我是脑子进了什么水要拿julia写完整个程序？？？
+
+## 2022.2.22
+
+根据上次讨论的意见，观察分项添加约束能否绕过求解器的bug。在`nonconvex-sdp\my-task-oscillator-prototype-4.jl`中做这件事。
+
+这成功地避开了[这个github issue](https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/issues/6)中的自动微分问题。
+然而，semidefinite constraint再次失效了。
