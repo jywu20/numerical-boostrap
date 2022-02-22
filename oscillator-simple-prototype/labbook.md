@@ -267,3 +267,12 @@ t = n - 3
 
 这成功地避开了[这个github issue](https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/issues/6)中的自动微分问题。
 然而，semidefinite constraint再次失效了。
+
+下面有几件事可以做：
+- 更换求解器
+  - 阅读韩希之的[代码](https://github.com/hanxzh94/matrix-bootstrap)
+  - JuMP
+- 寻找[这个github issue](https://github.com/JuliaNonconvex/NonconvexSemidefinite.jl/issues/6)中的自动微分漏洞
+- 提`nonconvex-sdp\my-task-oscillator-prototype-4.jl`涉及的新的正定性失效的漏洞
+
+尝试在`oscillator-simple-prototype\jump-oscillator-1.jl`中用JuMP做优化。
