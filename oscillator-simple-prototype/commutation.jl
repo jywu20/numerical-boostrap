@@ -134,3 +134,4 @@ end
 ^(ops::XPOpString, n::Integer) = prod(repeat([ops], n))
 
 comm(ops1::XPOpString, ops2::XPOpString) = ops1 * ops2 - ops2 * ops1
+

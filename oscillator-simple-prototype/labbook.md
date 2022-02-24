@@ -124,7 +124,7 @@ Numerical Bootstrap in Quantum Mechanics 2108.11416似乎值得一读。
 
 ## 2022.2.1
 
-算了我还是老老实实解析算吧……
+算了我还是老老实实解析算吧……按照McCoy's formula（见[此处](https://en.wikipedia.org/wiki/Canonical_commutation_relation#Generalizations)）
 $$
 p^m x^n = x^n p^m + \sum_{k=1}^{\min(m, n)} \frac{(- \ii)^k n! m!}{k! (n-k)! (m-k)!} x^{n-k} p^{m-k}
 $$
@@ -286,3 +286,13 @@ t = n - 3
 
 看起来，使用JuMP可能能写出更加清楚的代码（并且更不容易因为自动微分的问题而惹上麻烦），但是靠直接调包是做不成这个问题的。
 阅读韩希之的代码似乎无法避免，，，
+
+## 2022.2.24
+
+应该好好读读Supplementary Material for 'Bootstrapping Matrix Quantum Mechanics' in 2004.10212.
+
+2006.06002声称（"can be solved efficiently and accurately by SDP e.g. with [19, 20]"）
+
+看起来，作者在做数值优化的时候只用到了约束$\lang [H, \mathcal{O}] \rang = 0$，因此只需要处理线性约束？
+
+我们尝试写下一个基于上述做法的程序，在`oscillator-simple-prototype\jump-oscillator-2.jl`中。代码肯定是需要大大重写。
