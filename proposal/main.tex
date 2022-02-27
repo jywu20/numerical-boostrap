@@ -137,12 +137,43 @@
 然而，这不意味着bootstrap的思想和一些计算手段不能够适用于非CFT的体系：我们不强求像\eqref{eq:two-point-conformal}和\eqref{eq:three-point-conformal}这样把一个关联函数化简为几个数，但总是可以使用对称性等约束大大缩减一个关联函数所包含的数据；在仅仅由体系的哈密顿量决定的密度矩阵（如能量本征态或是热平衡态）上，我们有
 \begin{equation}
     \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}},
+    \label{eq:h-constraint}
 \end{equation}
-于是可以根据关联函数内的算符和哈密顿量的对易关系获得关联函数之间的联系；通过将正定性要求作用到不同的算符期望值上，我们可以缩小各个关联函数的取值范围，从而完成bootstrap。
+于是可以根据关联函数内的算符和哈密顿量的对易关系获得关联函数之间的联系，类似的，设$C$和$H$对易，即$C$是体系的一个对称性，则也有
+\begin{equation}
+    \expval*{O C} = \expval*{C {O}},
+    \label{eq:sym-constraint}
+\end{equation}
+于是能够得到另一些关联函数之间的联系；通过将正定性要求作用到不同的算符期望值上，我们可以缩小各个关联函数的取值范围，从而完成bootstrap。
+以上思路称为数值bootstrap，可以归结为如下步骤：
+\begin{enumerate}
+  \item 输入哈密顿量$H$、系统对称性算符集合$\{C_i\}$和参与bootstrap的关联函数涉及的算符组成的集合$\{O_i\}$；
+  \item 根据\eqref{eq:sym-constraint}和\eqref{eq:h-constraint}，自动确定不同的$\expval*{O}$之间的关系；
+  \item 构建矩阵$M_{ij} = \expval*{O_i^\dagger O_j}$，其中$O_i^\dagger O_j$使用$\{O_i\}$和一定的算符正规排序规则展开；$\{O_i\}$张成的算符空间中的形如$O^\dagger O$的算符的期望值不小于零，当且仅达$M$是正定的；
+  \item 在第2步的等式约束、$M$正定的约束下，最优化$\expval*{H}$——这是一个半正定规划（semidefinite programming, SDP）问题。
+\end{enumerate}
 
 已有若干关于不同体系的数值bootstrap研究出现，如关于难以微扰解决的单粒子量子力学问题和矩阵模型\cite{han_matrix,bhattacharya2021,kazakov2021analytic}以及强关联电子模型\cite{han_manybody}。
 这些研究展示了bootstrap方法能够处理各种非微扰效应：能够正确地捕捉到二势阱模型中的非微扰瞬子效应\cite{bhattacharya2021}，解决一度被认为是不可能处理的矩阵模型\cite{kazakov2021analytic}，在Hubbard模型上的表现和已有的方法吻合\cite{han_manybody}。
-有理由认为，
+由于物理学中大量未解决的问题最终都归结为如何处理非微扰效应，进一步研究数值bootstrap方法无疑有很大意义。
+
+在毕业论文中，我希望讨论如下话题：
+\begin{enumerate}
+    \item 复现文献\cite{han_matrix}中关于非线性谐振子的讨论。实际上，这可以通过Mathematica的\texttt{FindMinimum}函数轻松解决（我自行编写的代码的输出结果和文献\cite{han_matrix} Fig.~1完全一致，此文作者显然也是这么算的）。
+    但为了避免动量算符$p$出现在参与bootstrap的算符当中，作者使用了
+    \begin{equation}
+        \expval*{HO} = E \expval*{O} 
+        \label{eq:h-nonlinear-constraint}
+    \end{equation}
+    来将各个关联函数联系起来，由于哈密顿量的期望值$E$中本来已经含有若干算符的期望值，\eqref{eq:h-nonlinear-constraint}将是一个非线性约束。
+    由于比非线性谐振子更为复杂的问题可能涉及多得多的bootstrap变量（如文献\cite{han_manybody}中至少涉及了1000维的算符空间），可能需要使用更加专门的求解器来高效解决问题。由于线性SDP问题目前尚无一般的求解方法（见最后一条），我希望能够设计一种使用\eqref{eq:h-constraint}而非\eqref{eq:h-nonlinear-constraint}的数值bootstrap方案重新求解非线性谐振子，为后续研究量子多体系统的数值bootstrap提供经验。
+    \item 复现文献\cite{han_manybody}对Hubbard模型的计算，并且尝试其结论中提到的改进方向，以及在更多的凝聚态物理中常见的多体模型上使用数值bootstrap。
+    由于作者没有详细讲述实现细节，只是提到可以使用SCS求解器\cite{scs}，而该求解器在求解SDP问题时只支持线性约束（尝试引入非线性约束时报错），推测使用类似于\eqref{eq:h-constraint}的约束条件可以求解该问题，这也是我希望首先基于\eqref{eq:h-constraint}重新求解非线性谐振子问题的原因。
+    \item 优化方法的选取。非线性SDP问题是目前SDP领域的研究前沿之一\cite{Bofill_2014}，这也意味着已有的非线性SDP求解器尚不成熟\cite{kazakov2021analytic}。
+    事实上，优化前端JuMP\cite{jump}的求解器列表中列出的较为成熟的求解器要么只支持非线性优化但是不支持SDP约束，要么支持SDP约束不支持非线性优化。
+    不同的数值bootstrap研究中似乎开发了不同的优化算法：文献\cite{han_matrix}使用了一个``trust-region sequential semidefinite programming''方法；文献\cite{kazakov2021analytic}的约束条件是非线性的，但是使用了所谓的``relaxation bootstrap''方法，通过一定的方式将非线性、非凸的优化问题转化为线性凸优化。
+    如果时间允许，可以在前述模型上逐一尝试这些算法。
+\end{enumerate}
 
 \bibliographystyle{plain}
 \bibliography{refs}
