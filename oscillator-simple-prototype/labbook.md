@@ -296,3 +296,7 @@ t = n - 3
 看起来，作者在做数值优化的时候只用到了约束$\lang [H, \mathcal{O}] \rang = 0$，因此只需要处理线性约束？
 
 我们尝试写下一个基于上述做法的程序，在`oscillator-simple-prototype\jump-oscillator-2.jl`中。代码肯定是需要大大重写。
+
+## 2022.2.25
+
+现在的问题是怎么在同时考虑$x$和$p$的情况下构造$\mathcal{M}$矩阵；这里的问题是，generally speaking这是一个复矩阵，然后不知道CSDP支不支持就是了，，，

@@ -1,0 +1,150 @@
+\documentclass[hyperref, UTF8, a4paper]{ctexart}
+
+\usepackage{geometry}
+\usepackage{titling}
+\usepackage{titlesec}
+\usepackage{paralist}
+\usepackage{footnote}
+\usepackage{enumerate}
+\usepackage{autobreak}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{bbm}
+\usepackage[superscript]{cite}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage[compat=1.1.0]{tikz-feynhand}
+\usepackage[ruled, vlined, linesnumbered, noend]{algorithm2e}
+\usepackage{xr-hyper}
+\usepackage[colorlinks, linkcolor=black, anchorcolor=black, citecolor=black, filecolor=black]{hyperref}
+\usepackage[most]{tcolorbox}
+\usepackage{caption}
+\usepackage{prettyref}
+
+% Cite: superscript, [1]
+\makeatletter
+\renewcommand\@citess[1]{\textsuperscript{[#1]}}
+\makeatother
+
+\geometry{left=3.18cm,right=3.18cm,top=2.54cm,bottom=2.54cm}
+\titlespacing{\paragraph}{0pt}{1pt}{10pt}[20pt]
+\setlength{\droptitle}{-5em}
+\preauthor{\vspace{-10pt}\begin{center}}
+\postauthor{\par\end{center}}
+
+\DeclareMathOperator{\timeorder}{\mathcal{T}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\legpoly}{P}
+\DeclareMathOperator{\primevalue}{P}
+\DeclareMathOperator{\sgn}{sgn}
+\newcommand*{\ii}{\mathrm{i}}
+\newcommand*{\ee}{\mathrm{e}}
+\newcommand*{\const}{\mathrm{const}}
+\newcommand*{\suchthat}{\quad \text{s.t.} \quad}
+\newcommand*{\argmin}{\arg\min}
+\newcommand*{\argmax}{\arg\max}
+\newcommand*{\normalorder}[1]{: #1 :}
+\newcommand*{\pair}[1]{\langle #1 \rangle}
+\newcommand*{\fd}[1]{\mathcal{D} #1}
+
+\newrefformat{chap}{第\ref{#1}章}
+\newrefformat{sec}{第\ref{#1}节}
+\newrefformat{note}{注\ref{#1}}
+\newrefformat{fig}{图\ref{#1}}
+\newrefformat{alg}{算法\ref{#1}}
+\renewcommand{\autoref}{\prettyref}
+
+\usetikzlibrary{arrows,shapes,positioning}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{decorations.markings}
+\tikzstyle arrowstyle=[scale=1]
+\tikzstyle directed=[postaction={decorate,decoration={markings,
+    mark=at position .5 with {\arrow[arrowstyle]{stealth}}}}]
+\tikzstyle ray=[directed, thick]
+\tikzstyle dot=[anchor=base,fill,circle,inner sep=1pt]
+
+% Algorithm setting
+\renewcommand{\algorithmcfname}{算法}
+% Python-style code
+\SetKwIF{If}{ElseIf}{Else}{if}{:}{elif:}{else:}{}
+\SetKwFor{For}{for}{:}{}
+\SetKwFor{While}{while}{:}{}
+\SetKwInput{KwData}{输入}
+\SetKwInput{KwResult}{输出}
+\SetArgSty{textnormal}
+
+\tcbuselibrary{skins, breakable, theorems}
+
+\renewcommand{\emph}[1]{\textbf{#1}}
+\newcommand*{\concept}[1]{\underline{\textbf{#1}}}
+
+\newcommand{\hmn}[1]{% Hermann-Maguin notation
+  \ensuremath{\begingroup\setupHMN #1\endgroup}%
+}
+
+\newcommand{\setupHMN}{%
+  \doHMN{-}{\HMNoverline}%
+  \doHMN{*}{\HMNminverse}%
+  \doHMN{i}{\infty}
+}
+
+\newcommand{\doHMN}[2]{%
+  \begingroup\lccode`~=`#1
+  \lowercase{\endgroup\let~}#2%
+  \mathcode`#1="8000
+}
+
+\newcommand{\HMNminverse}[1]{\frac{#1}{m}}
+\newcommand{\HMNoverline}[1]{\mkern1mu\overline{\mkern-1mu#1\mkern-1mu}\mkern1mu}
+
+\newcommand{\Ztwo}{$\mathbb{Z}_2$}
+
+\newcommand{\bigO}[1]{\mathcal{O}(#1)}
+
+\title{数值bootstrap技术及其在凝聚态问题中的应用}
+\author{吴晋渊 18307110155}
+
+\begin{document}
+
+\maketitle
+
+一个量子理论可以看成一个准概率分布：如果我们能够计算出这个理论中任意的关联函数，那么我们可以说已经完全解决了该理论。
+在拟研究的理论高度受限时，我们可以首先建立一套从一部分关联函数计算其它所有关联函数的方法，据此列出确定该理论需要的全部数据，然后根据一系列诸如半正定性（即形如$O^\dagger O$的算符的期望值一定要大于等于零）的约束条件，得到这些数据能够取的值的范围。
+这种方法称为bootstrap，因为我们完全绕开了数值计算路径积分或是波函数，而只用到了物理量期望值满足某些约束这个信息，而“凭空”解决了一个（或者一族）理论\cite{bhattacharya2021}。
+
+最为著名的bootstrap方法可能是所谓的共形bootstrap，即针对共形场论（conformal field theory, CFT）的bootstrap。
+共形对称性对两点和三点关联函数的形式有着强烈的要求：关于标量算符$\mathcal{O}$的两点函数只能够取
+\begin{equation}
+    \expval*{\mathcal{O}(x) \mathcal{O}(y)} = \frac{1}{\abs*{x - y}^{2 \Delta_\mathcal{O}}}
+    \label{eq:two-point-conformal}
+\end{equation}
+的形式，其中$\Delta_{\mathcal{O}}$是常数（实际上是算符$\mathcal{O}$的反常量纲），而三点函数只能够取
+\begin{equation}
+    \langle\mathcal{A}(x) \mathcal{B}(y) \mathcal{C}(z)\rangle = \frac{f_{\mathcal{A B C}}}{|x-y|^{\Delta \mathcal{A}+\Delta_{\mathcal{B}}-\Delta_{\mathcal{C}}}|y-z|^{\Delta_{\mathcal{B}}+\Delta_{\mathcal{C}}-\Delta \mathcal{A}}|z-x|^{\Delta_{\mathcal{C}}+\Delta_{\mathcal{A}}-\Delta_{\mathcal{B}}}}
+    \label{eq:three-point-conformal}
+\end{equation}
+的形式。如果$\mathcal{O}$有自旋$l_{\mathcal{O}}$，分子上可能还会出现一些因子。
+在已知两点函数和三点函数之后，可以通过算符乘积展开将更高阶的关联函数递归地计算出来。于是，确定一个CFT需要的数据就是$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$。
+我们随后可以通过一系列约束条件，获得关于这些数据的不等式，从而确定自洽的CFT的$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$组合。
+通过这种方式，在给定一类CFT的基本自由度之后，我们实际上已经知道这整整一类CFT的行为以及理论空间的边界了\cite{Poland_2016,2019}。
+在凝聚态物理中，共形bootstrap可以为一个体系的临界行为是不是能够使用CFT描述提供一定提示，如通过比较三维伊辛模型和一类CFT的临界指数，我们有很强的信心表明三维伊辛模型的临界行为可能就是一个落在可行域边界上的CFT\cite{prd2012ising,Poland_2016}。
+
+由于bootstrap不依赖于哈密顿量中各项的大小，它显然是处理强关联问题的有力武器。
+然而，实际问题中会遇到的模型大多不像CFT那样容易做bootstrap：我们没有像\eqref{eq:two-point-conformal}和\eqref{eq:three-point-conformal}这么强的对关联函数的约束条件，一般情况下也不能解析地将高阶关联函数转化为低阶关联函数的多项式。
+然而，这不意味着bootstrap的思想和一些计算手段不能够适用于非CFT的体系：我们不强求像\eqref{eq:two-point-conformal}和\eqref{eq:three-point-conformal}这样把一个关联函数化简为几个数，但总是可以使用对称性等约束大大缩减一个关联函数所包含的数据；在仅仅由体系的哈密顿量决定的密度矩阵（如能量本征态或是热平衡态）上，我们有
+\begin{equation}
+    \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}},
+\end{equation}
+于是可以根据关联函数内的算符和哈密顿量的对易关系获得关联函数之间的联系；通过将正定性要求作用到不同的算符期望值上，我们可以缩小各个关联函数的取值范围，从而完成bootstrap。
+
+已有若干关于不同体系的数值bootstrap研究出现，如关于难以微扰解决的单粒子量子力学问题和矩阵模型\cite{han_matrix,bhattacharya2021,kazakov2021analytic}以及强关联电子模型\cite{han_manybody}。
+这些研究展示了bootstrap方法能够处理各种非微扰效应：能够正确地捕捉到二势阱模型中的非微扰瞬子效应\cite{bhattacharya2021}，解决一度被认为是不可能处理的矩阵模型\cite{kazakov2021analytic}，在Hubbard模型上的表现和已有的方法吻合\cite{han_manybody}。
+有理由认为，
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
