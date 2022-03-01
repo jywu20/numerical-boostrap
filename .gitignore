@@ -11,3 +11,5 @@ references/*.pdf
 *.toc
 *.bbl
 *.blg
+*.bcf
+*.run.xml
