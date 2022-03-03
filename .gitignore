@@ -13,3 +13,5 @@ references/*.pdf
 *.blg
 *.bcf
 *.run.xml
+*.nav
+*.snm
