@@ -314,3 +314,12 @@ t = n - 3
 ## 2022.3.3
 
 尝试使用`OffsetArray`来解决麻烦的从0还是从1开始的问题。
+
+照惯例，又出问题了。为了保证计算对易子时不会出现index out of bound的问题，实际上需要将`L_max`取为参与bootstrap的算符长度加4（因为哈密顿量中最高出现了$x^4$项）；然后另外一方面，在协方差矩阵$M$中出现的$O^\dag O$形式的算符如果正好覆盖所有参与bootstrap而具有正定性的算符，那么$O$（从而，协方差矩阵的指标对应的算符）的长度就大体上应该是`(L_max - 4) / 2`。
+
+所以这里头实际上有两个所谓的“index”：其一是算符系数向量的index，就是现在已经在`oscillator-simple-prototype\jump-oscillator-2.jl`里面定义的index，然后我们还需要M矩阵的那种index。
+
+一时半会估计写不完，先随便弄点toy model吧。见`jump-toy-1.jl`
+
+在`jump-toy-1-benchmark.nb`和`jump-toy-2-benchmark.nb`中玩了几把，好像SDP加线性约束还就是凸优化。
+[这篇博客文章](https://blog.csdn.net/sdgyfbtnyj/article/details/100101233)反正是这么说的；到时候可以读一读优化方面的书。

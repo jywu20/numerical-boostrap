@@ -1,12 +1,16 @@
 using JuMP, CSDP
 using LinearAlgebra  
 using OffsetArrays
+using Base.Iterators
 using Test
 
 # Interaction strength
 g = 1.0
-# Maximal length of x operator sequence and p operator sequence in C_1; must be even, so that we can easily construct the M matrix
-L_max = 8
+# Maximal length of x operator sequence and p operator sequence in C_1.
+# The value must be even, so that we can easily construct the M matrix; 
+# it should also be greater than 4, so that when computing commutation relation with the Hamiltonian,
+# there will be no out of bound error
+L_max = 12
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -188,25 +192,52 @@ function xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2)
     pre_normal_ord_term - comm_term
 end
 
+xpopstr_comm(x_power_1, p_power_1, x_power_2, p_power_2) = xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2) - xpopstr_normal_ord(x_power_2, p_power_2, x_power_1, p_power_1)
+
 @testset "Normal ordering of x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2" begin
-    # See ./2022-3-3.nb for symbolic benchmarks 
+    # See ./commutation-x-p.nb for symbolic benchmarks 
     @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 3, 2)) == 
         "6.0im x^2 p^2 - 18.0 x^3 p^3 - 9.0im x^4 p^4 + x^5 p^5"
     @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 1, 3)) == "- 3.0im x^2 p^5 + x^3 p^6"
 end
 
-# The Hamiltonian
-H = xpopstr_xp_power(2, 0) + xpopstr_xp_power(0, 2) + g * xpopstr_xp_power(4, 0)
+@testset "Commutation between x^x_power_1 p^p_power_1 and x^x_power_2 p^p_power_2" begin
+    # See ./commutation-x-p.nb for symbolic benchmarks 
+    @test xpopstr_stringify(xpopstr_comm(2, 3, 1, 3)) == "6.0 x p^4 + 3.0im x^2 p^5" 
+    @test xpopstr_stringify(xpopstr_comm(2, 3, 2, 2)) == "- 4.0 x^2 p^3 - 2.0im x^3 p^4" 
+end
 
+"""
+For simplicity, we do not implement a full version of commutation; we just calculate the commutator between 
+each term of an operator and the three terms of the Hamiltonian.
+"""
+function comm_with_ham(op::OffsetArray)
+    result = xpopstr_const(0.0)
+    for idx in xpopspace_index_range
+        if op[idx] != 0
+            x_power_in_op = index_to_xpower(idx)
+            p_power_in_op = index_to_ppower(idx)
 
+            # [op, x^2]
+            result += xpopstr_comm(x_power_in_op, p_power_in_op, 2, 0)
+            # [op, p^2]
+            result += xpopstr_comm(x_power_in_op, p_power_in_op, 0, 2)
+            # [op, g x^4]
+            result += g * xpopstr_comm(x_power_in_op, p_power_in_op, 4, 0)
+        end
+    end
+    result
+end
 
 ##
 
 model = Model(CSDP.Optimizer)
 # Only non-constant operators have uncertain expectations
 @variable(model, xpopstr_expected[1 : xpopspace_dim])
-
 xpopstr_basis = OffsetArray([1, xpopstr_expected...], xpopspace_index_range)
+
+# Construct the M matrix 
+
 
 @objective(model, Min, H)
 optimize!(model)
