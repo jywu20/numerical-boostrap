@@ -323,3 +323,7 @@ t = n - 3
 
 在`jump-toy-1-benchmark.nb`和`jump-toy-2-benchmark.nb`中玩了几把，好像SDP加线性约束还就是凸优化。
 [这篇博客文章](https://blog.csdn.net/sdgyfbtnyj/article/details/100101233)反正是这么说的；到时候可以读一读优化方面的书。
+
+[维基](https://en.wikipedia.org/wiki/Semidefinite_programming)本来应该好好读一读的。
+
+`jump-toy-1.jl`和`jump-toy-2.jl`均测试成功。
