@@ -5,8 +5,8 @@ using Test
 
 # Interaction strength
 g = 1.0
-# Maximal length of x operator sequence and p operator sequence in C_2
-L_max = 7
+# Maximal length of x operator sequence and p operator sequence in C_1; must be even, so that we can easily construct the M matrix
+L_max = 8
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -27,21 +27,17 @@ end
 
 ##
 
-model = Model(CSDP.Optimizer)
-# Only non-constant operators have uncertain expectations
-@variable(model, xpopstr_expected[1 : xpopspace_dim])
-
 """
 The coefficient list of a constant "operator" c.
 """
 function xpopstr_const(c)
-    result = OffsetArray(zeros(xpopspace_dim + 1), xpopspace_index_range)
+    result = OffsetArray(zeros(ComplexF64, xpopspace_dim + 1), xpopspace_index_range)
     result[0] = c
     result
 end
 
 """
-x^(x_power) p^(p_power)
+x^x_power p^p_power
 """
 function xpopstr_xp_power(x_power, p_power)
     result = xpopstr_const(0.0)
@@ -59,6 +55,13 @@ function power_str(var, pow)
     return "$var^$pow"
 end
 
+function xpopstr_power_str(x_power, p_power)
+    if x_power != 0 || p_power != 0
+        return " $(power_str("x", x_power)) $(power_str("p", p_power))"
+    end
+    return ""
+end
+
 function coefficient_format(c)
     if c == 1.0
         return " +"
@@ -72,13 +75,19 @@ function coefficient_format(c)
             return " + $c"
         end
         if c < 0
-            return " - $c"
+            return " - $(abs(c))"
         end
     end
     if real(c) == 0
-        return " + $(imag(c))im"
+        c = imag(c)
+        if c > 0
+            return " + $(c)im"
+        end
+        if c < 0
+            return " - $(- c)im"
+        end
     end
-    string(c)
+    " + ($(string(c)))"
 end
 
 function xpopstr_stringify(coefficients::OffsetArray)
@@ -88,7 +97,7 @@ function xpopstr_stringify(coefficients::OffsetArray)
         p_power = index_to_ppower(idx)
         if coefficients[idx] != 0
             push!(result_terms, 
-                "$(coefficient_format(coefficients[idx])) $(power_str("x", x_power)) $(power_str("p", p_power))")
+                "$(coefficient_format(coefficients[idx]))$(xpopstr_power_str(x_power, p_power))")
         end
     end
     output_str = strip(join(result_terms, ""))
@@ -106,10 +115,14 @@ end
     @test xpopstr_stringify(- op1) == "- x^2 p^3"
     @test xpopstr_stringify(2.0 * op1) == "2.0 x^2 p^3"
     @test xpopstr_stringify(- op0 + op1) == "- 3.4 + x^2 p^3"
+    op2 = xpopstr_xp_power(4, 3)
+    @test xpopstr_stringify(- op0 + 2.3 * op1 - im * op2) == "- 3.4 + 2.3 x^2 p^3 - 1.0im x^4 p^3"
+    @test xpopstr_stringify(- op0 + 2.3 * op1 + (1 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (1.0 + 1.0im) x^4 p^3"
+    @test xpopstr_stringify(- op0 + 2.3 * op1 + (- 2.3 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (-2.3 + 1.0im) x^4 p^3"
 end
 
 """
-x^(x_power) * idx * p^(p_power)
+x^x_power * idx * p^p_power
 """
 function xpopstr_left_x_right_p_mul(idx, x_power, p_power)
     x_power_0 = index_to_xpower(idx)
@@ -127,7 +140,7 @@ xpopstr_left_x_right_p_mul_offset(x_power, p_power) = x_power * (2L_max + 1) + p
 end
 
 """
-x^(x_power) * coefficients * p^(p_power)
+x^x_power * coefficients * p^p_power
 May throw out of index error if the highest order term is beyond xpopspace_index_range
 """
 function xpopstr_left_x_right_p_mul(coefficients, x_power, p_power)
@@ -139,14 +152,21 @@ function xpopstr_left_x_right_p_mul(coefficients, x_power, p_power)
     result
 end
 
+@testset "Multiplication in the form of x^x_power * O * p^p_power" begin
+    op0 = xpopstr_const(3.4)
+    @test xpopstr_stringify(xpopstr_left_x_right_p_mul(op0, 2, 3)) == "3.4 x^2 p^3"
+    op1 = xpopstr_const(2.5) + im * xpopstr_xp_power(3, 4)
+    @test xpopstr_stringify(xpopstr_left_x_right_p_mul(op1, 4, 2)) == "2.5 x^4 p^2 + 1.0im x^7 p^6"
+end
+
 """
 Calculate coefficients of [x^n, p^m] according to the McCoy's formula (not the operator, 
-# because this function is used to calculate the normal ordering)
+because this function is used to calculate the normal ordering)
 """
 function xpopstr_comm(x_power, p_power)
     n = x_power
     m = p_power
-    result = zeros(xpopspace_dim)
+    result = xpopstr_const(0.0)
     for k in 1 : min(m, n)
         numerator = - (- im)^k * factorial(n) * factorial(m)
         denominator = factorial(k) * factorial(n - k) * factorial(m - k)
@@ -156,13 +176,37 @@ function xpopstr_comm(x_power, p_power)
 end
 
 """
-Normal ordered version of x^(x_power_1) p^(p_power_1) x^(x_power_2) p^(p_power_2)
+Normal ordered version of x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2
 """
 function xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2)
-    
+    # We name the first term on the RHS of 
+    # x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2 = 
+    # x^x_power_1 x^x_power_2 p^p_power_1 p^p_power_2 - x^x_power_1 [x^x_power_2, p^p_power_1] p^p_power_2
+    # as pre_normal_ord_term, the second term as comm_term
+    pre_normal_ord_term = xpopstr_xp_power(x_power_1 + x_power_2, p_power_1 + p_power_2)
+    comm_term = xpopstr_left_x_right_p_mul(xpopstr_comm(x_power_2, p_power_1), x_power_1, p_power_2)
+    pre_normal_ord_term - comm_term
 end
+
+@testset "Normal ordering of x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2" begin
+    # See ./2022-3-3.nb for symbolic benchmarks 
+    @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 3, 2)) == 
+        "6.0im x^2 p^2 - 18.0 x^3 p^3 - 9.0im x^4 p^4 + x^5 p^5"
+    @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 1, 3)) == "- 3.0im x^2 p^5 + x^3 p^6"
+end
+
+# The Hamiltonian
+H = xpopstr_xp_power(2, 0) + xpopstr_xp_power(0, 2) + g * xpopstr_xp_power(4, 0)
+
+
 
 ##
 
-@objective(model, Min, 2M[si(0), si(2)] + 3g * M[si(0), si(4)])
+model = Model(CSDP.Optimizer)
+# Only non-constant operators have uncertain expectations
+@variable(model, xpopstr_expected[1 : xpopspace_dim])
+
+xpopstr_basis = OffsetArray([1, xpopstr_expected...], xpopspace_index_range)
+
+@objective(model, Min, H)
 optimize!(model)
