@@ -55,7 +55,7 @@
 \textbf{Why we need it}
 
 \begin{itemize}
-    \item Because it doesn't fail with strong non-perturbative effects. \footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
+    \item Because it doesn't fail with strong non-perturbative effects.\footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
 \end{itemize}
 
 \end{frame}
@@ -88,7 +88,7 @@
 
 \begin{itemize}
     \item Example of conformal bootstrap: verify whether the critical point of 3D Ising model 
-    is a CFT and its position in the allowed region \footnote{arXiv \href{https://arxiv.org/abs/1203.6064}{1203.6064}}
+    is a CFT and its position in the allowed region\footnote{arXiv \href{https://arxiv.org/abs/1203.6064}{1203.6064}}
     \item Physical picture tells us there are two degrees of freedom: energy density $\epsilon$, spin field $\sigma$
     \item Below is Fig.~3 in the paper: comparing critical exponents of 3D Ising model, and the allowed range from conformal bootstrap
 \end{itemize}
@@ -117,12 +117,11 @@
     
     \item Hard to get OPE
     
-    \textbf{Solution} Suppose we are working on a state whose density matrix is determined solely by $H$,
-    then we have 
+    \textbf{Solution} Density matrix is determined solely by $H$, then 
     \begin{equation}
         \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}}
     \end{equation}
-    for all operators $O$. If we are working on energy eigenstates (i.e with definite $E$), we have 
+    for all operators $O$. For energy eigenstates (i.e with definite $E$), we have 
     \begin{equation}
         \expval{O H} = E \expval{O}, \quad E = \expval{H}.
     \end{equation}
@@ -154,8 +153,104 @@
 
 \textbf{The procedure of numerical bootstrap}   
 
+Input data:
 \begin{itemize}
-    \item Determine a set of operators 
+    \item Determine $N$ operators $\{O_i\}$ as the basis of all operators.
+    Example: normal ordered, with a length cutoff 
+    \item Data of equality constraints: Hamiltonian, symmetry, etc.
+    \item Commutation rules, normal ordering rules, etc. so that $O_i O_j$ can be expanded in terms of $\{O_i\}$
+    \item Hamiltonian $H = \sum_i c_i O_i$
+\end{itemize}
+
+Building the optimization problem:
+\begin{enumerate}
+    \item Declare $N$ variables $\{X_i\}$, $X_i = \expval*{O_i}$ after optimization
+    \item Impose equality constraints on $\{X_i\}$ according to e.g. $\expval*{\comm{H}{O}} = 0$ 
+    \item Imposing semidefinite constraint on $M_{ij} = \expval*{O_i^\dagger O_j}$, so that after optimization $\expval*{O^\dagger O} \geq 0$ for every $O$
+    \item Optimize $\sum_i c_i X_i$
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{Some technical aspects of the problem}
+
+When building the optimization problem: 
+\begin{itemize}
+    \item A little symbolic calculation required
+    \item Auto normal ordering of $O_i O_j$ given the operator algebra
+    \item Auto commutator: $\comm{A}{B}$ = normal ordered $AB$ - normal ordered $BA$ 
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+For optimization itself
+\begin{itemize}
+    \item \concept{linear semidefinite programming (linear SDP)} when using $\expval*{\comm{H}{O}} = 0$
+    ($\expval{HO}$ and $\expval*{OH}$ being linear combination of $\{O_i\}$)
+    \begin{itemize}
+        \item Convex optimization, mature solvers\footnote{See \href{https://en.wikipedia.org/wiki/Semidefinite_programming}{Wikipedia}} 
+    \end{itemize}
+    \item \concept{nonlinear semidefinite programming (nonlinear SDP)} when using $\expval*{{H}{O}} = E \expval*{O}$
+    because there are optimization variables in $E$
+    \begin{itemize}
+        \item No solver mature enough \footnote{See the discussion before Sec.~1.1 in \href{https://arxiv.org/abs/2108.04830}{arXiv 2108.04830}. Also, no solver supporting both SDP and nonlinear programming (NLP) is listed in \href{https://jump.dev/JuMP.jl/stable/installation/}{the solver list of JuMP.jl}.}
+    \end{itemize}
+\end{itemize}    
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\begin{itemize}
+    \item linear SDP (constraints: $\expval*{\comm{O}{H}} = 0$, thermal states allowed) easy
+    \item nonlinear SDP (constraints: $\expval*{{O}{H}} = E \expval{O}$, no thermal states) hard 
+\end{itemize}
+
+\textbf{Example of linear SDP (and why it's easy)} 
+
+\begin{columns}
+    \begin{column}{0.5\textwidth}
+        \[
+            \begin{aligned}
+                \max\  &M_{11} + 2 M_{12}, \ \text{s.t.} \\
+                &M = M^\top, \ M \geq 0, \\
+                &M_{11} + M_{12} + M_{13} = - 0.5, \\
+                &M_{22} = 2 M_{11} + 3 M_{12} + 1, \\
+                &M_{23} + 4 M_{11} = 0, \\
+                &M_{33} = 4 M_{11} + 5M_{12}.
+            \end{aligned}
+        \]
+        \begin{itemize}
+            \item Convex feasible domain
+            \item Linear objective $\Rightarrow$ minimum at the edge
+        \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        \includegraphics[width=\textwidth]{jump-toy-2-benchmark-feasible-domain-and-result.pdf}
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: $x^4$ nonlinear oscillator}
+
+Consider the nonlinear oscillator\footnote{The example is provided in \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212}}
+\begin{equation}
+    H = x^2 + p^2 + g x^4.
+\end{equation}
+
+\begin{itemize}
+    \item Famous failure of perturbation theory\footnote{Carl M. Bender and Tai Tsun Wu, Anharmonic Oscillator. Phys. Rev. 184, 1231.}
+    \item Symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
+    \item Building the optimization problem: 
 \end{itemize}
 
 \end{frame}
@@ -163,14 +258,7 @@
 \begin{frame}
 \frametitle{Example: $x^4$ nonlinear oscillator}
 
-\begin{equation}
-    H = x^2 + p^2 + g x^4.
-\end{equation}
-
-\begin{itemize}
-    \item Symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
-    \item 
-\end{itemize}
+Numerical bootstrap can be quite precise!    
 
 \end{frame}
 
