@@ -1,5 +1,23 @@
 \documentclass{beamer}
 \usepackage{physics}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{mathdots}
+\usepackage{yhmath}
+\usepackage{cancel}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{tabularx}
+\usepackage{extarrows}
+\usepackage{booktabs}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
 \usepackage{hyperref}
 
 %Information to be included in the title page:
@@ -26,7 +44,7 @@
     Hamiltonian/Lagrangian $\Leftrightarrow$ ``probability distribution''
     \item Constraint on the system $\Rightarrow$ relation between different $\expval{O}$'s (``\concept{data}'');
     independent $\expval{O}$'s $\Leftrightarrow$ parameters in the model
-    \item Inequality constraint (e.g. positivity of $\expval{O^\dagger O}$) $\Rightarrow$ quantum allowed 
+    \item Inequality constraint (e.g. positivity of $\expval{O^\dagger O}$) $\Rightarrow$ allowed 
     range of $\expval{O}$'s
     \item Solving a class of problems without mentioning explicitly the wave function/path integral: 
     hence the name \emph{bootstrap}
@@ -37,7 +55,7 @@
 \textbf{Why we need it}
 
 \begin{itemize}
-    \item Because it doesn't fail with strong non-perturbative effects. \footnote{See \href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}.}
+    \item Because it doesn't fail with strong non-perturbative effects. \footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
 \end{itemize}
 
 \end{frame}
@@ -70,14 +88,89 @@
 
 \begin{itemize}
     \item Example of conformal bootstrap: verify whether the critical point of 3D Ising model 
-    is a CFT \footnote{\href{https://arxiv.org/abs/1203.6064}{1203.6064} }
-    \item Physical picture tells us there are two fields: energy density $\epsilon$, spin field $\sigma$
-    \item Below is Fig.~3 in the paper: comparing critical exponents from Monte Carlo simulation of 3D Ising, and the allowed range from conformal bootstrap
+    is a CFT and its position in the allowed region \footnote{arXiv \href{https://arxiv.org/abs/1203.6064}{1203.6064}}
+    \item Physical picture tells us there are two degrees of freedom: energy density $\epsilon$, spin field $\sigma$
+    \item Below is Fig.~3 in the paper: comparing critical exponents of 3D Ising model, and the allowed range from conformal bootstrap
 \end{itemize}
 
 \begin{center}
     \includegraphics[width=0.5\textwidth]{3d-ising-cft-bootstrap-range.PNG}
 \end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{How to perform bootstrap for a generic system?}    
+
+\begin{itemize}
+    \item Correlation functions cannot be determined by countably infinite parameters: 
+    no $\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$.
+    
+    \textbf{Solution} Store $\expval{O_1(x_1) O_2(x_2) \cdots O_n (x_n)}$ separately. Symmetries reduce the size 
+    of data: Suppose $C$ is a symmetry, 
+    \begin{equation}
+        \expval{OC} = \expval{CO}.
+    \end{equation}
+    Derivation similar to below.
+    
+    \item Hard to get OPE
+    
+    \textbf{Solution} Suppose we are working on a state whose density matrix is determined solely by $H$,
+    then we have 
+    \begin{equation}
+        \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}}
+    \end{equation}
+    for all operators $O$. If we are working on energy eigenstates (i.e with definite $E$), we have 
+    \begin{equation}
+        \expval{O H} = E \expval{O}, \quad E = \expval{H}.
+    \end{equation}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\begin{itemize}
+    \item The equality constraints used together with the positivity constraint 
+    \begin{equation}
+        \expval*{O^\dagger O} \geq 0
+    \end{equation}
+    for every $O$ defines an allowed region - the feasible domain for the following optimization.
+    \item To get ground state information, minimize $\expval*{H}$ globally.
+    \item To get information about excited states, find local minima of $\expval*{H}$.
+\end{itemize} 
+
+\begin{center}
+    \input{bootstrap-illustration-allowed-region.tex}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{The procedure of numerical bootstrap}   
+
+\begin{itemize}
+    \item Determine a set of operators 
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: $x^4$ nonlinear oscillator}
+
+\begin{equation}
+    H = x^2 + p^2 + g x^4.
+\end{equation}
+
+\begin{itemize}
+    \item Symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
+    \item 
+\end{itemize}
 
 \end{frame}
 
