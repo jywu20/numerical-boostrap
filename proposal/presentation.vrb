@@ -1,0 +1,39 @@
+\frametitle{Example: $x^4$ anharmonic oscillator}
+
+\begin{itemize}
+    \item Reproduce Fig.~1 in \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212} by brutal force searching
+    \item Numerical bootstrap can be quite precise! (high resolution Mathematica plotting required to find the allowed region)
+\end{itemize}
+
+\begin{columns}
+
+    \begin{column}{0.5\textwidth}
+        \lstset{language=Mathematica, basicstyle=\tiny, xleftmargin=-40pt}
+        % Code from oscillator-simple-prototype\2022-1-20.nb
+        \begin{lstlisting}
+            expectedX[0] := 1;
+            expectedX[2] := x2;
+            expectedX[4] := 1/(3 g) (E0 - 2 x2);
+            expectedX[u_?EvenQ] :=
+            1 / (4 g ((-3 + u) + 2)) *
+            (4 (-3 + u) E0 expectedX[(-3 + u) - 1]
+            + (-3 + u) ((-3 + u) - 1) ((-3 + u) - 2)
+                expectedX[(-3 + u) - 3]
+            - 4 ((-3 + u) + 1) expectedX[(-3 + u) + 1]);
+
+            matPositive[K_] :=
+            Table[expectedX[i+j], {i, 0, K}, {j, 0, K}];
+
+            RegionPlot[
+            AllTrue[Eigenvalues[matPositive[9] /. g -> 1],
+                # >= 0 &],
+            {E0, 1.35, 1.44}, {x2, 0.294, 0.311},
+            PlotPoints -> 100]
+        \end{lstlisting}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+        \includegraphics[width=\textwidth]{oscillator-bootstrap-feasible-domains.PNG}
+    \end{column}
+\end{columns}
+

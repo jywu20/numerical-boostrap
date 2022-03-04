@@ -83,3 +83,5 @@ for Δx in Δx_range
     _, result = spectrum_anham(L, Δx, g)
     push!(E0, result[1][1])
 end
+
+plot(E0)

@@ -10,7 +10,7 @@
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{amssymb}
-\usepackage{gensymb}
+\usepackage{textcomp, gensymb}
 \usepackage{tabularx}
 \usepackage{extarrows}
 \usepackage{booktabs}
@@ -18,6 +18,7 @@
 \usetikzlibrary{patterns}
 \usetikzlibrary{shadows.blur}
 \usetikzlibrary{shapes}
+\usepackage{listings}
 \usepackage{hyperref}
 
 %Information to be included in the title page:
@@ -51,12 +52,6 @@
 \end{itemize}
 
 \vspace{1em}
-
-\textbf{Why we need it}
-
-\begin{itemize}
-    \item Because it doesn't fail with strong non-perturbative effects.\footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
-\end{itemize}
 
 \end{frame}
 
@@ -175,6 +170,23 @@ Building the optimization problem:
 \begin{frame}
 \frametitle{Bootstrap for generic systems}
 
+\textbf{Why we need numerical bootstrap}
+
+\begin{itemize}
+    \item Because it doesn't fail with strong non-perturbative effects.\footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
+    \item Because if done correctly, it gives the \emph{lower} bound of ground state energy
+    \begin{itemize}
+        \item Density matrix = linear functional $\mathcal{F}$ from operators to numbers
+        \item Predicted $E_0$ = $\min_{\mathcal{F} \text{constrained}} \mathcal{F}[H]$
+        \item Real ground state also constrained $\Rightarrow$ real $E_0 > $ predicted $E_0$
+    \end{itemize}
+\end{itemize}    
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
 \textbf{Some technical aspects of the problem}
 
 When building the optimization problem: 
@@ -191,15 +203,16 @@ When building the optimization problem:
 
 For optimization itself
 \begin{itemize}
-    \item \concept{linear semidefinite programming (linear SDP)} when using $\expval*{\comm{H}{O}} = 0$
+    \item \concept{Linear semidefinite programming (linear SDP)} when using $\expval*{\comm{H}{O}} = 0$
     ($\expval{HO}$ and $\expval*{OH}$ being linear combination of $\{O_i\}$)
     \begin{itemize}
-        \item Convex optimization, mature solvers\footnote{See \href{https://en.wikipedia.org/wiki/Semidefinite_programming}{Wikipedia}} 
+        \item Convex optimization\footnote{See \href{https://en.wikipedia.org/wiki/Semidefinite_programming}{Wikipedia}} 
+        \item Mature solvers like SCS\footnote{\href{https://github.com/cvxgrp/scs}{https://github.com/cvxgrp/scs}} or CSDP\footnote{\href{https://github.com/coin-or/Csdp}{https://github.com/coin-or/Csdp}}
     \end{itemize}
-    \item \concept{nonlinear semidefinite programming (nonlinear SDP)} when using $\expval*{{H}{O}} = E \expval*{O}$
+    \item \concept{Nonlinear semidefinite programming (nonlinear SDP)} when using $\expval*{{H}{O}} = E \expval*{O}$
     because there are optimization variables in $E$
     \begin{itemize}
-        \item No solver mature enough \footnote{See the discussion before Sec.~1.1 in \href{https://arxiv.org/abs/2108.04830}{arXiv 2108.04830}. Also, no solver supporting both SDP and nonlinear programming (NLP) is listed in \href{https://jump.dev/JuMP.jl/stable/installation/}{the solver list of JuMP.jl}.}
+        \item No solver mature enough\footnote{See the discussion before Sec.~1.1 in \href{https://arxiv.org/abs/2108.04830}{arXiv 2108.04830}. Also, no solver supporting both SDP and nonlinear programming (NLP) is listed in \href{https://jump.dev/JuMP.jl/stable/installation/}{the solver list of JuMP.jl}.}
     \end{itemize}
 \end{itemize}    
 
@@ -240,25 +253,168 @@ For optimization itself
 \end{frame}
 
 \begin{frame}
-\frametitle{Example: $x^4$ nonlinear oscillator}
+\frametitle{Example: $x^4$ anharmonic oscillator}
 
-Consider the nonlinear oscillator\footnote{The example is provided in \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212}}
+Consider the anharmonic oscillator\footnote{The example is provided in \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212}}, a famous failure of perturbation theory\footnote{Carl M. Bender and Tai Tsun Wu, Anharmonic Oscillator. Phys. Rev. 184, 1231.}
 \begin{equation}
     H = x^2 + p^2 + g x^4.
 \end{equation}
 
 \begin{itemize}
-    \item Famous failure of perturbation theory\footnote{Carl M. Bender and Tai Tsun Wu, Anharmonic Oscillator. Phys. Rev. 184, 1231.}
     \item Symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
-    \item Building the optimization problem: 
+    \item Deriving equality constraints:
+    \begin{itemize}
+        \item $\mathcal{O}=x^{s}$ and $\mathcal{O}=x^{t} p$ in $\langle[H, \mathcal{O}]\rangle=0$ 
+        \item $\mathcal{O}=x^{t-1}$ in $\langle\mathcal{O} H\rangle=E\langle\mathcal{O}\rangle$
+    \end{itemize}
+    \item So finally we have
+        \begin{equation}
+            \begin{aligned}
+                &E=2\left\langle x^{2}\right\rangle+3 g\left\langle x^{4}\right\rangle, \\
+                &4 t E\left\langle x^{t-1}\right\rangle +t(t-1)(t-2)\left\langle x^{t-3}\right\rangle -4(t+1)\left\langle x^{t+1}\right\rangle \\
+                &\quad -4 g(t+2)\left\langle x^{t+3}\right\rangle=0 
+            \end{aligned}
+        \end{equation}
+    \item Only independent variables: $\expval{x^2}$ and $E$, so nonlinear SDP is possible
+    \item SDP constraint: $M_{ij} = \expval*{x^{i+j}}, M \geq 0$
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Example: $x^4$ anharmonic oscillator}
+
+\begin{itemize}
+    \item Reproduce Fig.~1 in \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212} by brutal force searching
+    \item Numerical bootstrap can be quite precise! (high resolution Mathematica plotting required to find the allowed region)
+\end{itemize}
+
+\begin{columns}
+    
+    \begin{column}{0.5\textwidth}
+        \lstset{language=Mathematica, basicstyle=\tiny, xleftmargin=-40pt}
+        % Code from oscillator-simple-prototype\2022-1-20.nb
+        \begin{lstlisting}
+            expectedX[0] := 1;
+            expectedX[2] := x2;
+            expectedX[4] := 1/(3 g) (E0 - 2 x2);
+            expectedX[u_?EvenQ] := 
+            1 / (4 g ((-3 + u) + 2)) * 
+            (4 (-3 + u) E0 expectedX[(-3 + u) - 1] 
+            + (-3 + u) ((-3 + u) - 1) ((-3 + u) - 2) 
+                expectedX[(-3 + u) - 3] 
+            - 4 ((-3 + u) + 1) expectedX[(-3 + u) + 1]);
+
+            matPositive[K_] := 
+            Table[expectedX[i+j], {i, 0, K}, {j, 0, K}];
+
+            RegionPlot[
+            AllTrue[Eigenvalues[matPositive[9] /. g -> 1], 
+                # >= 0 &], 
+            {E0, 1.35, 1.44}, {x2, 0.294, 0.311}, 
+            PlotPoints -> 100]
+        \end{lstlisting}
+    \end{column}
+
+    \begin{column}{0.5\textwidth}
+        \includegraphics[width=\textwidth]{oscillator-bootstrap-feasible-domains.PNG}
+    \end{column}
+\end{columns} 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Example: $x^4$ anharmonic oscillator}
+
+\textbf{Benchmark}
+
+\begin{itemize}
+    % program: oscillator-simple-prototype\stationary-schrodinger.jl
+    \item Solving the Schr\"{o}dinger equation with finite difference method with $\Delta x = 0.05$: $E_0 = 1.3919$
+    % program: oscillator-simple-prototype\2022-1-20.nb
+    \item Numerical bootstrap with $K=11$: $E_0 = 1.3922$
+\end{itemize}  
+
+\end{frame}
+
+\begin{frame}
+\frametitle{More examples}
+
+\textbf{Double-well potential}\footnote{See \href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
+
+\begin{columns}
+    \begin{column}{0.5\textwidth}
+        \begin{itemize}
+            \item Another famous non-perturbative model (instantons between the wells)
+            \item \begin{equation}
+                H=p^{2}-m^{2} x^{2}+g x^{4}+\mathcal{V}_{0}
+            \end{equation}
+            \item Error between predicted split between the ground state and the first excited state and the dilute instanton approximation goes down as the two wells are separated.
+        \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        \includegraphics[width=\textwidth]{double-well-bootstrap-feasible-domain.png}
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{More examples}
+
+\textbf{Matrix model}\footnote{See \href{https://arxiv.org/pdf/2108.04830.pdf}{arXiv 2108.04830} and \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212}}
+
+\begin{itemize}
+    \item Impossible to solve otherwise
+    \item A specific case associated with $M$-theory\footnote{\href{https://arxiv.org/abs/hep-th/9610043}{arXiv hep-th 9610043}}
+    \item (Inherent) nonlinear constraints
+    \begin{itemize}
+        \item Relaxed bootstrap in Sec.~4 in \href{https://arxiv.org/pdf/2108.04830.pdf}{arXiv 2108.04830}
+        \item trust-region sequential SDP in \href{https://github.com/hanxzh94/matrix-bootstrap}{Xizhi Han's code}
+    \end{itemize}
 \end{itemize}
 
 \end{frame}
 
 \begin{frame}
-\frametitle{Example: $x^4$ nonlinear oscillator}
+\frametitle{More examples}
 
-Numerical bootstrap can be quite precise!    
+\textbf{Hubbard model}\footnote{See \href{https://arxiv.org/abs/2006.06002}{2006.06002}.}
+
+Bootstrapping of models in condensed matter physics -- No sign problem!
+
+\input{hubbard-bootstrap-table.tex}
+
+\begin{itemize}
+    \item Operator space cutoff: $l(c_{x_1 \sigma_1}^{(\dagger)}) = r + \sum_{i=1}^r \|x_i \|_1 \leq K$ 
+    \item Ground state energy lower bounded
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Discussion}
+
+\textbf{What can be immediately done}
+
+\begin{itemize}
+    \item Bootstrapping anharmonic oscillator by linear SDP
+    \item Reproduce the results of Hubbard model 
+\end{itemize}
+
+\textbf{Future perspectives}
+
+\begin{itemize}
+    \item Bootstrapping a \emph{class} of models (e.g. ``all possible models made by $x$ and $p$'')
+    \begin{itemize}
+        \item Extending what is done in conformal bootstrap (e.g. ``all possible CFTs made by $\sigma$ and $\epsilon$'') to all kind of models
+    \end{itemize}
+    \item Extracting thermal information from $\expval*{\comm{O}{H}} = 0$ bootstraps
+    \item What constraints are effective? 
+    \begin{itemize}
+        \item Can wave function ansatz (e.g. DMRG) provide some hints?
+    \end{itemize}
+\end{itemize}
 
 \end{frame}
 
