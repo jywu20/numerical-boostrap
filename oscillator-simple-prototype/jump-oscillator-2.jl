@@ -6,10 +6,12 @@ using Test
 
 # Interaction strength
 g = 1.0
-# Maximal length of x operator sequence and p operator sequence in C_1.
+# Maximal length of x operator sequence and p operator sequence ever considered in this program.
 # The value must be even, so that we can easily construct the M matrix; 
-# it should also be greater than 4, so that when computing commutation relation with the Hamiltonian,
-# there will be no out of bound error
+# it should also be greater than 4 + the length of x/p sequence of O in ⟨[H, O]⟩=0, 
+# so that when computing commutation relation with the Hamiltonian,
+# there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
+# make sure that 2K ≤ L.
 L_max = 12
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
@@ -60,8 +62,14 @@ function power_str(var, pow)
 end
 
 function xpopstr_power_str(x_power, p_power)
-    if x_power != 0 || p_power != 0
+    if x_power != 0 && p_power != 0
         return " $(power_str("x", x_power)) $(power_str("p", p_power))"
+    end
+    if x_power == 0 && p_power != 0
+        return " $(power_str("p", p_power))"
+    end
+    if x_power != 0 && p_power == 0
+        return " $(power_str("x", x_power))"
     end
     return ""
 end
@@ -123,6 +131,8 @@ end
     @test xpopstr_stringify(- op0 + 2.3 * op1 - im * op2) == "- 3.4 + 2.3 x^2 p^3 - 1.0im x^4 p^3"
     @test xpopstr_stringify(- op0 + 2.3 * op1 + (1 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (1.0 + 1.0im) x^4 p^3"
     @test xpopstr_stringify(- op0 + 2.3 * op1 + (- 2.3 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (-2.3 + 1.0im) x^4 p^3"
+    op3 = xpopstr_xp_power(0, 3)
+    @test xpopstr_stringify(im * op3) == "1.0im p^3"
 end
 
 """
@@ -183,7 +193,7 @@ end
 Normal ordered version of x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2
 """
 function xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2)
-    # We name the first term on the RHS of 
+    # We name the first term on the RHS of
     # x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2 = 
     # x^x_power_1 x^x_power_2 p^p_power_1 p^p_power_2 - x^x_power_1 [x^x_power_2, p^p_power_1] p^p_power_2
     # as pre_normal_ord_term, the second term as comm_term
@@ -229,15 +239,84 @@ function comm_with_ham(op::OffsetArray)
     result
 end
 
+@testset "Commutator with the Hamiltonian" begin
+    op1 = xpopstr_xp_power(2, 1)
+    @test xpopstr_stringify(comm_with_ham(op1)) == "2.0 p + 4.0im x p^2 - 2.0im x^3 - 4.0im x^5"
+end
+
+function max_x_power(op::OffsetArray)
+    nonzero_terms_idx = xpopspace_index_range[collect(op .!= 0)]
+    if length(nonzero_terms_idx) == 0
+        return 0
+    end
+    max(map(index_to_xpower, nonzero_terms_idx)...)
+end
+
+function max_p_power(op::OffsetArray)
+    nonzero_terms_idx = xpopspace_index_range[collect(op .!= 0)]
+    if length(nonzero_terms_idx) == 0
+        return 0
+    end
+    max(map(index_to_ppower, nonzero_terms_idx)...)
+end
+
+@testset "Finding the maximal power of x and p in an operator" begin
+    op0 = xpopstr_const(3.4)
+    op1 = xpopstr_const(2.5) + im * xpopstr_xp_power(3, 4)
+    @test max_x_power(op0) == 0
+    @test max_p_power(op0) == 0
+    @test max_x_power(op1) == 3
+    @test max_p_power(op1) == 4
+end
+
 ##
 
 model = Model(CSDP.Optimizer)
 # Only non-constant operators have uncertain expectations
-@variable(model, xpopstr_expected[1 : xpopspace_dim])
-xpopstr_basis = OffsetArray([1, xpopstr_expected...], xpopspace_index_range)
+# Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
+# Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
+# number of variables is doubled
+@variable(model, xpopstr_expected[1 : 2xpopspace_dim])
 
-# Construct the M matrix 
+xpopstr_expected_real_imag_parts(i, real_or_imag) = begin
+    if real_or_imag == :real
+        return xpopstr_expected[2i - 1]
+    end
+    if real_or_imag == :imag
+        return xpopstr_expected[2i]
+    end
+end
 
+I22 = Matrix(1*I, 2, 2)
+O22 = 0.0 * I22
+Im22 = [
+    0   -1 ; 
+    1    0
+]
 
-@objective(model, Min, H)
+variable_list_real = [xpopstr_expected_real_imag_parts(i, :real) * I22 for i in 1 : xpopspace_dim]
+variable_list_imag = [xpopstr_expected_real_imag_parts(i, :imag) * Im22 for i in 1 : xpopspace_dim]
+xpopstr_basis_real = OffsetArray([I22, variable_list_real...], xpopspace_index_range)
+xpopstr_basis_imag = OffsetArray([O22, variable_list_imag...], xpopspace_index_range)
+
+# Building constraints
+# make sure the size of OH does not cause any out of bound error.
+# Then imposing constraints to the variables
+
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    lhs = transpose(real(cons)) * xpopstr_basis_real + transpose(imag(cons)) * xpopstr_basis_imag
+    @constraint(model, lhs .== O22)
+end
+
+# Construct the M matrix and impose the semidefinite constraint 
+
+K = Int(L_max / 2)
+
+@variable(model, M[1 : 2K + 1, 1 : 2 K + 1], PSD)
+
+##
+
+@objective(model, Min, xpopstr_expected[xpopstr_index(2, 0)] + xpopstr_expected[xpopstr_index(0, 2)] + g * xpopstr_expected[xpopstr_index(4, 0)])
 optimize!(model)
