@@ -327,3 +327,26 @@ t = n - 3
 [维基](https://en.wikipedia.org/wiki/Semidefinite_programming)本来应该好好读一读的。
 
 `jump-toy-1.jl`和`jump-toy-2.jl`均测试成功。
+
+## 2022.3.5
+
+今天的讨论结果：
+- 应当注意，linear SDP方法不能够给出清晰的第一激发态！（linear SDP给出的是凸的可行域，凸的可行域不可能分成一块一块）
+- 是否可以通过$\lang O^\dagger O \rang \geq 0$导出不确定性关系？是否所有仅仅由算符代数确定的自洽性条件都可以使用某个算符的正定性条件给出？
+  - 是否正定性条件普遍成立$\Leftrightarrow$我们的$\lang \cdot \rang$对应正定的密度矩阵？？
+
+尝试在Julia里面找一个包做x和p的对易关系。QuantumAlgebra算Hubbard模型时肯定会用上，但是它好像不支持x和p。
+
+在`2022-3-5.nb`中构造$M$矩阵，用linear SDP。从M[[27, 16]]的计算结果可以看出，最终构造出来的$M$矩阵是含有大量$\ii$的。
+因此，我们需要确保优化器能够处理复变量问题。
+
+在`jump-toy-3.jl`和`2022-3-5.nb`中讨论该问题。`2022-3-5.nb`表明Mathematica可以处理这类问题。`jump-toy-3.jl`表明JuMP不能直接处理这类问题。
+事实上，我们有
+```
+julia> im * x1
+ERROR: InexactError: Float64(im)
+Stacktrace:
+ [1] Real at .\complex.jl:37 [inlined]
+ [2] convert at .\number.jl:7 [inlined]
+```
+一个可能的方法是将$\ii$替换成`[0 -1; 1 0]`。我们在`jump-toy-4.jl`中做这件事。成功了，和`2022-3-5.nb`完全一致。将有关内容放在`jump-toy-3-benchmark.nb`中。

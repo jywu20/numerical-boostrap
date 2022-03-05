@@ -108,11 +108,22 @@
     \begin{equation}
         \expval{OC} = \expval{CO}.
     \end{equation}
-    Derivation similar to below.
+    Derivation similar to next slide.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{How to perform bootstrap for a generic system?}  
+
+\begin{itemize}
+    \item How to get relations between correlation functions
+
+    \textbf{Solution} Expanding each operator to a linear combination of normal ordered operators. (poor man's OPE)
     
-    \item Hard to get OPE
-    
-    \textbf{Solution} Density matrix is determined solely by $H$, then 
+    Density matrix is determined solely by $H$, then 
     \begin{equation}
         \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}}
     \end{equation}
@@ -120,6 +131,7 @@
     \begin{equation}
         \expval{O H} = E \expval{O}, \quad E = \expval{H}.
     \end{equation}
+    Thus we break higher order correlation functions into lower order ones.
 \end{itemize}
 
 \end{frame}
@@ -132,7 +144,7 @@
     \begin{equation}
         \expval*{O^\dagger O} \geq 0
     \end{equation}
-    for every $O$ defines an allowed region - the feasible domain for the following optimization.
+    for every $O$ defines an allowed region -- the feasible domain for the following optimization.
     \item To get ground state information, minimize $\expval*{H}$ globally.
     \item To get information about excited states, find local minima of $\expval*{H}$.
 \end{itemize} 
@@ -150,8 +162,7 @@
 
 Input data:
 \begin{itemize}
-    \item Determine $N$ operators $\{O_i\}$ as the basis of all operators.
-    Example: normal ordered, with a length cutoff 
+    \item $N$ basis operators $\{O_i\}$, normal ordered with a length cutoff
     \item Data of equality constraints: Hamiltonian, symmetry, etc.
     \item Commutation rules, normal ordering rules, etc. so that $O_i O_j$ can be expanded in terms of $\{O_i\}$
     \item Hamiltonian $H = \sum_i c_i O_i$
@@ -161,7 +172,7 @@ Building the optimization problem:
 \begin{enumerate}
     \item Declare $N$ variables $\{X_i\}$, $X_i = \expval*{O_i}$ after optimization
     \item Impose equality constraints on $\{X_i\}$ according to e.g. $\expval*{\comm{H}{O}} = 0$ 
-    \item Imposing semidefinite constraint on $M_{ij} = \expval*{O_i^\dagger O_j}$, so that after optimization $\expval*{O^\dagger O} \geq 0$ for every $O$
+    \item Imposing semidefinite constraint on $M_{ij} = \expval*{O_i^\dagger O_j}$ (expanded into linear combination of $\{X_i\}$), so that after optimization $\expval*{O^\dagger O} \geq 0$ for every $O$
     \item Optimize $\sum_i c_i X_i$
 \end{enumerate}
 
@@ -386,7 +397,7 @@ Bootstrapping of models in condensed matter physics -- No sign problem!
 \input{hubbard-bootstrap-table.tex}
 
 \begin{itemize}
-    \item Operator space cutoff: $l(c_{x_1 \sigma_1}^{(\dagger)}) = r + \sum_{i=1}^r \|x_i \|_1 \leq K$ 
+    \item Operator space cutoff: $l(c_{x_1 \sigma_1}^{(\dagger)} \cdots c_{x_r \sigma_r}^{(\dagger)}) = r + \sum_{i=1}^r \|x_i \|_1 \leq K$ 
     \item Ground state energy lower bounded
 \end{itemize}
 
