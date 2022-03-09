@@ -1,0 +1,111 @@
+\documentclass{beamer}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{mathdots}
+\usepackage{yhmath}
+\usepackage{cancel}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amssymb}
+\usepackage{textcomp, gensymb}
+\usepackage{tabularx}
+\usepackage{extarrows}
+\usepackage{booktabs}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
+\usepackage{listings}
+\usepackage{hyperref}
+
+%Information to be included in the title page:
+\title{Technical details in linear SDP bootstrap of $x^4$ anharmonic oscillator}
+\author{Jinyuan Wu}
+\institute{Department of Physics, Fudan University}
+\date{2021}
+
+\usetheme{Madrid}
+
+\newcommand{\concept}[1]{\textbf{#1}}
+\newcommand{\ee}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{Basis of operator space}
+
+\textbf{The operator space basis}
+
+\begin{itemize}
+    \item All in the form of $x^m p^n$ 
+    \item Cutoff: $0 \leq m, n \leq 2L$
+    \item In the $M_{ij} = \expval*{O_i O_j}$ matrix: this means the cutoff is $0 \leq i, j \leq L$
+\end{itemize}    
+
+\textbf{Indexing of each operator}
+
+\begin{itemize}
+    \item Two digit base-$2L$ number $\overline{mn}$
+    \item Min = $0$, Max = $(2 L + 1)^2 - 1$ 
+    \item Analogy: base-10, $2L = 9$, Min = 0, Max = 99 = $(9 + 1)^2 - 1$
+\end{itemize}
+
+\textbf{Implementation}
+
+\begin{itemize}
+    \item \texttt{xpopstr\_index(x\_power, p\_power)}: from $(m, n)$ to $\overline{mn}$
+    \item \texttt{index\_to\_xpower(idx)}: from $\overline{mn}$ to $m$
+    \item \texttt{index\_to\_ppower(idx)}: from $\overline{mn}$ to $n$
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Operator algebra}
+
+\textbf{Operator algebra when formulating the problem}
+
+\begin{itemize}
+    \item $\comm*{H}{O}$: normal ordered commutator between $x^{m_1} p^{n_1}$ and $x^{m_2} p^{n_2}$
+    \begin{itemize}
+        \item Equivalent to commutator between $x^m$ and $p^n$
+    \end{itemize}
+    \item $O_i O_j$: normal ordered multiplication of $x^{m_1} p^{n_1}$ and $x^{m_2} p^{n_2}$
+    \begin{itemize}
+        \item Equivalent to normal ordering of $p^{n} x^m$
+        \item Equivalent to commutator between $x^m$ and $p^n$
+    \end{itemize}
+    \item Normal ordered commutator between $x^m$ and $p^n$: McCoy's formula\footnote{See \url{https://en.wikipedia.org/wiki/Canonical_commutation_relation}}
+\end{itemize}
+
+\textbf{Fundamental operations we need}
+
+\begin{itemize}
+    \item $x^l \cdot x^m p^n \cdot p^k$ -- implemented as \texttt{xpopstr\_left\_x\_right\_p\_mul}
+    \item $\comm*{x^m}{p^n}$ -- implemented as \texttt{xpopstr\_comm}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Constructing $M$ matrix}
+
+    
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Imaginary number in linear SDP}
+
+Since CSDP doesn't support complex number in the semidefinite constraint, we need to 
+replace $1$ by $I_{2 \times 2}$ and $\ii$ by $\pmqty{0 & -1 \\ 1 & 0}$.
+
+\end{frame}
+
+\end{document}

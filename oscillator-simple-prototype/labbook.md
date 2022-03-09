@@ -350,3 +350,7 @@ Stacktrace:
  [2] convert at .\number.jl:7 [inlined]
 ```
 一个可能的方法是将$\ii$替换成`[0 -1; 1 0]`。我们在`jump-toy-4.jl`中做这件事。成功了，和`2022-3-5.nb`完全一致。将有关内容放在`jump-toy-3-benchmark.nb`中。
+
+## 2022.3.9
+
+`jump-oscillator-2.jl`是写完了，但是报奇怪的错误。

@@ -7,8 +7,7 @@ using Test
 # Interaction strength
 g = 1.0
 # Maximal length of x operator sequence and p operator sequence ever considered in this program.
-# The value must be even, so that we can easily construct the M matrix; 
-# it should also be greater than 4 + the length of x/p sequence of O in ⟨[H, O]⟩=0, 
+# It should be greater than 4 + the length of x/p sequence of O in ⟨[H, O]⟩=0, 
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
@@ -16,9 +15,9 @@ L_max = 12
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
-# The range of possible x / p power 
+# The range of possible x / p power
 xpoppower_range = 0 : 2L_max
-# The complete range of indexes of operators 
+# The complete range of indexes of operators, the length of which is xpopspace_dim + 1 = (2L_max + 1)^2
 xpopspace_index_range = 0 : xpopspace_dim
 
 # Define variables. We label the expectation values as the follows: x^m p^n is labeled as m * (K + 1) + n 
@@ -311,12 +310,41 @@ for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
 end
 
 # Construct the M matrix and impose the semidefinite constraint 
+# The range of two indices of M matrix defined in papers is from 0 to L; note that this is NOT the index in the 
+# JuMP constraint @variable(model, M[...]), because 1. we need to replace 0 with I and i with [0 -1; 1 0], 
+# so the size of the PSD matrix is twice as much as the size of the M matrix in analytical calculation, and
+# 2. in JuMP we count from 1 not 0 and OffsetArray cannot be created using @variable
 
-K = Int(L_max / 2)
+M_index_to_xpopstr_index = zeros(Int, (L_max + 1)^2)
+for i in 0 : L_max
+    for j in 0 : L_max
+        M_idx = i * (L_max + 1) + j + 1
+        M_index_to_xpopstr_index[M_idx] = xpopstr_index(i, j)
+    end
+end
 
-@variable(model, M[1 : 2K + 1, 1 : 2 K + 1], PSD)
+# To check if the opeartors are correct, run
+# map(idx -> xpopstr_power_str(index_to_xpower(idx), index_to_ppower(idx)), M_index_to_xpopstr_index) 
 
-##
+@variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2], PSD)
+
+for i in 1 : (L_max + 1)^2
+    for j in i : (L_max + 1)^2
+        op1_idx = M_index_to_xpopstr_index[i]
+        op2_idx = M_index_to_xpopstr_index[j]
+        op1_idx_xpower = index_to_xpower(op1_idx)
+        op1_idx_ppower = index_to_ppower(op1_idx)
+        op2_idx_xpower = index_to_xpower(op2_idx)
+        op2_idx_ppower = index_to_ppower(op2_idx)
+        op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+
+        real_part = transpose(real(op_ij)) * xpopstr_basis_real * I22
+        imag_part = transpose(imag(op_ij)) * xpopstr_basis_imag * Im22
+        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== real_part + imag_part)
+    end
+end
 
 @objective(model, Min, xpopstr_expected[xpopstr_index(2, 0)] + xpopstr_expected[xpopstr_index(0, 2)] + g * xpopstr_expected[xpopstr_index(4, 0)])
 optimize!(model)
+
+@show objective_value(model)
