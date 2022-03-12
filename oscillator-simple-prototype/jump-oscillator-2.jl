@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 12
+L_max = 4
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1

@@ -354,3 +354,37 @@ Stacktrace:
 ## 2022.3.9
 
 `jump-oscillator-2.jl`是写完了，但是报奇怪的错误。
+```
+LoadError: ArgumentError: Empty constraint MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(1): MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[], 0.0)-in-MathOptInterface.EqualTo{Float64}(0.0). Not supported by CSDP.
+```
+
+## 2022.3.12
+
+将`L_max`改成4，然后错误当然还是来了。这个错误真的很奇怪。要怎么排查呢？
+- 首先至少应该看出来被报错的这个所谓empty constraint到底是什么
+- 不知道从错误信息里面能不能看出来什么东西。
+- 也许现在可以把约束都打印出来看一看
+
+```
+Empty constraint MathOptInterface.ConstraintIndex{
+    MathOptInterface.ScalarAffineFunction{Float64},
+    MathOptInterface.EqualTo{Float64}
+}(1): MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[], 0.0)-in-MathOptInterface.EqualTo{Float64}(0.0)
+```
+感觉这个`MathOptInterface.ScalarAffineTerm{Float64}[], 0.0`很有些问题。哪个施加约束的地方会有`[]`出现呢？
+首先肯定不是SDP那个约束。
+
+执行如下命令：
+```julia
+x_power=1; p_power=1
+op = xpopstr_xp_power(x_power, p_power)
+cons = comm_with_ham(op)
+lhs = transpose(real(cons)) * xpopstr_basis_real + transpose(imag(cons)) * xpopstr_basis_imag 
+```
+发现`lhs`的`[1, 1]`和`[2, 2]`分量都是零，所以会有一个`0 == 0`的约束。是否这是问题呢？
+
+有趣，`jump-toy-4.jl`中还确实没有出现过这种类型的约束。hmm……
+
+为了判断是不是这样，在`jump-toy-4-2022-3-12-test-1.jl`中测试加入一个`0 == 0`的约束会怎么样。
+
+好家伙果然报error了。看来CSDP不怕重复约束，但是怕空约束。
