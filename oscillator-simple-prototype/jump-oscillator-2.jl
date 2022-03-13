@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 5 
+L_max = 12
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -309,7 +309,9 @@ for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
     cons = comm_with_ham(op)
     cons_real = transpose(real(cons))
     cons_imag = transpose(imag(cons))
-    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    cons_real_mat_version = map(x -> x * I22, cons_real)
+    cons_imag_mat_version = map(x -> x * Im22, cons_imag)
+    lhs = (cons_real_mat_version + cons_imag_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
     if cons_real == cons_imag == zero_xpopstr'
         continue
     end
@@ -357,7 +359,10 @@ for i in 1 : (L_max + 1)^2
     end
 end
 
-@objective(model, Min, xpopstr_expected[xpopstr_index(2, 0)] + xpopstr_expected[xpopstr_index(0, 2)] + g * xpopstr_expected[xpopstr_index(4, 0)])
+@objective(model, Min, 
+    xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)] + 
+    xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real)] + 
+    g * xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real)])
 optimize!(model)
 
 @show objective_value(model)

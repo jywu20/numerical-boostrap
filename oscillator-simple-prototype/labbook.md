@@ -464,3 +464,290 @@ end
 做出对应修改之后程序至少是能够跑起来了。
 
 在`L_max = 5`时能量优化出来是`0.5921578324750953`。当然这个肯定很不准。
+
+结果把`L_max`改成12又跑不了了。改成6都跑不了。
+
+重复前述诊断，运行
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr'
+        continue
+    end
+    if cons_real == zero_xpopstr'
+        #@constraint(model, lhs[1, 2] == 0.0)
+        println(x_power, " ", p_power)
+        println("real part == 0")
+        println(lhs[1, 2])
+        println()
+    elseif cons_imag == zero_xpopstr'
+        #@constraint(model, lhs[1, 1] == 0.0)
+        println(x_power, " ", p_power)
+        println("imag part == 0")
+        println(lhs[1, 1])
+        println()
+    else
+        #@constraint(model, lhs .== O22)
+        println(x_power, " ", p_power)
+        println(lhs)
+        println()
+    end
+end
+```
+似乎无法定位出`0 == 0`约束。实际上这回的错误信息是
+```
+ERROR: LoadError: ArgumentError: Empty constraint MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(28): MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[], 0.0)-in-MathOptInterface.EqualTo{Float64}(-2.0). Not supported by CSDP.
+```
+这个`-2.0`就很神奇，我什么时候加入过这种约束了。
+
+最坏的情况当然就是有约束彼此冲突了，就是说我之前自动生成约束的程序有问题……
+
+首先定位这个出问题的约束到底是哪里引进的。
+```julia
+@constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== real_part + imag_part)
+```
+是这个约束引入的吗？注释掉这个约束，发现错误仍然存在。不注释这个约束，而注释前面$\lang [O, H] \rang = 0$的约束没有错误。因此问题不在这里。
+
+一种检查引入的约束有无互相冲突的办法是计算行列式。
+
+想到一个稍微容易一些的办法。建立一个具有一模一样的变量的模型，然后一条一条往上面加约束，看看会怎么样。
+目前`L_max = 6`，然后运行
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr'
+        continue
+    end
+    if cons_real == zero_xpopstr'
+        #@constraint(model, lhs[1, 2] == 0.0)
+        println(x_power, " ", p_power)
+        println("real part == 0")
+        println(lhs[1, 2])
+        println()
+    elseif cons_imag == zero_xpopstr'
+        #@constraint(model, lhs[1, 1] == 0.0)
+        println(x_power, " ", p_power)
+        println("imag part == 0")
+        println(lhs[1, 1])
+        println()
+    else
+        #@constraint(model, lhs .== O22)
+        println(x_power, " ", p_power)
+        println(lhs[1, 1])
+        println(lhs[1, 2])
+        println(lhs[2, 1])
+        println(lhs[2, 2])
+        println()
+    end
+end
+```
+输出为
+```
+0 1     
+real part == 0
+2 xpopstr_expected[26] + 4 xpopstr_expected[78]
+
+0 2
+-12 xpopstr_expected[51] - 2
+4 xpopstr_expected[28] + 8 xpopstr_expected[80]
+-4 xpopstr_expected[28] - 8 xpopstr_expected[80]
+-12 xpopstr_expected[51] - 2
+
+0 3
+-6 xpopstr_expected[1] - 36 xpopstr_expected[53]
+-24 xpopstr_expected[26] + 6 xpopstr_expected[30] + 12 xpopstr_expected[82]
+24 xpopstr_expected[26] - 6 xpopstr_expected[30] - 12 xpopstr_expected[82]
+-6 xpopstr_expected[1] - 36 xpopstr_expected[53]
+
+0 4
+-12 xpopstr_expected[3] - 72 xpopstr_expected[55] + 24
+-96 xpopstr_expected[28] + 8 xpopstr_expected[32] + 16 xpopstr_expected[84]
+96 xpopstr_expected[28] - 8 xpopstr_expected[32] - 16 xpopstr_expected[84]
+-12 xpopstr_expected[3] - 72 xpopstr_expected[55] + 24
+
+1 0
+real part == 0
+-2 xpopstr_expected[2]
+
+1 1
+real part == 0
+-2 xpopstr_expected[4] + 2 xpopstr_expected[52] + 4 xpopstr_expected[104]
+
+1 2
+-2 xpopstr_expected[25] - 12 xpopstr_expected[77]
+-2 xpopstr_expected[6] + 4 xpopstr_expected[54] + 8 xpopstr_expected[106]
+2 xpopstr_expected[6] - 4 xpopstr_expected[54] - 8 xpopstr_expected[106]
+-2 xpopstr_expected[25] - 12 xpopstr_expected[77]
+
+1 3
+-6 xpopstr_expected[27] - 36 xpopstr_expected[79]
+-2 xpopstr_expected[8] - 24 xpopstr_expected[52] + 6 xpopstr_expected[56] + 12 xpopstr_expected[108]       
+2 xpopstr_expected[8] + 24 xpopstr_expected[52] - 6 xpopstr_expected[56] - 12 xpopstr_expected[108]        
+-6 xpopstr_expected[27] - 36 xpopstr_expected[79]
+
+1 4
+24 xpopstr_expected[25] - 12 xpopstr_expected[29] - 72 xpopstr_expected[81]
+-2 xpopstr_expected[10] - 96 xpopstr_expected[54] + 8 xpopstr_expected[58] + 16 xpopstr_expected[110]      
+2 xpopstr_expected[10] + 96 xpopstr_expected[54] - 8 xpopstr_expected[58] - 16 xpopstr_expected[110]       
+24 xpopstr_expected[25] - 12 xpopstr_expected[29] - 72 xpopstr_expected[81]
+
+2 0
+2
+-4 xpopstr_expected[28]
+4 xpopstr_expected[28]
+2
+
+2 1
+2 xpopstr_expected[1]
+-4 xpopstr_expected[30] + 2 xpopstr_expected[78] + 4 xpopstr_expected[130]
+4 xpopstr_expected[30] - 2 xpopstr_expected[78] - 4 xpopstr_expected[130]
+2 xpopstr_expected[1]
+
+2 2
+2 xpopstr_expected[3] - 2 xpopstr_expected[51] - 12 xpopstr_expected[103]
+-4 xpopstr_expected[32] + 4 xpopstr_expected[80] + 8 xpopstr_expected[132]
+4 xpopstr_expected[32] - 4 xpopstr_expected[80] - 8 xpopstr_expected[132]
+2 xpopstr_expected[3] - 2 xpopstr_expected[51] - 12 xpopstr_expected[103]
+
+2 3
+2 xpopstr_expected[5] - 6 xpopstr_expected[53] - 36 xpopstr_expected[105]
+-4 xpopstr_expected[34] - 24 xpopstr_expected[78] + 6 xpopstr_expected[82] + 12 xpopstr_expected[134]      
+4 xpopstr_expected[34] + 24 xpopstr_expected[78] - 6 xpopstr_expected[82] - 12 xpopstr_expected[134]       
+2 xpopstr_expected[5] - 6 xpopstr_expected[53] - 36 xpopstr_expected[105]
+
+2 4
+2 xpopstr_expected[7] + 24 xpopstr_expected[51] - 12 xpopstr_expected[55] - 72 xpopstr_expected[107]       
+-4 xpopstr_expected[36] - 96 xpopstr_expected[80] + 8 xpopstr_expected[84] + 16 xpopstr_expected[136]      
+4 xpopstr_expected[36] + 96 xpopstr_expected[80] - 8 xpopstr_expected[84] - 16 xpopstr_expected[136]       
+2 xpopstr_expected[7] + 24 xpopstr_expected[51] - 12 xpopstr_expected[55] - 72 xpopstr_expected[107]       
+```
+
+这其中
+```
+2 0
+2
+-4 xpopstr_expected[28]
+4 xpopstr_expected[28]
+2
+```
+这一节比较神奇啊。第一个应该排除的问题就是，以下这段代码
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr'
+        continue
+    end
+    if cons_real == zero_xpopstr'
+        #@constraint(model, lhs[1, 2] == 0.0)
+    elseif cons_imag == zero_xpopstr'
+        #@constraint(model, lhs[1, 1] == 0.0)
+    else
+        #@constraint(model, lhs .== O22)
+    end
+end
+```
+是错误的：应该让`cons`整体乘以`xpopstr_basis_real + xpopstr_basis_imag`，否则会漏掉诸如$(1 + \ii) (\Re \lang x p^3 \rang + \ii \Im \lang x p^3 \rang)$的式子的交叉项。
+按照这个方法做了以后在`L_max = 6`时程序能够跑起来了，但是不收敛。输出如下：
+```
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+000 Pobj:  0.0000000e+000 Ad: 0.00e+000 Dobj:  0.0000000e+000
+Iter:  1 Ap: 8.94e-001 Pobj:  2.9135765e-003 Ad: 7.96e-001 Dobj: -1.6691110e+003
+Iter:  2 Ap: 7.23e-001 Pobj: -2.1461302e-002 Ad: 7.47e-001 Dobj: -4.3513612e+003
+Iter:  3 Ap: 5.69e-001 Pobj: -2.6843704e-002 Ad: 6.25e-001 Dobj: -4.5970090e+003
+Iter:  4 Ap: 7.18e-001 Pobj: -3.3056704e-002 Ad: 6.05e-001 Dobj: -3.5877049e+003
+Iter:  5 Ap: 5.88e-001 Pobj: -3.3587080e-002 Ad: 4.74e-001 Dobj: -3.6026251e+003
+Iter:  6 Ap: 5.45e-001 Pobj: -3.9891326e-002 Ad: 4.98e-001 Dobj: -6.8414694e+003 
+Iter:  7 Ap: 3.25e-001 Pobj: -1.9793391e-003 Ad: 4.17e-001 Dobj: -1.7296038e+004 
+Iter:  8 Ap: 3.56e-001 Pobj: -1.4929152e-002 Ad: 2.59e-001 Dobj: -3.0082726e+004 
+Iter:  9 Ap: 2.07e-001 Pobj: -3.9899597e-003 Ad: 1.69e-001 Dobj: -5.1484112e+004 
+Iter: 10 Ap: 1.75e-001 Pobj: -6.8952358e-004 Ad: 2.04e-001 Dobj: -1.0369714e+005 
+Iter: 11 Ap: 4.30e-002 Pobj: -9.3357851e-003 Ad: 2.62e-002 Dobj: -1.5779293e+005 
+Iter: 12 Ap: 7.45e-002 Pobj: -2.7797489e-002 Ad: 3.78e-002 Dobj: -2.2335467e+005 
+Iter: 13 Ap: 8.01e-002 Pobj: -2.5124854e-002 Ad: 5.10e-002 Dobj: -3.1249471e+005 
+Iter: 14 Ap: 3.09e-002 Pobj: -2.0653000e-002 Ad: 2.19e-002 Dobj: -3.9387359e+005 
+Iter: 15 Ap: 5.86e-002 Pobj: -3.0493792e-002 Ad: 6.99e-002 Dobj: -7.5747103e+005 
+Iter: 16 Ap: 2.07e-002 Pobj: -4.0745847e-002 Ad: 1.48e-002 Dobj: -8.6652382e+005 
+Iter: 17 Ap: 6.72e-002 Pobj: -6.7351231e-002 Ad: 3.49e-002 Dobj: -1.1878179e+006 
+Iter: 18 Ap: 2.99e-002 Pobj: -5.5795053e-002 Ad: 2.49e-002 Dobj: -1.5524760e+006 
+Iter: 19 Ap: 5.52e-002 Pobj: -4.8554588e-002 Ad: 2.14e-002 Dobj: -1.8574070e+006 
+Iter: 20 Ap: 6.89e-002 Pobj: -9.7445510e-003 Ad: 4.81e-002 Dobj: -2.3399780e+006 
+Iter: 21 Ap: 7.61e-002 Pobj:  4.4322528e-003 Ad: 7.10e-002 Dobj: -2.9793394e+006 
+Iter: 22 Ap: 3.80e-002 Pobj:  2.1248791e-002 Ad: 5.50e-002 Dobj: -3.9235038e+006 
+Iter: 23 Ap: 1.77e-001 Pobj:  6.1237672e-002 Ad: 1.05e-001 Dobj: -4.8925425e+006 
+Iter: 24 Ap: 2.25e-001 Pobj:  6.6629249e-002 Ad: 1.86e-001 Dobj: -4.8298094e+006 
+Iter: 25 Ap: 2.95e-001 Pobj:  6.6920334e-002 Ad: 3.25e-001 Dobj: -4.6516071e+006 
+Iter: 26 Ap: 4.06e-001 Pobj:  8.2055383e-002 Ad: 3.41e-001 Dobj: -4.2925248e+006 
+Iter: 27 Ap: 2.57e-001 Pobj:  1.3668061e-001 Ad: 2.40e-001 Dobj: -3.9866845e+006 
+Iter: 28 Ap: 2.00e-001 Pobj:  2.4420053e-001 Ad: 1.82e-001 Dobj: -3.7464056e+006 
+Iter: 29 Ap: 1.39e-001 Pobj:  4.3827913e-001 Ad: 1.29e-001 Dobj: -3.5838074e+006 
+Iter: 30 Ap: 8.74e-002 Pobj:  7.6671766e-001 Ad: 9.60e-002 Dobj: -3.4702762e+006 
+Iter: 31 Ap: 5.80e-002 Pobj:  1.3437788e+000 Ad: 7.02e-002 Dobj: -3.3895233e+006 
+Iter: 32 Ap: 3.80e-002 Pobj:  2.2832417e+000 Ad: 5.53e-002 Dobj: -3.3249359e+006 
+Iter: 33 Ap: 2.62e-002 Pobj:  3.7491887e+000 Ad: 4.71e-002 Dobj: -3.2670520e+006 
+Iter: 34 Ap: 2.25e-002 Pobj:  6.4019780e+000 Ad: 3.88e-002 Dobj: -3.2168456e+006 
+Iter: 35 Ap: 2.14e-002 Pobj:  1.1798876e+001 Ad: 2.60e-002 Dobj: -3.1839252e+006 
+Iter: 36 Ap: 1.63e-002 Pobj:  2.0920682e+001 Ad: 2.41e-002 Dobj: -3.1553522e+006 
+Iter: 37 Ap: 2.25e-002 Pobj:  4.7869841e+001 Ad: 2.48e-002 Dobj: -3.1267838e+006 
+Iter: 38 Ap: 2.55e-003 Pobj:  5.6466862e+001 Ad: 2.19e-002 Dobj: -3.1026234e+006 
+Iter: 39 Ap: 9.74e-004 Pobj:  6.1266697e+001 Ad: 2.17e-002 Dobj: -3.0829492e+006 
+Iter: 40 Ap: 1.33e-003 Pobj:  7.0662482e+001 Ad: 1.62e-002 Dobj: -3.0715400e+006 
+Iter: 41 Ap: 5.09e-004 Pobj:  7.5778772e+001 Ad: 1.92e-002 Dobj: -3.0520063e+006 
+Iter: 42 Ap: 1.06e-003 Pobj:  8.9753980e+001 Ad: 1.23e-002 Dobj: -3.0333867e+006 
+Iter: 43 Ap: 5.06e-004 Pobj:  9.8387121e+001 Ad: 1.43e-002 Dobj: -3.0107974e+006 
+Iter: 44 Ap: 4.97e-004 Pobj:  1.0834594e+002 Ad: 1.98e-002 Dobj: -2.9840187e+006 
+Iter: 45 Ap: 1.14e-003 Pobj:  1.3834944e+002 Ad: 9.39e-003 Dobj: -2.9712425e+006 
+Iter: 46 Ap: 1.90e-004 Pobj:  1.4564973e+002 Ad: 1.09e-002 Dobj: -2.9516628e+006 
+Iter: 47 Ap: 5.05e-004 Pobj:  1.6620453e+002 Ad: 1.00e-002 Dobj: -2.9325857e+006 
+Iter: 48 Ap: 6.35e-004 Pobj:  1.9498984e+002 Ad: 1.15e-002 Dobj: -2.9145314e+006 
+Iter: 49 Ap: 1.12e-003 Pobj:  2.6226669e+002 Ad: 1.39e-002 Dobj: -2.9014456e+006 
+Iter: 50 Ap: 3.66e-004 Pobj:  3.0258776e+002 Ad: 5.65e-003 Dobj: -2.8942541e+006 
+Iter: 51 Ap: 1.62e-004 Pobj:  3.2584136e+002 Ad: 4.04e-003 Dobj: -2.8875372e+006 
+Iter: 52 Ap: 2.19e-004 Pobj:  3.6017357e+002 Ad: 9.64e-003 Dobj: -2.8700087e+006 
+Iter: 53 Ap: 2.58e-004 Pobj:  4.0442632e+002 Ad: 4.00e-003 Dobj: -2.8639588e+006 
+Iter: 54 Ap: 2.45e-004 Pobj:  4.5327880e+002 Ad: 5.48e-003 Dobj: -2.8561048e+006 
+Iter: 55 Ap: 2.88e-004 Pobj:  5.2212742e+002 Ad: 5.76e-003 Dobj: -2.8469554e+006 
+Iter: 56 Ap: 1.67e-004 Pobj:  5.7095875e+002 Ad: 5.03e-003 Dobj: -2.8384368e+006 
+Iter: 57 Ap: 3.19e-004 Pobj:  6.7872678e+002 Ad: 6.73e-003 Dobj: -2.8293572e+006
+Iter: 58 Ap: 1.35e-004 Pobj:  7.3926868e+002 Ad: 3.11e-003 Dobj: -2.8250135e+006
+Iter: 59 Ap: 2.90e-004 Pobj:  8.9170553e+002 Ad: 5.14e-003 Dobj: -2.8212096e+006
+Iter: 60 Ap: 7.53e-005 Pobj:  9.4707469e+002 Ad: 4.71e-003 Dobj: -2.8168009e+006
+Iter: 61 Ap: 2.20e-004 Pobj:  1.1486775e+003 Ad: 5.63e-003 Dobj: -2.8138429e+006
+Lack of progress.  Giving up!
+Failure: return code is 7
+Primal objective value: 2.2832417e+000
+Dual objective value: -3.3249359e+006
+Relative primal infeasibility: 5.61e-002
+Relative dual infeasibility: 3.86e+000
+Real Relative Gap: -1.00e+000
+XZ Relative Gap: 3.94e+000
+DIMACS error measures: 8.05e-002 0.00e+000 6.66e+000 0.00e+000 -1.00e+000 3.94e+000
+objective_value(model) = -2.283241739287405
+-2.283241739287405
+```
+
+不收敛问题在`L_max = 4`时也存在。
+
+好像存在另一个问题，就是
+```julia
+@objective(model, Min, xpopstr_expected[xpopstr_index(2, 0)] + xpopstr_expected[xpopstr_index(0, 2)] + g * xpopstr_expected[xpopstr_index(4, 0)])
+```
+仍然是原来虚、实部混在一起的版本。换成
+```julia
+@objective(model, Min, 
+    xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)] + 
+    xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real)] + 
+    g * xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real)])
+```
+不工作，有invalid index error。
