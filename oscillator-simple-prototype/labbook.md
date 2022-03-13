@@ -750,4 +750,83 @@ objective_value(model) = -2.283241739287405
     xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real)] + 
     g * xpopstr_expected[xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real)])
 ```
-不工作，有invalid index error。
+不工作，有invalid index error。卧槽原来`xpopstr_expected_real_imag_parts`直接输出变量而不是index。
+去掉`xpopstr_expected[]`以后程序可以跑起来，但是memory allocation failed。（此时`L_max = 12`）
+
+现在将`L_max`调小到6，然后还是不收敛，不过现在至少objective value是68.06036356465847。输出如下：
+```
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+000 Pobj:  0.0000000e+000 Ad: 0.00e+000 Dobj:  0.0000000e+000 
+Iter:  1 Ap: 8.94e-001 Pobj:  1.0393856e-001 Ad: 7.96e-001 Dobj: -1.6690661e+003 
+Iter:  2 Ap: 7.23e-001 Pobj:  6.1576793e-001 Ad: 7.47e-001 Dobj: -4.3514769e+003 
+Iter:  3 Ap: 5.69e-001 Pobj:  3.9555074e-001 Ad: 6.25e-001 Dobj: -4.5971255e+003 
+Iter:  4 Ap: 7.18e-001 Pobj:  3.2698353e-001 Ad: 6.05e-001 Dobj: -3.5877331e+003 
+Iter:  5 Ap: 5.88e-001 Pobj:  3.8394091e-001 Ad: 4.74e-001 Dobj: -3.6026388e+003 
+Iter:  6 Ap: 5.46e-001 Pobj:  2.8370552e-001 Ad: 4.98e-001 Dobj: -6.8415674e+003 
+Iter:  7 Ap: 3.24e-001 Pobj:  1.7443035e-001 Ad: 4.15e-001 Dobj: -1.7315108e+004 
+Iter:  8 Ap: 3.54e-001 Pobj:  1.4419978e-001 Ad: 2.59e-001 Dobj: -3.0261606e+004 
+Iter:  9 Ap: 2.06e-001 Pobj:  7.6159949e-002 Ad: 1.69e-001 Dobj: -5.1608031e+004 
+Iter: 10 Ap: 1.76e-001 Pobj:  2.8225580e-002 Ad: 2.05e-001 Dobj: -1.0381123e+005 
+Iter: 11 Ap: 4.38e-002 Pobj: -1.0884879e-001 Ad: 2.70e-002 Dobj: -1.5849860e+005 
+Iter: 12 Ap: 7.41e-002 Pobj: -1.0017728e-001 Ad: 3.78e-002 Dobj: -2.2427085e+005 
+Iter: 13 Ap: 8.04e-002 Pobj: -2.3143836e-001 Ad: 5.03e-002 Dobj: -3.1189763e+005 
+Iter: 14 Ap: 3.12e-002 Pobj: -2.5591558e-001 Ad: 2.20e-002 Dobj: -3.9378658e+005 
+Iter: 15 Ap: 5.86e-002 Pobj: -3.8882386e-001 Ad: 7.00e-002 Dobj: -7.6150734e+005 
+Iter: 16 Ap: 2.04e-002 Pobj: -3.8027812e-001 Ad: 1.55e-002 Dobj: -8.7496163e+005 
+Iter: 17 Ap: 6.65e-002 Pobj: -5.9772591e-001 Ad: 3.41e-002 Dobj: -1.1931748e+006 
+Iter: 18 Ap: 3.03e-002 Pobj: -5.8196452e-001 Ad: 1.98e-002 Dobj: -1.4676507e+006 
+Iter: 19 Ap: 5.93e-002 Pobj: -8.0068609e-001 Ad: 2.37e-002 Dobj: -1.8016859e+006 
+Iter: 20 Ap: 7.13e-002 Pobj: -7.9588464e-001 Ad: 4.77e-002 Dobj: -2.3435909e+006 
+Iter: 21 Ap: 5.84e-002 Pobj: -1.0256495e+000 Ad: 4.88e-002 Dobj: -2.9289293e+006 
+Iter: 22 Ap: 6.33e-002 Pobj: -1.0293021e+000 Ad: 7.47e-002 Dobj: -4.2752813e+006 
+Iter: 23 Ap: 2.00e-001 Pobj: -1.3404625e+000 Ad: 2.01e-001 Dobj: -4.5856521e+006 
+Iter: 24 Ap: 2.42e-001 Pobj: -1.5124606e+000 Ad: 1.82e-001 Dobj: -4.5858794e+006 
+Iter: 25 Ap: 3.10e-001 Pobj: -1.8383679e+000 Ad: 2.52e-001 Dobj: -4.4679781e+006 
+Iter: 26 Ap: 3.52e-001 Pobj: -2.3632871e+000 Ad: 3.28e-001 Dobj: -4.1256414e+006 
+Iter: 27 Ap: 2.59e-001 Pobj: -3.3773445e+000 Ad: 2.48e-001 Dobj: -3.8335879e+006 
+Iter: 28 Ap: 2.04e-001 Pobj: -5.5014065e+000 Ad: 1.78e-001 Dobj: -3.5991974e+006 
+Iter: 29 Ap: 1.31e-001 Pobj: -9.2674176e+000 Ad: 1.25e-001 Dobj: -3.4380223e+006 
+Iter: 30 Ap: 8.62e-002 Pobj: -1.5659852e+001 Ad: 9.49e-002 Dobj: -3.3222368e+006 
+Iter: 31 Ap: 5.82e-002 Pobj: -2.6072022e+001 Ad: 7.46e-002 Dobj: -3.2342994e+006 
+Iter: 32 Ap: 4.05e-002 Pobj: -4.2447605e+001 Ad: 6.18e-002 Dobj: -3.1619966e+006 
+Iter: 33 Ap: 2.97e-002 Pobj: -6.8060364e+001 Ad: 5.27e-002 Dobj: -3.0992810e+006 
+Iter: 34 Ap: 2.29e-002 Pobj: -1.0870437e+002 Ad: 3.61e-002 Dobj: -3.0555436e+006 
+Iter: 35 Ap: 1.94e-002 Pobj: -1.7519156e+002 Ad: 3.14e-002 Dobj: -3.0181803e+006 
+Iter: 36 Ap: 2.71e-002 Pobj: -3.5585378e+002 Ad: 3.36e-002 Dobj: -2.9794972e+006 
+Iter: 37 Ap: 3.16e-002 Pobj: -8.9136747e+002 Ad: 3.08e-002 Dobj: -2.9459964e+006 
+Iter: 38 Ap: 2.98e-002 Pobj: -2.5515147e+003 Ad: 2.59e-002 Dobj: -2.9235276e+006 
+Iter: 39 Ap: 3.32e-003 Pobj: -3.2749581e+003 Ad: 3.04e-002 Dobj: -2.9068907e+006 
+Iter: 40 Ap: 1.71e-003 Pobj: -4.0293522e+003 Ad: 2.75e-002 Dobj: -2.8934632e+006 
+Iter: 41 Ap: 7.13e-004 Pobj: -4.6852931e+003 Ad: 1.95e-002 Dobj: -2.8811600e+006 
+Iter: 42 Ap: 6.28e-004 Pobj: -5.6563176e+003 Ad: 6.37e-003 Dobj: -2.8716478e+006 
+Iter: 43 Ap: 7.59e-004 Pobj: -7.2852922e+003 Ad: 1.68e-002 Dobj: -2.8633124e+006 
+Iter: 44 Ap: 5.97e-004 Pobj: -9.8923166e+003 Ad: 5.69e-003 Dobj: -2.8519349e+006 
+Iter: 45 Ap: 2.75e-004 Pobj: -1.1609626e+004 Ad: 9.21e-003 Dobj: -2.8433925e+006 
+Iter: 46 Ap: 7.91e-004 Pobj: -1.9123711e+004 Ad: 4.11e-003 Dobj: -2.8400379e+006 
+Iter: 47 Ap: 1.49e-004 Pobj: -2.1788925e+004 Ad: 3.72e-003 Dobj: -2.8361820e+006 
+Iter: 48 Ap: 1.91e-004 Pobj: -2.6028917e+004 Ad: 4.04e-003 Dobj: -2.8304991e+006 
+Iter: 49 Ap: 4.92e-005 Pobj: -2.7432397e+004 Ad: 4.24e-003 Dobj: -2.8252920e+006 
+Iter: 50 Ap: 3.18e-004 Pobj: -3.8306243e+004 Ad: 4.66e-003 Dobj: -2.8222317e+006 
+Iter: 51 Ap: 4.26e-005 Pobj: -4.0857207e+004 Ad: 3.87e-003 Dobj: -2.8194880e+006 
+Iter: 52 Ap: 2.99e-004 Pobj: -6.3688468e+004 Ad: 3.34e-003 Dobj: -2.8151265e+006 
+Iter: 53 Ap: 1.67e-004 Pobj: -8.5640730e+004 Ad: 1.89e-003 Dobj: -2.8130403e+006 
+Iter: 54 Ap: 1.51e-004 Pobj: -1.1470022e+005 Ad: 2.46e-003 Dobj: -2.8114466e+006 
+Iter: 55 Ap: 1.61e-004 Pobj: -1.6358658e+005 Ad: 2.52e-003 Dobj: -2.8098889e+006 
+Iter: 56 Ap: 1.05e-004 Pobj: -2.1860126e+005 Ad: 1.22e-003 Dobj: -2.8095144e+006 
+Iter: 57 Ap: 3.61e-005 Pobj: -2.4668581e+005 Ad: 2.43e-003 Dobj: -2.8075831e+006 
+Iter: 58 Ap: 7.26e-005 Pobj: -3.2183543e+005 Ad: 2.39e-003 Dobj: -2.8048472e+006 
+Iter: 59 Ap: 3.28e-005 Pobj: -3.7297373e+005 Ad: 8.33e-004 Dobj: -2.8045873e+006 
+Iter: 60 Ap: 9.91e-005 Pobj: -5.6430845e+005 Ad: 1.11e-003 Dobj: -2.8027903e+006 
+Iter: 61 Ap: 5.65e-005 Pobj: -7.3405737e+005 Ad: 1.62e-003 Dobj: -2.8007675e+006 
+Lack of progress.  Giving up!
+Failure: return code is 7 
+Primal objective value: -6.8060364e+001
+Dual objective value: -3.0992810e+006
+Relative primal infeasibility: 5.27e-002
+Relative dual infeasibility: 3.71e+000
+Real Relative Gap: -1.00e+000
+XZ Relative Gap: 3.69e+000
+DIMACS error measures: 7.57e-002 0.00e+000 6.40e+000 0.00e+000 -1.00e+000 3.69e+000
+objective_value(model) = 68.06036356465847
+68.06036356465847
+```
