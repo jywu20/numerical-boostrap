@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 4
+L_max = 5 
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -293,10 +293,12 @@ Im22 = [
     1    0
 ]
 
+zero_xpopstr = xpopstr_const(0.0)
+
 variable_list_real = [xpopstr_expected_real_imag_parts(i, :real) * I22 for i in 1 : xpopspace_dim]
 variable_list_imag = [xpopstr_expected_real_imag_parts(i, :imag) * Im22 for i in 1 : xpopspace_dim]
 xpopstr_basis_real = OffsetArray([I22, variable_list_real...], xpopspace_index_range)
-xpopstr_basis_imag = OffsetArray([O22, variable_list_imag...], xpopspace_index_range)
+xpopstr_basis_imag = OffsetArray([Im22, variable_list_imag...], xpopspace_index_range)
 
 # Building constraints
 # make sure the size of OH does not cause any out of bound error.
@@ -305,8 +307,19 @@ xpopstr_basis_imag = OffsetArray([O22, variable_list_imag...], xpopspace_index_r
 for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
     op = xpopstr_xp_power(x_power, p_power)
     cons = comm_with_ham(op)
-    lhs = transpose(real(cons)) * xpopstr_basis_real + transpose(imag(cons)) * xpopstr_basis_imag
-    @constraint(model, lhs .== O22)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr'
+        continue
+    end
+    if cons_real == zero_xpopstr'
+        @constraint(model, lhs[1, 2] == 0.0)
+    elseif cons_imag == zero_xpopstr'
+        @constraint(model, lhs[1, 1] == 0.0)
+    else
+        @constraint(model, lhs .== O22)
+    end
 end
 
 # Construct the M matrix and impose the semidefinite constraint 

@@ -388,3 +388,79 @@ lhs = transpose(real(cons)) * xpopstr_basis_real + transpose(imag(cons)) * xpops
 为了判断是不是这样，在`jump-toy-4-2022-3-12-test-1.jl`中测试加入一个`0 == 0`的约束会怎么样。
 
 好家伙果然报error了。看来CSDP不怕重复约束，但是怕空约束。
+
+修改了
+```julia
+# Building constraints
+# make sure the size of OH does not cause any out of bound error.
+# Then imposing constraints to the variables
+```
+后面的那一段，但是好像还是有同样的error。
+
+## 2022.3.13
+
+在执行`jump-oscillator-2.jl`之后，执行如下代码
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        #@constraint(model, lhs[1, 2] == 0.0)
+        println(x_power, " ", p_power)
+        println(lhs[1, 2])
+        println()
+    elseif cons_imag == zero_xpopstr
+        #@constraint(model, lhs[1, 1] == 0.0)
+        println(x_power, " ", p_power)
+        println(lhs[1, 1])
+        println()
+    else
+        #@constraint(model, lhs .== O22)
+        println(x_power, " ", p_power)
+        println(lhs)
+        println()
+    end
+end
+```
+发现的确有一些LHS的矩阵存在全零分量。这是怎么回事？进一步，执行
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = transpose(real(cons))
+    cons_imag = transpose(imag(cons))
+    lhs = cons_real * xpopstr_basis_real + cons_imag * xpopstr_basis_imag
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        #@constraint(model, lhs[1, 2] == 0.0)
+        println(x_power, " ", p_power)
+        println("real part == 0")
+        println(lhs[1, 2])
+        println()
+    elseif cons_imag == zero_xpopstr
+        #@constraint(model, lhs[1, 1] == 0.0)
+        println(x_power, " ", p_power)
+        println("imag part == 0")
+        println(lhs[1, 1])
+        println()
+    else
+        #@constraint(model, lhs .== O22)
+        println(x_power, " ", p_power)
+        println(lhs)
+        println()
+    end
+end
+```
+发现前三个选择分支从来没有被进入过。见鬼，`cons_real`和`cons_imag`是转置过的。
+
+做出对应修改之后程序至少是能够跑起来了。
+
+在`L_max = 5`时能量优化出来是`0.5921578324750953`。当然这个肯定很不准。
