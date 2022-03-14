@@ -68,7 +68,7 @@ function spectrum_anham(L, Δx, g)
     # Building the Hamiltonian and diagonalize
 
     H = - ∇² + V
-    H, eigs(H, nev = 10, which = :SM)
+    H, eigs(H, nev = 10, which = :SM), xs
 end
 
 ##
@@ -80,8 +80,25 @@ g = 1
 E0 = []
 
 for Δx in Δx_range
-    _, result = spectrum_anham(L, Δx, g)
+    _, result, _ = spectrum_anham(L, Δx, g)
     push!(E0, result[1][1])
 end
 
 plot(E0)
+
+##
+
+L = 10
+g = 1
+
+_, result, xs = spectrum_anham(L, Δx, g)
+E0 = result[1][1]
+ψ = result[2][:, 1]
+
+xⁿ_expected = []
+
+for n in 2 : 2 : 20
+    push!(xⁿ_expected, ψ' * (xs.^n .* ψ))
+end
+
+xⁿ_expected

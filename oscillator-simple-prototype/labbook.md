@@ -830,3 +830,67 @@ DIMACS error measures: 7.57e-002 0.00e+000 6.40e+000 0.00e+000 -1.00e+000 3.69e+
 objective_value(model) = 68.06036356465847
 68.06036356465847
 ```
+
+## 2022.3.14
+
+现在需要做的事情：
+- 读CSDP的输出
+- 检查约束生成的是不是正确（使用Mathematica）
+- 拿nonlinear SDP的输出做benchmark
+
+在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-1.nb`中做benchmark。计算得到$\lang x^{2n} \rang$得到
+```
+0.301138, 0.253782, 0.343358, 0.598177, 1.31284, 3.40689, 9.75835, 
+32.4658, 117.962, 451.727
+```
+$n$大的时候这个期望值大得离谱。无法理解。为谨慎起见最好同时做一下解方程解出来的$\lang x^{2n} \rang$。
+
+以下是`stationary-schrodinger.jl`给出的列表
+```
+   0.3056965917452047
+   0.2600508887447216
+   0.3469360154545109
+   0.6157259808259774
+   1.3445134629688316
+   3.4523744557836737
+  10.122111626479073
+  33.196322791312184
+ 119.94730115539195
+ 471.98535693014253
+```
+看起来是差不多的。
+
+在calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-1.nb中，运行
+```
+Table[comm[xntimes[i], H], {i, 1, 10} ]
+```
+能够得到
+```
+{2 I xpOpString[p], 2 xpOpString[] + 4 I xpOpString[x, p], 
+ 6 xpOpString[x] + 6 I xpOpString[x, x, p], 
+ 12 xpOpString[x, x] + 8 I xpOpString[x, x, x, p], 
+ 20 xpOpString[x, x, x] + 10 I xpOpString[x, x, x, x, p], 
+ 30 xpOpString[x, x, x, x] + 12 I xpOpString[x, x, x, x, x, p], 
+ 42 xpOpString[x, x, x, x, x] + 14 I xpOpString[x, x, x, x, x, x, p], 
+ 56 xpOpString[x, x, x, x, x, x] + 
+  16 I xpOpString[x, x, x, x, x, x, x, p], 
+ 72 xpOpString[x, x, x, x, x, x, x] + 
+  18 I xpOpString[x, x, x, x, x, x, x, x, p], 
+ 90 xpOpString[x, x, x, x, x, x, x, x] + 
+  20 I xpOpString[x, x, x, x, x, x, x, x, x, p]}
+```
+然后可以看到，奇数个算符乘积的期望值是零这个事实是可以通过和哈密顿量的对易关系得到的。
+
+感觉一种可能的做法是把所有的约束全部列出来，在`L_max`比较小的时候，这样能够判断什么约束是已经有了的。
+
+一批含有一个$p$的算符的期望值：
+```
+{{xpOpString[x, p] -> 0. + 0.5 I, xpOpString[x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, p] -> 0. + 0.451707 I, 
+  xpOpString[x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, p] -> 0. + 0.634454 I, 
+  xpOpString[x, x, x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, x, x, p] -> 0. + 1.20175 I, 
+  xpOpString[x, x, x, x, x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, x, x, x, x, p] -> 0. + 2.6918 I}}
+```

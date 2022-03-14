@@ -271,6 +271,7 @@ end
 ##
 
 model = Model(CSDP.Optimizer)
+set_optimizer_attributes(model, "maxiter" => 100)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
