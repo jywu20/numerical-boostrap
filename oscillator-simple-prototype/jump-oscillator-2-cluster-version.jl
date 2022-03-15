@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 10
+L_max = 8
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -25,12 +25,6 @@ xpopspace_index_range = 0 : xpopspace_dim
 xpopstr_index(x_power, p_power) = x_power * (2L_max + 1) + p_power
 index_to_xpower(idx) = Int(floor(idx / (2L_max + 1)))
 index_to_ppower(idx) = idx % (2L_max + 1)
-
-@testset "Operator string labeling" begin
-    @test [xpopstr_index(i, j) for i in xpoppower_range for j in xpoppower_range] == 0 : xpopspace_dim 
-end
-
-##
 
 """
 The coefficient list of a constant "operator" c.
@@ -118,22 +112,6 @@ function xpopstr_stringify(coefficients::OffsetArray)
     return output_str
 end
 
-@testset "Operator string generating and stringifying." begin
-    op0 = xpopstr_const(3.4)
-    @test xpopstr_stringify(op0) == "3.4"
-    op1 = xpopstr_xp_power(2, 3)
-    @test xpopstr_stringify(op1) == "x^2 p^3"
-    @test xpopstr_stringify(- op1) == "- x^2 p^3"
-    @test xpopstr_stringify(2.0 * op1) == "2.0 x^2 p^3"
-    @test xpopstr_stringify(- op0 + op1) == "- 3.4 + x^2 p^3"
-    op2 = xpopstr_xp_power(4, 3)
-    @test xpopstr_stringify(- op0 + 2.3 * op1 - im * op2) == "- 3.4 + 2.3 x^2 p^3 - 1.0im x^4 p^3"
-    @test xpopstr_stringify(- op0 + 2.3 * op1 + (1 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (1.0 + 1.0im) x^4 p^3"
-    @test xpopstr_stringify(- op0 + 2.3 * op1 + (- 2.3 + im) * op2) == "- 3.4 + 2.3 x^2 p^3 + (-2.3 + 1.0im) x^4 p^3"
-    op3 = xpopstr_xp_power(0, 3)
-    @test xpopstr_stringify(im * op3) == "1.0im p^3"
-end
-
 """
 x^x_power * idx * p^p_power
 """
@@ -147,11 +125,6 @@ end
 
 xpopstr_left_x_right_p_mul_offset(x_power, p_power) = x_power * (2L_max + 1) + p_power
 
-@testset "Operator multiplication by index offset" begin
-    @test xpopstr_left_x_right_p_mul(2, 2, 1) == 2 + xpopstr_left_x_right_p_mul_offset(2, 1)
-    @test xpopstr_left_x_right_p_mul(10, 2, 3) == 10 + xpopstr_left_x_right_p_mul_offset(2, 3)
-end
-
 """
 x^x_power * coefficients * p^p_power
 May throw out of index error if the highest order term is beyond xpopspace_index_range
@@ -163,13 +136,6 @@ function xpopstr_left_x_right_p_mul(coefficients, x_power, p_power)
         result[idx] = coefficients[idx - offset]
     end
     result
-end
-
-@testset "Multiplication in the form of x^x_power * O * p^p_power" begin
-    op0 = xpopstr_const(3.4)
-    @test xpopstr_stringify(xpopstr_left_x_right_p_mul(op0, 2, 3)) == "3.4 x^2 p^3"
-    op1 = xpopstr_const(2.5) + im * xpopstr_xp_power(3, 4)
-    @test xpopstr_stringify(xpopstr_left_x_right_p_mul(op1, 4, 2)) == "2.5 x^4 p^2 + 1.0im x^7 p^6"
 end
 
 """
@@ -203,19 +169,6 @@ end
 
 xpopstr_comm(x_power_1, p_power_1, x_power_2, p_power_2) = xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2) - xpopstr_normal_ord(x_power_2, p_power_2, x_power_1, p_power_1)
 
-@testset "Normal ordering of x^x_power_1 p^p_power_1 x^x_power_2 p^p_power_2" begin
-    # See ./commutation-x-p.nb for symbolic benchmarks 
-    @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 3, 2)) == 
-        "6.0im x^2 p^2 - 18.0 x^3 p^3 - 9.0im x^4 p^4 + x^5 p^5"
-    @test xpopstr_stringify(xpopstr_normal_ord(2, 3, 1, 3)) == "- 3.0im x^2 p^5 + x^3 p^6"
-end
-
-@testset "Commutation between x^x_power_1 p^p_power_1 and x^x_power_2 p^p_power_2" begin
-    # See ./commutation-x-p.nb for symbolic benchmarks 
-    @test xpopstr_stringify(xpopstr_comm(2, 3, 1, 3)) == "6.0 x p^4 + 3.0im x^2 p^5" 
-    @test xpopstr_stringify(xpopstr_comm(2, 3, 2, 2)) == "- 4.0 x^2 p^3 - 2.0im x^3 p^4" 
-end
-
 """
 For simplicity, we do not implement a full version of commutation; we just calculate the commutator between 
 each term of an operator and the three terms of the Hamiltonian.
@@ -238,11 +191,6 @@ function comm_with_ham(op::OffsetArray)
     result
 end
 
-@testset "Commutator with the Hamiltonian" begin
-    op1 = xpopstr_xp_power(2, 1)
-    @test xpopstr_stringify(comm_with_ham(op1)) == "2.0 p + 4.0im x p^2 - 2.0im x^3 - 4.0im x^5"
-end
-
 function max_x_power(op::OffsetArray)
     nonzero_terms_idx = xpopspace_index_range[collect(op .!= 0)]
     if length(nonzero_terms_idx) == 0
@@ -258,17 +206,6 @@ function max_p_power(op::OffsetArray)
     end
     max(map(index_to_ppower, nonzero_terms_idx)...)
 end
-
-@testset "Finding the maximal power of x and p in an operator" begin
-    op0 = xpopstr_const(3.4)
-    op1 = xpopstr_const(2.5) + im * xpopstr_xp_power(3, 4)
-    @test max_x_power(op0) == 0
-    @test max_p_power(op0) == 0
-    @test max_x_power(op1) == 3
-    @test max_p_power(op1) == 4
-end
-
-##
 
 model = Model(CSDP.Optimizer)
 set_optimizer_attributes(model, "maxiter" => 100)
