@@ -301,6 +301,14 @@ variable_list_imag = [xpopstr_expected_real_imag_parts(i, :imag) * Im22 for i in
 xpopstr_basis_real = OffsetArray([I22, variable_list_real...], xpopspace_index_range)
 xpopstr_basis_imag = OffsetArray([Im22, variable_list_imag...], xpopspace_index_range)
 
+function complex_to_mat(coefficients)
+    real_part = transpose(real(coefficients))
+    imag_part = transpose(imag(coefficients))
+    real_part_mat_version = map(x -> x * I22, real_part)
+    imag_part_mat_version = map(x -> x * I22, imag_part)
+    (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
+end
+
 # Building constraints
 # make sure the size of OH does not cause any out of bound error.
 # Then imposing constraints to the variables
@@ -308,17 +316,15 @@ xpopstr_basis_imag = OffsetArray([Im22, variable_list_imag...], xpopspace_index_
 for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
     op = xpopstr_xp_power(x_power, p_power)
     cons = comm_with_ham(op)
-    cons_real = transpose(real(cons))
-    cons_imag = transpose(imag(cons))
-    cons_real_mat_version = map(x -> x * I22, cons_real)
-    cons_imag_mat_version = map(x -> x * Im22, cons_imag)
-    lhs = (cons_real_mat_version + cons_imag_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
-    if cons_real == cons_imag == zero_xpopstr'
+    cons_real = real(cons)
+    cons_imag = imag(cons)
+    lhs = complex_to_mat(cons)
+    if cons_real == cons_imag == zero_xpopstr
         continue
     end
-    if cons_real == zero_xpopstr'
+    if cons_real == zero_xpopstr
         @constraint(model, lhs[1, 2] == 0.0)
-    elseif cons_imag == zero_xpopstr'
+    elseif cons_imag == zero_xpopstr
         @constraint(model, lhs[1, 1] == 0.0)
     else
         @constraint(model, lhs .== O22)
@@ -354,9 +360,7 @@ for i in 1 : (L_max + 1)^2
         op2_idx_ppower = index_to_ppower(op2_idx)
         op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
 
-        real_part = transpose(real(op_ij)) * xpopstr_basis_real * I22
-        imag_part = transpose(imag(op_ij)) * xpopstr_basis_imag * Im22
-        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== real_part + imag_part)
+        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== complex_to_mat(op_ij))
     end
 end
 

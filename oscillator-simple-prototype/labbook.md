@@ -860,7 +860,7 @@ $n$大的时候这个期望值大得离谱。无法理解。为谨慎起见最�
 ```
 看起来是差不多的。
 
-在calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-1.nb中，运行
+在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-1.nb`中，运行
 ```
 Table[comm[xntimes[i], H], {i, 1, 10} ]
 ```
@@ -894,3 +894,66 @@ Table[comm[xntimes[i], H], {i, 1, 10} ]
   xpOpString[x, x, x, x, x, x, x, x, p] -> 0. + 0. I, 
   xpOpString[x, x, x, x, x, x, x, x, x, p] -> 0. + 2.6918 I}}
 ```
+等待和`stationary-schrodinger.jl`对比。
+
+## 2022.3.15
+
+对了这里头还有一个点，就是一维束缚态波函数总是实的，而$p = - \ii \grad$，所以含有奇数个$p$的算符序列的期望值是虚的，含有偶数个$p$的算符序列的期望值是实的。
+
+找文献找到这个：http://www.optimization-online.org/DB_FILE/2002/10/551.pdf
+
+lacking of progress是独立于max iteration times的。不知道是不是和初始值有关系？？？
+
+想起来还有一个事情。~被我这么一弄好像`M`没法保证是一个对称的矩阵啊~这个没有问题因为`j`从`i`开始。在一次失败的优化之后运行如下诊断代码：
+```julia
+Mcons = Matrix(undef, 2 * (L_max + 1)^2, 2 * (L_max + 1)^2)
+for i in 1 : (L_max + 1)^2
+    for j in i : (L_max + 1)^2
+        op1_idx = M_index_to_xpopstr_index[i]
+        op2_idx = M_index_to_xpopstr_index[j]
+        op1_idx_xpower = index_to_xpower(op1_idx)
+        op1_idx_ppower = index_to_ppower(op1_idx)
+        op2_idx_xpower = index_to_xpower(op2_idx)
+        op2_idx_ppower = index_to_ppower(op2_idx)
+        op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+
+        real_part = transpose(real(op_ij)) * xpopstr_basis_real * I22
+        imag_part = transpose(imag(op_ij)) * xpopstr_basis_imag * Im22
+        Mcons[2i - 1 : 2i, 2j - 1 : 2j] = real_part + imag_part
+    end
+end
+Mcons
+```
+马上发现两个大问题，~一个是有一些矩阵元好像没有被遍历到~（这个是正确的，这样直接解决了前述不对称的问题），一个是
+```julia
+Mcons[1:2, 3:4]
+```
+给出
+```
+2×2 Array{Any,2}:
+ xpopstr_expected[1]  0
+ 0                    xpopstr_expected[1]
+```
+虚部去哪儿了？？？
+
+我在这里大概率还是犯了虚部实部分开来算的问题，交叉项被忽略了。如下诊断代码
+```julia
+Mcons = Matrix(undef, 2 * (L_max + 1)^2, 2 * (L_max + 1)^2)
+for i in 1 : (L_max + 1)^2
+    for j in i : (L_max + 1)^2
+        op1_idx = M_index_to_xpopstr_index[i]
+        op2_idx = M_index_to_xpopstr_index[j]
+        op1_idx_xpower = index_to_xpower(op1_idx)
+        op1_idx_ppower = index_to_ppower(op1_idx)
+        op2_idx_xpower = index_to_xpower(op2_idx)
+        op2_idx_ppower = index_to_ppower(op2_idx)
+        op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+
+        Mcons[2i - 1 : 2i, 2j - 1 : 2j] = complex_to_mat(op_ij)
+    end
+end
+Mcons
+```
+至少能够给出还算正常的结果。将其复制回`jump-oscillator-2.jl`。
+
+收敛是收敛了，但是结果明显不正确，估计还是有bug。
