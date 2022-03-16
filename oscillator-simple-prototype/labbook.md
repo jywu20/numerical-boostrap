@@ -1125,3 +1125,113 @@ objective_value(model) = -0.08198934656684287
 ```
 
 这么说估计是哪里写错了。
+
+## 2022.3.16
+
+即使将`L_max`设置为5，同样有`Declaring primal infeasibility.`。
+
+先看看这个时候约束对不对吧。运行诊断代码
+```julia
+for i in 1 : L_max
+    println("i = $i : $(value(xpopstr_expected_real_imag_parts(xpopstr_index(i, 0), :real))) + $(value(xpopstr_expected_real_imag_parts(xpopstr_index(i, 0), :imag))) im ")
+end
+```
+得到
+```
+i = 1 : -1.7763568394002505e-15 + 0.0 im 
+i = 2 : -0.05054150351097597 + -3.3311966518567715e-9 im
+i = 3 : 0.0 + 0.0 im
+i = 4 : 0.0558192989219819 + 1.2002825400259098e-9 im
+i = 5 : 0.0 + 0.0 im
+```
+因此奇数$\lang x^n \rang$为零的约束施加得很好，且$\Im \lang x^n \rang$几乎为零。
+
+我们再来看$\land x^n p \rang$。运行诊断代码
+```julia
+for i in 1 : L_max
+    println("i = $i : $(value(xpopstr_expected_real_imag_parts(xpopstr_index(i, 1), :real))) + $(value(xpopstr_expected_real_imag_parts(xpopstr_index(i, 1), :imag))) im ")
+end
+```
+得到
+```
+i = 1 : 0.0743289004671901 + -0.38974764309131515 im 
+i = 2 : 0.0 + 0.0 im
+i = 3 : -0.07827649436848816 + 0.07794952716507275 im
+i = 4 : 0.0 + 0.0 im
+i = 5 : 0.1423146029647775 + 0.008878796747188389 im
+```
+说明约束$\Re \lang x^{2n-1}p \rang = 0$并没有得到实施。另一方面，$\lang x^{2n} p \rang = 0$得到了实施。
+前者是基态才有的性质，后者是哈密顿量决定的，因此至少一部分由哈密顿量施加的约束得到了实施，但是优化存在难度。
+
+为了分析$M$矩阵是否正确构造，执行诊断代码
+```julia
+storage_name = "D:\\Projects\\numerical-boostrap\\oscillator-simple-prototype\\"
+open(storage_name * "M-mat-element-oscillator-2-cluster-version-2022-3-16.txt", "w") do file
+    for i in 1 : (L_max + 1)^2
+        for j in i : (L_max + 1)^2
+            op1_idx = M_index_to_xpopstr_index[i]
+            op2_idx = M_index_to_xpopstr_index[j]
+            op1_idx_xpower = index_to_xpower(op1_idx)
+            op1_idx_ppower = index_to_ppower(op1_idx)
+            op2_idx_xpower = index_to_xpower(op2_idx)
+            op2_idx_ppower = index_to_ppower(op2_idx)
+            op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+    
+            println(file, 
+                "i = $i  j = $j  x^$op1_idx_xpower p^$op1_idx_ppower x^$op2_idx_xpower p^$op2_idx_ppower ")
+            println(file, complex_to_mat(op_ij)[1, 1])
+            println(file, complex_to_mat(op_ij)[1, 2])
+            println(file, complex_to_mat(op_ij)[2, 1])
+            println(file, complex_to_mat(op_ij)[2, 2])
+        end
+    end
+end
+```
+所得结果保存于`M-mat-element-oscillator-2-cluster-version-2022-3-16.txt`中。
+
+为了分析是否$M$矩阵被正确的建立了，如下做抽检：从`M-mat-element-oscillator-2-cluster-version-2022-3-16.txt`中取样
+```
+i = 24  j = 36  x^3 p^5 x^5 p^5 
+-120 xpopstr_expected[75] + 600 xpopstr_expected[99] + 600 xpopstr_expected[123] - 200 xpopstr_expected[147] - 25 xpopstr_expected[171] + xpopstr_expected[195]
+120 xpopstr_expected[76] - 600 xpopstr_expected[100] - 600 xpopstr_expected[124] + 200 xpopstr_expected[148] + 25 xpopstr_expected[172] - xpopstr_expected[196]
+-120 xpopstr_expected[76] + 600 xpopstr_expected[100] + 600 xpopstr_expected[124] - 200 xpopstr_expected[148] - 25 xpopstr_expected[172] + xpopstr_expected[196]
+-120 xpopstr_expected[75] + 600 xpopstr_expected[99] + 600 xpopstr_expected[123] - 200 xpopstr_expected[147] - 25 xpopstr_expected[171] + xpopstr_expected[195]
+```
+这里涉及到的`xpopstr_expected`变量的index（从1开始）包括
+
+75, 99, 123, 147, 171, 195
+
+使用如下诊断代码将它们转化成$x$和$p$的幂次：
+```julia
+xpopstr_expected_indices = [75, 99, 123, 147, 171, 195]
+for idx in xpopstr_expected_indices
+    x_power = index_to_xpower(Int((idx + 1) / 2))
+    p_power = index_to_ppower(Int((idx + 1) / 2))
+    println("$idx  x^$x_power p^$p_power")
+end
+```
+得到
+```
+75  x^3 p^5
+99  x^4 p^6
+123  x^5 p^7
+147  x^6 p^8
+171  x^7 p^9
+195  x^8 p^10
+```
+解析计算（见`2022-3-16.nb`）给出
+$$
+\left(
+\begin{array}{cc}
+ 120 \Im\left(x^3.p^5\right)-600 \Im\left(x^5.p^7\right)+25 \Im\left(x^7.p^9\right)+600
+   \Re\left(x^4.p^6\right)-200 \Re\left(x^6.p^8\right)+\Re\left(x^8.p^{10}\right) & -600
+   \Im\left(x^4.p^6\right)+200 \Im\left(x^6.p^8\right)-\Im\left(x^8.p^{10}\right)+120
+   \Re\left(x^3.p^5\right)-600 \Re\left(x^5.p^7\right)+25 \Re\left(x^7.p^9\right) \\
+ 600 \Im\left(x^4.p^6\right)-200 \Im\left(x^6.p^8\right)+\Im\left(x^8.p^{10}\right)-120
+   \Re\left(x^3.p^5\right)+600 \Re\left(x^5.p^7\right)-25 \Re\left(x^7.p^9\right) & 120
+   \Im\left(x^3.p^5\right)-600 \Im\left(x^5.p^7\right)+25 \Im\left(x^7.p^9\right)+600
+   \Re\left(x^4.p^6\right)-200 \Re\left(x^6.p^8\right)+\Re\left(x^8.p^{10}\right) \\
+\end{array}
+\right)
+$$
+卧槽好像还真的对不上……
