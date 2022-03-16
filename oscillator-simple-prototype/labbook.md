@@ -1235,3 +1235,173 @@ $$
 \right)
 $$
 卧槽好像还真的对不上……
+
+结果发现如下代码：
+```julia
+function complex_to_mat(coefficients)
+    real_part = transpose(real(coefficients))
+    imag_part = transpose(imag(coefficients))
+    real_part_mat_version = map(x -> x * I22, real_part)
+    imag_part_mat_version = map(x -> x * I22, imag_part)
+    (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
+end
+```
+中第二行的`I22`不对，应该是`Im22`。
+
+然而修改之后仍然提示`Declaring primal infeasibility.`……
+
+重复诊断
+```julia
+storage_name = "D:\\Projects\\numerical-boostrap\\oscillator-simple-prototype\\"
+open(storage_name * "M-mat-element-oscillator-2-cluster-version-2022-3-16-2.txt", "w") do file
+    for i in 1 : (L_max + 1)^2
+        for j in i : (L_max + 1)^2
+            op1_idx = M_index_to_xpopstr_index[i]
+            op2_idx = M_index_to_xpopstr_index[j]
+            op1_idx_xpower = index_to_xpower(op1_idx)
+            op1_idx_ppower = index_to_ppower(op1_idx)
+            op2_idx_xpower = index_to_xpower(op2_idx)
+            op2_idx_ppower = index_to_ppower(op2_idx)
+            op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+    
+            println(file, 
+                "i = $i  j = $j  x^$op1_idx_xpower p^$op1_idx_ppower x^$op2_idx_xpower p^$op2_idx_ppower ")
+            println(file, complex_to_mat(op_ij)[1, 1])
+            println(file, complex_to_mat(op_ij)[1, 2])
+            println(file, complex_to_mat(op_ij)[2, 1])
+            println(file, complex_to_mat(op_ij)[2, 2])
+        end
+    end
+end
+```
+取样：
+```
+i = 24  j = 36  x^3 p^5 x^5 p^5 
+120 xpopstr_expected[76] + 600 xpopstr_expected[99] - 600 xpopstr_expected[124] - 200 xpopstr_expected[147] + 25 xpopstr_expected[172] + xpopstr_expected[195]
+120 xpopstr_expected[75] - 600 xpopstr_expected[100] - 600 xpopstr_expected[123] + 200 xpopstr_expected[148] + 25 xpopstr_expected[171] - xpopstr_expected[196]
+-120 xpopstr_expected[75] + 600 xpopstr_expected[100] + 600 xpopstr_expected[123] - 200 xpopstr_expected[148] - 25 xpopstr_expected[171] + xpopstr_expected[196]
+120 xpopstr_expected[76] + 600 xpopstr_expected[99] - 600 xpopstr_expected[124] - 200 xpopstr_expected[147] + 25 xpopstr_expected[172] + xpopstr_expected[195]
+```
+这回似乎是正确的。
+
+整体运行`jump-oscillator-2-cluster-version.jl`，仍然存在“infeasible”的输出：
+```
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+000 Pobj:  0.0000000e+000 Ad: 0.00e+000 Dobj:  0.0000000e+000 
+Iter:  1 Ap: 8.18e-002 Pobj: -1.3962147e-002 Ad: 9.43e-002 Dobj: -2.1809110e+010 
+Iter:  2 Ap: 1.36e-001 Pobj: -4.2888011e-001 Ad: 6.88e-002 Dobj: -3.3221426e+010 
+Iter:  3 Ap: 2.81e-002 Pobj: -1.0940146e+000 Ad: 2.17e-002 Dobj: -7.5508937e+010 
+Iter:  4 Ap: 3.81e-002 Pobj: -8.7152731e-001 Ad: 7.41e-002 Dobj: -2.3816175e+011 
+Iter:  5 Ap: 6.80e-002 Pobj:  1.4322870e+000 Ad: 5.05e-002 Dobj: -3.3485435e+011 
+Iter:  6 Ap: 5.87e-002 Pobj:  3.5434138e+000 Ad: 6.03e-002 Dobj: -4.0310930e+011 
+Iter:  7 Ap: 5.16e-002 Pobj:  3.6233577e+000 Ad: 4.89e-002 Dobj: -4.4682471e+011 
+Iter:  8 Ap: 1.08e-001 Pobj:  4.1490790e+000 Ad: 9.53e-002 Dobj: -5.1735824e+011 
+Iter:  9 Ap: 9.35e-002 Pobj:  2.4398432e+000 Ad: 8.56e-002 Dobj: -5.6546517e+011 
+Iter: 10 Ap: 4.92e-002 Pobj:  2.4157495e+000 Ad: 5.79e-002 Dobj: -5.8655939e+011 
+Iter: 11 Ap: 2.17e-001 Pobj:  1.3680341e+000 Ad: 1.11e-001 Dobj: -6.2108891e+011 
+Iter: 12 Ap: 1.06e-001 Pobj:  1.6787347e+000 Ad: 1.37e-001 Dobj: -6.3750707e+011 
+Iter: 13 Ap: 1.95e-001 Pobj:  1.5151120e+000 Ad: 9.04e-002 Dobj: -6.4720303e+011 
+Iter: 14 Ap: 1.52e-001 Pobj:  3.3565862e-001 Ad: 1.63e-001 Dobj: -6.6165588e+011 
+Iter: 15 Ap: 1.58e-001 Pobj:  7.6631334e-002 Ad: 1.44e-001 Dobj: -6.7205402e+011 
+Iter: 16 Ap: 2.63e-001 Pobj: -3.0307305e-001 Ad: 1.90e-001 Dobj: -6.8199187e+011 
+Iter: 17 Ap: 2.26e-001 Pobj: -8.9357966e-001 Ad: 1.75e-001 Dobj: -6.8839332e+011 
+Iter: 18 Ap: 2.10e-001 Pobj: -6.7280867e-001 Ad: 1.11e-001 Dobj: -6.9183384e+011 
+Iter: 19 Ap: 1.92e-001 Pobj: -8.8180127e-001 Ad: 1.65e-001 Dobj: -6.9574259e+011 
+Iter: 20 Ap: 2.19e-001 Pobj: -8.0838883e-001 Ad: 7.28e-002 Dobj: -6.9709513e+011 
+Iter: 21 Ap: 2.02e-001 Pobj: -6.8410885e-001 Ad: 2.39e-001 Dobj: -7.0181048e+011 
+Iter: 22 Ap: 1.82e-001 Pobj: -7.1210439e-001 Ad: 1.69e-001 Dobj: -7.0451834e+011 
+Iter: 23 Ap: 3.75e-001 Pobj: -7.1955460e-001 Ad: 2.81e-001 Dobj: -7.0748138e+011 
+Iter: 24 Ap: 2.36e-001 Pobj: -3.4911901e-001 Ad: 1.95e-001 Dobj: -7.0872672e+011 
+Iter: 25 Ap: 2.04e-001 Pobj: -2.5080693e-001 Ad: 1.98e-001 Dobj: -7.0956273e+011 
+Iter: 26 Ap: 2.98e-001 Pobj: -1.5662899e-001 Ad: 1.83e-001 Dobj: -7.1041007e+011 
+Iter: 27 Ap: 2.47e-001 Pobj:  7.5027960e-004 Ad: 1.82e-001 Dobj: -7.1092184e+011 
+Iter: 28 Ap: 2.80e-001 Pobj:  2.6233834e-002 Ad: 1.97e-001 Dobj: -7.1127606e+011 
+Iter: 29 Ap: 3.27e-001 Pobj:  1.4558903e-003 Ad: 2.53e-001 Dobj: -7.1143068e+011 
+Iter: 30 Ap: 3.14e-001 Pobj: -1.8949497e-002 Ad: 1.87e-001 Dobj: -7.1149932e+011 
+Iter: 31 Ap: 3.63e-001 Pobj: -1.4733383e-002 Ad: 2.84e-001 Dobj: -7.1157593e+011 
+Iter: 32 Ap: 2.69e-001 Pobj:  2.1126149e-003 Ad: 2.37e-001 Dobj: -7.1164616e+011 
+Iter: 33 Ap: 2.84e-001 Pobj: -1.0628196e-001 Ad: 2.08e-001 Dobj: -7.1179961e+011 
+Iter: 34 Ap: 2.24e-001 Pobj: -1.8582056e-001 Ad: 1.78e-001 Dobj: -7.1184138e+011 
+Iter: 35 Ap: 1.22e-001 Pobj: -1.8141766e-001 Ad: 1.07e-001 Dobj: -7.1186888e+011 
+Iter: 36 Ap: 1.90e-001 Pobj: -1.6999011e-001 Ad: 8.87e-002 Dobj: -7.1189836e+011 
+Iter: 37 Ap: 1.69e-001 Pobj: -1.5153773e-001 Ad: 1.66e-001 Dobj: -7.1195303e+011 
+Iter: 38 Ap: 2.11e-001 Pobj: -1.5226794e-001 Ad: 1.56e-001 Dobj: -7.1205845e+011 
+Iter: 39 Ap: 2.21e-001 Pobj: -1.2269656e-001 Ad: 2.11e-001 Dobj: -7.1228465e+011 
+Iter: 40 Ap: 2.26e-001 Pobj: -1.1381863e-001 Ad: 1.30e-001 Dobj: -7.1242018e+011 
+Iter: 41 Ap: 1.90e-001 Pobj: -1.0404438e-001 Ad: 1.95e-001 Dobj: -7.1266116e+011 
+Iter: 42 Ap: 2.09e-001 Pobj: -8.6792608e-002 Ad: 1.43e-001 Dobj: -7.1283776e+011 
+Iter: 43 Ap: 2.56e-001 Pobj: -1.2611741e-001 Ad: 2.62e-001 Dobj: -7.1301279e+011
+Iter: 44 Ap: 3.10e-001 Pobj: -1.5209232e-001 Ad: 2.77e-001 Dobj: -7.1300428e+011
+Iter: 45 Ap: 2.26e-001 Pobj: -2.0416423e-001 Ad: 2.52e-001 Dobj: -7.1290687e+011
+Iter: 46 Ap: 2.74e-001 Pobj: -2.9092366e-001 Ad: 3.54e-001 Dobj: -7.1275800e+011
+Iter: 47 Ap: 9.36e-002 Pobj: -5.6264545e-001 Ad: 5.20e-002 Dobj: -7.1270029e+011
+Iter: 48 Ap: 4.26e-002 Pobj: -6.6329424e-001 Ad: 4.91e-002 Dobj: -7.1259666e+011
+Iter: 49 Ap: 3.63e-002 Pobj: -6.5939724e-001 Ad: 4.93e-002 Dobj: -7.1248753e+011
+Declaring primal infeasibility.
+Success: SDP is primal infeasible
+Certificate of primal infeasibility: a'*y=-1.00000e+000, ||A'(y)-Z||=9.55843e-009
+objective_value(model) = 0.6593972351693083
+```
+此时`L_max = 8`。
+
+尝试一个之前一直想到但是没有来得及试的方法：指定初始值。然后CSDP还不支持初始值……
+
+重新计算得到
+```
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+000 Pobj:  0.0000000e+000 Ad: 0.00e+000 Dobj:  0.0000000e+000 
+Iter:  1 Ap: 8.18e-002 Pobj: -1.3962147e-002 Ad: 9.43e-002 Dobj: -2.1809110e+010 
+Iter:  2 Ap: 1.36e-001 Pobj: -4.2888011e-001 Ad: 6.88e-002 Dobj: -3.3221426e+010 
+Iter:  3 Ap: 2.81e-002 Pobj: -1.0940146e+000 Ad: 2.17e-002 Dobj: -7.5508937e+010 
+Iter:  4 Ap: 3.81e-002 Pobj: -8.7152731e-001 Ad: 7.41e-002 Dobj: -2.3816175e+011 
+Iter:  5 Ap: 6.80e-002 Pobj:  1.4322870e+000 Ad: 5.05e-002 Dobj: -3.3485435e+011 
+Iter:  6 Ap: 5.87e-002 Pobj:  3.5434138e+000 Ad: 6.03e-002 Dobj: -4.0310930e+011 
+Iter:  7 Ap: 5.16e-002 Pobj:  3.6233577e+000 Ad: 4.89e-002 Dobj: -4.4682471e+011 
+Iter:  8 Ap: 1.08e-001 Pobj:  4.1490790e+000 Ad: 9.53e-002 Dobj: -5.1735824e+011 
+Iter:  9 Ap: 9.35e-002 Pobj:  2.4398432e+000 Ad: 8.56e-002 Dobj: -5.6546517e+011 
+Iter: 10 Ap: 4.92e-002 Pobj:  2.4157495e+000 Ad: 5.79e-002 Dobj: -5.8655939e+011 
+Iter: 11 Ap: 2.17e-001 Pobj:  1.3680341e+000 Ad: 1.11e-001 Dobj: -6.2108891e+011 
+Iter: 12 Ap: 1.06e-001 Pobj:  1.6787347e+000 Ad: 1.37e-001 Dobj: -6.3750707e+011 
+Iter: 13 Ap: 1.95e-001 Pobj:  1.5151120e+000 Ad: 9.04e-002 Dobj: -6.4720303e+011 
+Iter: 14 Ap: 1.52e-001 Pobj:  3.3565862e-001 Ad: 1.63e-001 Dobj: -6.6165588e+011 
+Iter: 15 Ap: 1.58e-001 Pobj:  7.6631334e-002 Ad: 1.44e-001 Dobj: -6.7205402e+011 
+Iter: 16 Ap: 2.63e-001 Pobj: -3.0307305e-001 Ad: 1.90e-001 Dobj: -6.8199187e+011 
+Iter: 17 Ap: 2.26e-001 Pobj: -8.9357966e-001 Ad: 1.75e-001 Dobj: -6.8839332e+011 
+Iter: 18 Ap: 2.10e-001 Pobj: -6.7280867e-001 Ad: 1.11e-001 Dobj: -6.9183384e+011 
+Iter: 19 Ap: 1.93e-001 Pobj: -8.8140377e-001 Ad: 1.66e-001 Dobj: -6.9566540e+011 
+Iter: 20 Ap: 2.19e-001 Pobj: -8.0721903e-001 Ad: 7.31e-002 Dobj: -6.9702267e+011 
+Iter: 21 Ap: 2.02e-001 Pobj: -6.8561861e-001 Ad: 2.40e-001 Dobj: -7.0163995e+011 
+Iter: 22 Ap: 1.85e-001 Pobj: -7.2311332e-001 Ad: 1.74e-001 Dobj: -7.0378128e+011 
+Iter: 23 Ap: 3.54e-001 Pobj: -7.1837629e-001 Ad: 2.75e-001 Dobj: -7.0714731e+011 
+Iter: 24 Ap: 2.42e-001 Pobj: -3.7297316e-001 Ad: 2.09e-001 Dobj: -7.0850748e+011 
+Iter: 25 Ap: 2.04e-001 Pobj: -2.6165012e-001 Ad: 1.95e-001 Dobj: -7.0913032e+011 
+Iter: 26 Ap: 3.07e-001 Pobj: -1.6440458e-001 Ad: 1.94e-001 Dobj: -7.0999035e+011 
+Iter: 27 Ap: 2.47e-001 Pobj: -1.4533222e-003 Ad: 1.88e-001 Dobj: -7.1029880e+011 
+Iter: 28 Ap: 2.77e-001 Pobj:  2.5255903e-002 Ad: 2.05e-001 Dobj: -7.1068814e+011 
+Iter: 29 Ap: 3.41e-001 Pobj: -9.4201483e-004 Ad: 2.37e-001 Dobj: -7.1083676e+011 
+Iter: 30 Ap: 3.34e-001 Pobj: -2.0191262e-002 Ad: 2.04e-001 Dobj: -7.1095091e+011 
+Iter: 31 Ap: 3.35e-001 Pobj:  6.0105422e-003 Ad: 2.64e-001 Dobj: -7.1100615e+011 
+Iter: 32 Ap: 2.97e-001 Pobj: -1.7669119e-002 Ad: 2.46e-001 Dobj: -7.1107574e+011 
+Iter: 33 Ap: 3.15e-001 Pobj: -1.2698698e-001 Ad: 1.93e-001 Dobj: -7.1120175e+011 
+Iter: 34 Ap: 1.82e-001 Pobj: -2.1831267e-001 Ad: 9.58e-002 Dobj: -7.1125553e+011 
+Iter: 35 Ap: 1.63e-001 Pobj: -2.0931588e-001 Ad: 1.03e-001 Dobj: -7.1131622e+011 
+Iter: 36 Ap: 1.91e-001 Pobj: -1.7809097e-001 Ad: 1.25e-001 Dobj: -7.1136500e+011 
+Iter: 37 Ap: 2.15e-001 Pobj: -1.4791290e-001 Ad: 2.14e-001 Dobj: -7.1147311e+011 
+Iter: 38 Ap: 1.93e-001 Pobj: -1.4956594e-001 Ad: 1.60e-001 Dobj: -7.1160971e+011 
+Iter: 39 Ap: 2.07e-001 Pobj: -1.0139010e-001 Ad: 1.99e-001 Dobj: -7.1189605e+011 
+Iter: 40 Ap: 2.43e-001 Pobj: -1.0572125e-001 Ad: 1.36e-001 Dobj: -7.1204700e+011 
+Iter: 41 Ap: 1.93e-001 Pobj: -1.1033933e-001 Ad: 1.85e-001 Dobj: -7.1232677e+011
+Iter: 42 Ap: 2.34e-001 Pobj: -9.5756183e-002 Ad: 1.75e-001 Dobj: -7.1250214e+011
+Iter: 43 Ap: 1.97e-001 Pobj: -1.1980201e-001 Ad: 2.71e-001 Dobj: -7.1263298e+011
+Iter: 44 Ap: 2.42e-001 Pobj: -1.3890931e-001 Ad: 2.34e-001 Dobj: -7.1264511e+011
+Iter: 45 Ap: 2.74e-001 Pobj: -1.8944747e-001 Ad: 3.09e-001 Dobj: -7.1260420e+011
+Iter: 46 Ap: 1.89e-001 Pobj: -2.6079582e-001 Ad: 2.42e-001 Dobj: -7.1244221e+011
+Iter: 47 Ap: 1.58e-001 Pobj: -3.5200318e-001 Ad: 1.93e-001 Dobj: -7.1229941e+011
+Declaring primal infeasibility.
+Success: SDP is primal infeasible
+Certificate of primal infeasibility: a'*y=-1.00000e+000, ||A'(y)-Z||=9.88450e-009
+objective_value(model) = 0.3520031810148794
+```
+可以看到从中间某一步出发两次计算就不一致了。
+
+idea：解析计算出所有的关联函数，然后验证它代入此处的问题是否是feasible的。如果是，那么我的程序的毛病就是纯粹技术性的，如果不是，我肯定就哪里写错了。

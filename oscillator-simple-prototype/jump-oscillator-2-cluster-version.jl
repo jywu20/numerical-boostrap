@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 5
+L_max = 8
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -242,7 +242,7 @@ function complex_to_mat(coefficients)
     real_part = transpose(real(coefficients))
     imag_part = transpose(imag(coefficients))
     real_part_mat_version = map(x -> x * I22, real_part)
-    imag_part_mat_version = map(x -> x * I22, imag_part)
+    imag_part_mat_version = map(x -> x * Im22, imag_part)
     (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
 end
 
@@ -305,6 +305,14 @@ end
     xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real) + 
     xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real) + 
     g * xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real))
+
+# The initial value of E and ⟨x²⟩ are [1.37, 0.298], and therefore 
+# x⁴ = (E - 2x²) / 3g = 0.258 
+x²_0 = 0.298
+x⁴_0 = 0.258
+set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real), x²_0)
+set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real), x⁴_0)
+
 optimize!(model)
 
 @show objective_value(model)
