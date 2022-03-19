@@ -167,7 +167,8 @@ function xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2)
     pre_normal_ord_term - comm_term
 end
 
-xpopstr_comm(x_power_1, p_power_1, x_power_2, p_power_2) = xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2) - xpopstr_normal_ord(x_power_2, p_power_2, x_power_1, p_power_1)
+xpopstr_comm(x_power_1, p_power_1, x_power_2, p_power_2) = 
+    xpopstr_normal_ord(x_power_1, p_power_1, x_power_2, p_power_2) - xpopstr_normal_ord(x_power_2, p_power_2, x_power_1, p_power_1)
 
 """
 For simplicity, we do not implement a full version of commutation; we just calculate the commutator between 

@@ -1722,3 +1722,15 @@ Optimal objective: Inf
 Runtime: 3.947s (3947.0ms)
 ```
 因此程序多半实在是写错了。
+
+唉，现在只能老实检查了。
+
+建立`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-2.nb`，用于系统性地计算L_max=5的情况。
+其实还有一件事可以做，就是在Mathematica里面画图。不知道存在量词这一套能不能用在`xpOpString[x ,x ,p]`这样的东西上面。
+
+下面可以做的事情：
+- 检查约束情况
+  - 计算`L_max = 5`的Mathematica benchmark；幂次最高为$x^{10} p^{10}$
+  - 但是这里就有一个问题，就是递归计算出来，高次关联函数都是很大的，是不是会不准确等等……
+  - 不过还是先检查约束是否可以满足吧
+- 用Mathematica画图
