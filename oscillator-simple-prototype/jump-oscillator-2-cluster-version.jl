@@ -1,4 +1,4 @@
-using JuMP, CSDP
+using JuMP, COSMO 
 using LinearAlgebra  
 using OffsetArrays
 using Base.Iterators
@@ -11,7 +11,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 8
+L_max = 5 
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -207,8 +207,8 @@ function max_p_power(op::OffsetArray)
     max(map(index_to_ppower, nonzero_terms_idx)...)
 end
 
-model = Model(CSDP.Optimizer)
-set_optimizer_attributes(model, "maxiter" => 100)
+model = Model(COSMO.Optimizer)
+set_optimizer_attributes(model)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
