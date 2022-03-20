@@ -1734,3 +1734,236 @@ Runtime: 3.947s (3947.0ms)
   - 但是这里就有一个问题，就是递归计算出来，高次关联函数都是很大的，是不是会不准确等等……
   - 不过还是先检查约束是否可以满足吧
 - 用Mathematica画图
+- 说起来我感觉我的思维方式被限制住了，为什么不能直接用解薛定谔方程得到参考数值？
+
+## 2022.3.20
+
+在`stationary-schrodinger-2.jl`中计算$\lang x^m p^n \rang$。
+
+汇总目前通过严格做numerical bootstrap得到的数据：
+[此处](#2022314)的$\lang x^{2n} \rang$
+```
+0.301138, 0.253782, 0.343358, 0.598177, 1.31284, 3.40689, 9.75835, 
+32.4658, 117.962, 451.727
+```
+[此处](#2022319)的
+```
+{{xpOpString[p, p] -> 0.808702 + 0. I, xpOpString[x, p, p] -> 0, 
+  xpOpString[x, x, p, p] -> -0.186501 + 0. I, 
+  xpOpString[x, x, x, p, p] -> 0, 
+  xpOpString[x, x, x, x, p, p] -> -0.595472 + 0. I, 
+  xpOpString[x, x, x, x, x, p, p] -> 0, 
+  xpOpString[x, x, x, x, x, x, p, p] -> -1.44281 + 0. I}}
+```
+从`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-1.nb`读出一些之前没有记录的数据：
+```
+{{xpOpString[x, p] -> 0. + 0.5 I, xpOpString[x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, p] -> 0. + 0.451707 I, 
+  xpOpString[x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, p] -> 0. + 0.634454 I, 
+  xpOpString[x, x, x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, x, x, p] -> 0. + 1.20175 I, 
+  xpOpString[x, x, x, x, x, x, x, x, p] -> 0. + 0. I, 
+  xpOpString[x, x, x, x, x, x, x, x, x, p] -> 0. + 2.6918 I}}
+```
+
+用它们和`stationary-schrodinger-2.jl`的输出相对比：$\lang x^n \rang$
+```
+     1.0000000000000004 + 0.0im
+ -9.672537983335926e-15 + 0.0im
+    0.30579492589833185 + 0.0im
+ -7.419859045292633e-15 + 0.0im
+     0.2602109595243272 + 0.0im
+ -9.215911011408188e-15 + 0.0im
+    0.34723077229789145 + 0.0im
+  -1.52123002337647e-14 + 0.0im
+     0.6163426616900493 + 0.0im
+ -3.171550048562737e-14 + 0.0im
+     1.3459312154711665 + 0.0im
+```
+$\lang x^n p \rang$
+```
+0.0 + 0.008262813010199016im
+ 0.0 + 0.4999173718698987im
+ 0.0 - 0.0018168737481579495im
+ 0.0 + 0.45864691158556825im
+ 0.0 - 0.006012850492717911im
+ 0.0 + 0.6505222900588602im
+ 0.0 - 0.014788289221550878im
+ 0.0 + 1.2154322376908027im
+ 0.0 - 0.03943614114283746im
+ 0.0 + 2.774174630029892im
+ 0.0 - 0.11712209240572102im
+```
+$\lang x^n p^2 \rang$
+```
+ 0.8258946223615176 + 0.0im
+  -0.024780705457444523 + 0.0im
+   -0.18139193503898404 + 0.0im
+  -0.013641080401041665 + 0.0im
+     -0.600674817668086 + 0.0im
+ -0.0015412857505892742 + 0.0im
+    -1.4777566743789248 + 0.0im
+    0.03732157515563892 + 0.0im
+     -3.941977898035117 + 0.0im
+    0.18966713392589257 + 0.0im
+     -11.71143017592804 + 0.0im
+```
+大致对得上，虽然误差很有些大。
+
+ok，现在数据有了，可以试着做测试了。输出数据保存在`xpopstr_expected_ode-dx-0.02-l-10.jld2`。
+
+在`jump-oscillator-2-benchmark-with-ode.jl`中讨论我自己写的constraint是否是正确的，使用`xpopstr_expected_ode-dx-0.02-l-10.jld2`中的数据做benchmark。
+
+首先尝试直接将优化variable替换成真实值，看看约束是不是成立；可是这第一步就出了奇怪的问题。运行如下代码：
+```julia
+fix(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real), 0.298)
+fix(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :imag), 0.0)
+fix(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real), 0.258)
+fix(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :imag), 0.0)
+
+optimize!(model)
+
+value(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real))
+```
+发现输出结果是`0.21942580250281907`。也就是说拿`fix`根本fix不了变量。有毒。
+
+退而求其次，观察约束的系数是否正确。
+
+采用如下代码构建测试数据：
+```julia
+using JLD2
+working_path = "D:\\Projects\\numerical-boostrap\\oscillator-simple-prototype\\"
+@load working_path * "xpopstr_expected_ode-dx-0.02-l-10.jld2" xpopstr_expected_ode 
+
+xpopstr_expected_ope_value = zeros(2xpopspace_dim)
+
+for xpopstr_idx in 1 : xpopspace_dim
+    x_power = index_to_xpower(xpopstr_idx)
+    p_power = index_to_ppower(xpopstr_idx)
+    expected_value = xpopstr_expected_ode[x_power, p_power]
+    xpopstr_expected_ope_value[2xpopstr_idx - 1] = real(expected_value)
+    xpopstr_expected_ope_value[2xpopstr_idx] = imag(expected_value)
+end
+
+xpopstr_expected_real_imag_parts_ope_value(i, real_or_imag) = begin
+    if real_or_imag == :real
+        return xpopstr_expected_ope_value[2i - 1]
+    end
+    if real_or_imag == :imag
+        return xpopstr_expected_ope_value[2i]
+    end
+end
+
+variable_list_real_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :real) * I22 for i in 1 : xpopspace_dim]
+variable_list_imag_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :imag) * Im22 for i in 1 : xpopspace_dim]
+xpopstr_basis_real_ope_value = OffsetArray([I22, variable_list_real_ope_value...], xpopspace_index_range)
+xpopstr_basis_imag_ope_value = OffsetArray([Im22, variable_list_imag_ope_value...], xpopspace_index_range)
+
+function complex_to_mat_ope_value(coefficients)
+    real_part = transpose(real(coefficients))
+    imag_part = transpose(imag(coefficients))
+    real_part_mat_version = map(x -> x * I22, real_part)
+    imag_part_mat_version = map(x -> x * Im22, imag_part)
+    (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real_ope_value + xpopstr_basis_imag_ope_value)
+end
+
+complex_to_mat_ope_value(xpopstr_xp_power(4, 0))
+```
+测试$\lang [H, O] \rang = 0$的诊断代码：
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = real(cons)
+    cons_imag = imag(cons)
+    lhs = complex_to_mat(cons)
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        println(lhs[1, 2])
+    elseif cons_imag == zero_xpopstr
+        println(lhs[1, 1])
+    else
+        println(lhs[1, 1])
+        println(lhs[1, 2])
+    end
+end
+```
+输出为
+```
+-4.902451214784239e-14
+-0.0006943306158411211
+2.0
+0.0
+-0.32820777442942706
+0.0
+0.0006444451709375354
+-0.17131613487814604
+0.0
+0.0
+0.020025042775518642
+```
+发现三处可疑的地方。改用如下诊断代码，定位可疑之处：
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = real(cons)
+    cons_imag = imag(cons)
+    lhs = complex_to_mat_ope_value(cons)
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 2])")
+    elseif cons_imag == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 1])")
+    else
+        println("$x_power $p_power   $(lhs[1, 2])")
+        println("$x_power $p_power   $(lhs[1, 1])")
+    end
+end
+```
+得到
+```
+0 1   -4.902451214784239e-14
+0 2   2.0
+0 2   -0.0006943306158411211
+0 3   -0.32820777442942706  
+0 3   0.0
+1 0   0.0
+1 1   0.0006444451709375354
+1 2   0.0
+1 2   -0.17131613487814604
+1 3   0.020025042775518642
+1 3   0.0
+```
+离谱之处：$p^2$, $p^3$和$x p$。
+
+以$p^2$为例。运行
+```julia
+xpopstr_stringify(comm_with_ham(xpopstr_xp_power(0, 2)))
+```
+得到
+```
+- 2.0 - 4.0im x p - 12.0 x^2 - 8.0im x^3 p
+```
+与手动计算一致。将所有变量用另行计算的值代替，即
+```julia
+- 2.0 - 4.0im * (0.5im) - 12.0 * 0.301138 - 8.0im * (0.451707im)
+
+##
+
+- 2.0 - 4.0im * (0.4999173718698987im) - 12.0 * (0.30579492589833185) - 8.0im * (0.45864691158556825im)
+```
+得到
+```
+0.0 - 0.0im
+
+-0.0006943306158411211 - 0.0im
+```
+和前述自动计算的明显不一样啊。
