@@ -1966,4 +1966,294 @@ xpopstr_stringify(comm_with_ham(xpopstr_xp_power(0, 2)))
 
 -0.0006943306158411211 - 0.0im
 ```
-和前述自动计算的明显不一样啊。
+和前述自动计算的明显不一样啊。另一方面，
+```julia
+complex_to_mat_ope_value(comm_with_ham(xpopstr_xp_power(0, 2)))
+```
+给出
+```
+2×2 Array{Float64,2}:
+ -0.000694331   2.0
+ -2.0          -0.000694331
+```
+
+在下面的代码中出现了惊人一幕：
+```julia
+coefficients = comm_with_ham(xpopstr_xp_power(0, 2))
+real_part = transpose(real(coefficients))
+imag_part = transpose(imag(coefficients))
+real_part_mat_version = map(x -> x * I22, real_part)
+imag_part_mat_version = map(x -> x * Im22, imag_part)
+(real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real_ope_value + xpopstr_basis_imag_ope_value)
+```
+运行结果为
+```
+julia> coefficients[xpopstr_index(2, 0)]
+-12.0 + 0.0im
+
+julia> real_part[xpopstr_index(2, 0)]
+0.0
+```
+我好像有点知道了，julia里面OffsetArray的转置是有问题的。考虑以下情况：
+```
+julia> transpose(coefficients)[xpopstr_index(2, 0)]
+0.0 + 0.0im
+
+julia> transpose(coefficients)[1, xpopstr_index(2, 0)]
+-12.0 + 0.0im
+```
+更加清楚的是如下代码：
+```
+julia> transpose(OffsetArray([1, 2, 3], 0:2))[1]
+1
+
+julia> transpose(OffsetArray([1, 2, 3], 0:2))[2]
+2
+
+julia> transpose(OffsetArray([1, 2, 3], 0:2))[3]
+3
+```
+总之有下面的结果：
+```
+julia> xpopstr_basis_real_ope_value[xpopstr_index(2, 0)]
+2×2 Array{Float64,2}:
+ 0.305795  0.0
+ 0.0       0.305795
+
+julia> xpopstr_basis_imag_ope_value[xpopstr_index(2, 0)]
+2×2 Array{Float64,2}:
+ 0.0  -0.0
+ 0.0   0.0
+
+julia> coefficients[xpopstr_index(2, 0)]
+-12.0 + 0.0im
+
+julia> real_part[xpopstr_index(2, 0)]
+0.0
+```
+
+现在的问题是，这是否会影响乘法计算。为此考虑如下诊断代码：
+```julia
+coefficients = xpopstr_xp_power(2, 0) 
+real_part = transpose(real(coefficients))
+imag_part = transpose(imag(coefficients))
+real_part_mat_version = map(x -> x * I22, real_part)
+imag_part_mat_version = map(x -> x * Im22, imag_part)
+(real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real_ope_value + xpopstr_basis_imag_ope_value)
+```
+这给出
+```
+2×2 Array{Float64,2}:
+ 0.305795  0.0
+ 0.0       0.305795
+```
+这个时候就没有问题了……
+
+我现在感觉，问题并不在这里的乘法上面。至少有一处地方是有错的，就是
+```julia
+xpopstr_basis_imag = OffsetArray([Im22, variable_list_imag...], xpopspace_index_range)
+```
+应该改成
+```julia
+xpopstr_basis_imag = OffsetArray([O22, variable_list_imag...], xpopspace_index_range)
+```
+
+解决此问题后，得到
+```
+Iter: 60 Ap: 1.00e+000 Pobj: -2.3212105e+000 Ad: 1.00e+000 Dobj: -2.7433469e+000 
+Iter: 61 Ap: 1.00e+000 Pobj: -2.3214312e+000 Ad: 1.00e+000 Dobj: -2.7436446e+000 
+Iter: 62 Ap: 1.00e+000 Pobj: -2.3214572e+000 Ad: 1.00e+000 Dobj: -2.7437136e+000 
+Lack of progress.  Giving up!
+Partial Success: SDP solved with reduced accuracy
+Primal objective value: -2.7259246e+000
+Dual objective value: -3.7969216e+000
+Relative primal infeasibility: 1.89e-006
+Relative dual infeasibility: 7.10e-007
+Real Relative Gap: -1.42e-001
+XZ Relative Gap: 3.53e-006
+DIMACS error measures: 2.72e-006 0.00e+000 1.58e-006 0.00e+000 -1.42e-001 3.53e-006
+objective_value(model) = 2.7259246483686406
+2.7259246483686406
+```
+增大`L_max`以后并没有什么改善；实际上事情变得更糟糕了：
+```
+CSDP 6.2.0
+Iter:  0 Ap: 0.00e+000 Pobj:  0.0000000e+000 Ad: 0.00e+000 Dobj:  0.0000000e+000 
+Iter:  1 Ap: 8.80e-001 Pobj: -3.8497934e-001 Ad: 8.24e-001 Dobj: -2.3755443e+005 
+Iter:  2 Ap: 7.66e-001 Pobj: -1.1723146e-001 Ad: 7.50e-001 Dobj: -8.7864365e+005 
+Iter:  3 Ap: 4.74e-001 Pobj: -1.3935154e-001 Ad: 5.62e-001 Dobj: -4.5625669e+006 
+Iter:  4 Ap: 4.50e-001 Pobj: -1.6926176e-001 Ad: 4.56e-001 Dobj: -7.3760066e+006 
+Iter:  5 Ap: 3.44e-001 Pobj: -2.1358992e-001 Ad: 2.97e-001 Dobj: -8.4295899e+006 
+Iter:  6 Ap: 1.53e-001 Pobj: -2.2305444e-001 Ad: 1.42e-001 Dobj: -1.3591702e+007 
+Iter:  7 Ap: 2.62e-001 Pobj: -2.6397489e-001 Ad: 2.43e-001 Dobj: -1.9624439e+007 
+Iter:  8 Ap: 1.17e-001 Pobj: -2.4948540e-001 Ad: 1.34e-001 Dobj: -2.7772499e+007 
+Iter:  9 Ap: 2.59e-001 Pobj: -1.7872294e-001 Ad: 1.16e-001 Dobj: -2.6204276e+007 
+Iter: 10 Ap: 3.30e-001 Pobj: -1.4676353e-001 Ad: 3.77e-001 Dobj: -2.3152780e+007 
+Iter: 11 Ap: 2.68e-001 Pobj: -8.8779044e-002 Ad: 2.48e-001 Dobj: -2.6689109e+007 
+Iter: 12 Ap: 1.96e-001 Pobj: -7.1291821e-002 Ad: 1.73e-001 Dobj: -3.3215252e+007 
+Iter: 13 Ap: 1.72e-001 Pobj: -8.8379535e-002 Ad: 1.35e-001 Dobj: -3.6279903e+007 
+Iter: 14 Ap: 1.64e-001 Pobj: -6.8449424e-002 Ad: 1.52e-001 Dobj: -4.7157744e+007 
+Iter: 15 Ap: 2.37e-001 Pobj: -3.1114869e-002 Ad: 1.89e-001 Dobj: -4.6955571e+007 
+Iter: 16 Ap: 1.71e-001 Pobj: -2.2216149e-002 Ad: 1.02e-001 Dobj: -4.9721674e+007 
+Iter: 17 Ap: 1.14e-001 Pobj: -2.8719540e-002 Ad: 1.35e-001 Dobj: -6.3235837e+007 
+Iter: 18 Ap: 1.73e-001 Pobj: -2.2907474e-002 Ad: 8.54e-002 Dobj: -7.0021527e+007 
+Iter: 19 Ap: 1.56e-001 Pobj: -6.3163150e-002 Ad: 1.37e-001 Dobj: -9.1592672e+007 
+Iter: 20 Ap: 1.19e-001 Pobj: -8.4291142e-002 Ad: 9.67e-002 Dobj: -1.1694313e+008 
+Iter: 21 Ap: 6.65e-002 Pobj: -9.0550316e-002 Ad: 7.97e-002 Dobj: -1.4573091e+008 
+Iter: 22 Ap: 1.07e-001 Pobj: -1.0265732e-001 Ad: 7.92e-002 Dobj: -1.4335241e+008 
+Iter: 23 Ap: 1.40e-001 Pobj: -1.2893908e-001 Ad: 9.89e-002 Dobj: -1.6888717e+008 
+Iter: 24 Ap: 1.04e-001 Pobj: -1.2968038e-001 Ad: 8.45e-002 Dobj: -2.0106444e+008 
+Iter: 25 Ap: 1.19e-001 Pobj: -1.3396755e-001 Ad: 1.03e-001 Dobj: -2.6291206e+008 
+Iter: 26 Ap: 1.61e-001 Pobj: -1.2081859e-001 Ad: 1.29e-001 Dobj: -3.1272945e+008 
+Iter: 27 Ap: 1.47e-001 Pobj: -1.6442645e-001 Ad: 6.79e-002 Dobj: -3.4553305e+008 
+Iter: 28 Ap: 1.90e-001 Pobj: -1.7087796e-001 Ad: 1.83e-001 Dobj: -4.1812515e+008 
+Iter: 29 Ap: 1.46e-001 Pobj: -1.6625690e-001 Ad: 1.19e-001 Dobj: -4.9763111e+008 
+Iter: 30 Ap: 1.79e-001 Pobj: -1.5523266e-001 Ad: 1.11e-001 Dobj: -5.3710511e+008 
+Iter: 31 Ap: 1.05e-001 Pobj: -1.3872120e-001 Ad: 5.70e-002 Dobj: -5.8421301e+008 
+Iter: 32 Ap: 2.46e-001 Pobj: -1.2280831e-001 Ad: 2.46e-001 Dobj: -6.4857491e+008 
+Iter: 33 Ap: 2.04e-001 Pobj: -1.1117251e-001 Ad: 2.55e-001 Dobj: -7.0580803e+008 
+Iter: 34 Ap: 2.46e-001 Pobj: -1.1812814e-001 Ad: 3.40e-001 Dobj: -7.0138268e+008 
+Iter: 35 Ap: 1.70e-001 Pobj: -1.0929292e-001 Ad: 1.95e-001 Dobj: -6.7625417e+008 
+Iter: 36 Ap: 8.32e-002 Pobj: -9.1785166e-002 Ad: 9.16e-002 Dobj: -6.5604306e+008 
+Iter: 37 Ap: 1.28e-001 Pobj: -8.1225888e-002 Ad: 1.50e-001 Dobj: -6.2504958e+008 
+Iter: 38 Ap: 2.26e-001 Pobj: -6.8912568e-002 Ad: 2.25e-001 Dobj: -5.9836368e+008 
+Iter: 39 Ap: 3.10e-001 Pobj: -5.8786865e-002 Ad: 2.12e-001 Dobj: -5.7828546e+008 
+Iter: 40 Ap: 9.61e-002 Pobj: -1.2469784e-002 Ad: 3.67e-002 Dobj: -5.7263015e+008 
+Iter: 41 Ap: 4.23e-001 Pobj:  1.0058632e-001 Ad: 1.98e-001 Dobj: -5.4950178e+008 
+Iter: 42 Ap: 7.45e-002 Pobj:  2.4967065e-001 Ad: 8.00e-002 Dobj: -5.3450070e+008 
+Iter: 43 Ap: 5.48e-002 Pobj:  3.8282919e-001 Ad: 8.20e-002 Dobj: -5.1029128e+008 
+Iter: 44 Ap: 1.74e-001 Pobj:  5.9074755e-001 Ad: 1.16e-001 Dobj: -4.9590747e+008 
+Iter: 45 Ap: 9.47e-002 Pobj:  1.0574616e+000 Ad: 1.32e-001 Dobj: -4.7476221e+008 
+Iter: 46 Ap: 1.36e-001 Pobj:  1.3202404e+000 Ad: 1.28e-001 Dobj: -4.6041614e+008 
+Iter: 47 Ap: 2.89e-001 Pobj:  6.8435726e+000 Ad: 8.00e-002 Dobj: -4.5444093e+008 
+Iter: 48 Ap: 1.67e-001 Pobj:  8.7056222e+000 Ad: 1.49e-001 Dobj: -4.3147855e+008 
+Iter: 49 Ap: 3.75e-002 Pobj:  1.0702630e+001 Ad: 7.64e-002 Dobj: -4.1525341e+008 
+Iter: 50 Ap: 1.21e-001 Pobj:  2.4260114e+001 Ad: 1.33e-001 Dobj: -4.0489770e+008 
+Iter: 51 Ap: 4.95e-002 Pobj:  4.5650516e+001 Ad: 2.62e-002 Dobj: -4.0126904e+008 
+Iter: 52 Ap: 1.89e-002 Pobj:  5.5841017e+001 Ad: 6.13e-002 Dobj: -3.9325771e+008 
+Iter: 53 Ap: 2.98e-003 Pobj:  5.7611261e+001 Ad: 5.44e-002 Dobj: -3.8728660e+008 
+Iter: 54 Ap: 1.28e-003 Pobj:  5.8058111e+001 Ad: 7.24e-002 Dobj: -3.7893624e+008 
+Iter: 55 Ap: 6.69e-003 Pobj:  6.2474520e+001 Ad: 2.34e-002 Dobj: -3.7531119e+008 
+Iter: 56 Ap: 2.39e-003 Pobj:  6.3323565e+001 Ad: 3.04e-002 Dobj: -3.7239800e+008 
+Iter: 57 Ap: 7.90e-003 Pobj:  7.0040754e+001 Ad: 5.02e-002 Dobj: -3.6727162e+008 
+Iter: 58 Ap: 4.98e-004 Pobj:  7.0251734e+001 Ad: 6.70e-002 Dobj: -3.6011516e+008 
+Iter: 59 Ap: 7.13e-003 Pobj:  7.4779127e+001 Ad: 2.68e-002 Dobj: -3.5509648e+008 
+Iter: 60 Ap: 2.02e-003 Pobj:  7.6522387e+001 Ad: 6.77e-002 Dobj: -3.5012660e+008 
+Iter: 61 Ap: 2.38e-003 Pobj:  7.9244340e+001 Ad: 3.61e-002 Dobj: -3.4788780e+008 
+Iter: 62 Ap: 5.54e-003 Pobj:  8.6349968e+001 Ad: 2.54e-002 Dobj: -3.4479584e+008 
+Iter: 63 Ap: 1.24e-003 Pobj:  8.8030114e+001 Ad: 5.35e-002 Dobj: -3.4137316e+008 
+Iter: 64 Ap: 2.84e-003 Pobj:  9.1882687e+001 Ad: 3.62e-002 Dobj: -3.3848881e+008 
+Lack of progress.  Giving up!
+Failure: return code is 7 
+Primal objective value: 1.0702630e+001
+Dual objective value: -4.1525341e+008
+Relative primal infeasibility: 2.76e-001
+Relative dual infeasibility: 5.31e+001
+Real Relative Gap: -1.00e+000
+XZ Relative Gap: 4.25e+001
+DIMACS error measures: 3.94e-001 0.00e+000 9.17e+001 0.00e+000 -1.00e+000 4.25e+001
+```
+
+那么无论如何，先把剩下的测试做完吧。
+
+运行诊断代码
+```julia
+using JLD2
+working_path = "D:\\Projects\\numerical-boostrap\\oscillator-simple-prototype\\"
+@load working_path * "xpopstr_expected_ode-dx-0.02-l-10.jld2" xpopstr_expected_ode 
+
+xpopstr_expected_ope_value = zeros(2xpopspace_dim)
+
+for xpopstr_idx in 1 : xpopspace_dim
+    x_power = index_to_xpower(xpopstr_idx)
+    p_power = index_to_ppower(xpopstr_idx)
+    expected_value = xpopstr_expected_ode[x_power, p_power]
+    xpopstr_expected_ope_value[2xpopstr_idx - 1] = real(expected_value)
+    xpopstr_expected_ope_value[2xpopstr_idx] = imag(expected_value)
+end
+
+xpopstr_expected_real_imag_parts_ope_value(i, real_or_imag) = begin
+    if real_or_imag == :real
+        return xpopstr_expected_ope_value[2i - 1]
+    end
+    if real_or_imag == :imag
+        return xpopstr_expected_ope_value[2i]
+    end
+end
+
+variable_list_real_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :real) * I22 for i in 1 : xpopspace_dim]
+variable_list_imag_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :imag) * Im22 for i in 1 : xpopspace_dim]
+xpopstr_basis_real_ope_value = OffsetArray([I22, variable_list_real_ope_value...], xpopspace_index_range)
+xpopstr_basis_imag_ope_value = OffsetArray([O22, variable_list_imag_ope_value...], xpopspace_index_range)
+
+function complex_to_mat_ope_value(coefficients)
+    real_part = transpose(real(coefficients))
+    imag_part = transpose(imag(coefficients))
+    real_part_mat_version = map(x -> x * I22, real_part)
+    imag_part_mat_version = map(x -> x * Im22, imag_part)
+    (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real_ope_value + xpopstr_basis_imag_ope_value)
+end
+
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = real(cons)
+    cons_imag = imag(cons)
+    lhs = complex_to_mat_ope_value(cons)
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 2])")
+    elseif cons_imag == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 1])")
+    else
+        println("$x_power $p_power   $(lhs[1, 2])")
+        println("$x_power $p_power   $(lhs[1, 1])")
+    end
+end
+```
+发现
+```
+0 1   -4.902451214784239e-14
+0 2   0.0
+0 2   -0.0006943306158411211
+0 3   -0.32820777442942706
+0 3   0.0
+1 0   0.0
+1 1   0.0006444451709375354
+1 2   0.0
+1 2   -0.17131613487814604
+1 3   0.020025042775518642
+1 3   0.0
+```
+
+我们下面讨论
+```
+0 3   -0.32820777442942706
+```
+这一行。计算
+```julia
+xpopstr_stringify(comm_with_ham(xpopstr_xp_power(0, 3)))
+```
+得到
+```
+- 6.0 p + 24.0im x - 6.0im x p^2 - 36.0 x^2 p - 12.0im x^3 p^2
+```
+这个点看起来是纯粹的数值误差。我们有
+```
+julia> xpopstr_expected_ode[0, 1], xpopstr_expected_ode[1, 0], xpopstr_expected_ode[1, 2], xpopstr_expected_ode[2, 1], xpopstr_expected_ode[3, 2]
+(0.0 + 0.008262813010199016im, -9.672537983335926e-15 + 0.0im, -0.024780705457444523 + 0.0im, 0.0 - 0.0018168737481579495im, -0.013641080401041665 + 0.0im)
+```
+因此应该是计算误差积累的结果。
+
+不过我倒是意外发现了一个bug，就是
+```julia
+for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+```
+似乎应该替换成
+```julia
+for x_power in 0 : 2L_max - 4, p_power in 0 : 2L_max - 2
+```

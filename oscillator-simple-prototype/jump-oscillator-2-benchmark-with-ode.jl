@@ -237,7 +237,7 @@ zero_xpopstr = xpopstr_const(0.0)
 variable_list_real = [xpopstr_expected_real_imag_parts(i, :real) * I22 for i in 1 : xpopspace_dim]
 variable_list_imag = [xpopstr_expected_real_imag_parts(i, :imag) * Im22 for i in 1 : xpopspace_dim]
 xpopstr_basis_real = OffsetArray([I22, variable_list_real...], xpopspace_index_range)
-xpopstr_basis_imag = OffsetArray([Im22, variable_list_imag...], xpopspace_index_range)
+xpopstr_basis_imag = OffsetArray([O22, variable_list_imag...], xpopspace_index_range)
 
 function complex_to_mat(coefficients)
     real_part = transpose(real(coefficients))
@@ -251,7 +251,7 @@ end
 # make sure the size of OH does not cause any out of bound error.
 # Then imposing constraints to the variables
 
-for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
+for x_power in 0 : 2L_max - 4, p_power in 0 : 2L_max - 2
     op = xpopstr_xp_power(x_power, p_power)
     cons = comm_with_ham(op)
     cons_real = real(cons)
