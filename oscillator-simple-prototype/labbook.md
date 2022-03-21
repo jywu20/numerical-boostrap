@@ -2678,3 +2678,161 @@ Product[Eigenvalues[(M /. nonzeroExpected /.
 ```
 
 此时的$M$矩阵保存在`nonlinear-SDP-x-power-10-standard-m-value.csv`中。
+
+现在`xpopstr_expected`和`M`都有了，那么可以检查`jump-oscillator-2-benchmark-with-ode.jl`是不是正确了。
+
+在`obtain-jump-point-xpopstr-expected-nonlinear-sdp-x-power-11.nb`中自动生成用于JuMP feasibility测试的数据点：
+```julia
+xpopstr_expected[1] => 0, xpopstr_expected[2] => 0, 
+xpopstr_expected[3] => 0.826205, xpopstr_expected[4] => 0., 
+xpopstr_expected[5] => 0, xpopstr_expected[6] => 0, 
+xpopstr_expected[7] => 1.93335, xpopstr_expected[8] => 0., 
+xpopstr_expected[9] => 0, xpopstr_expected[10] => 0, 
+xpopstr_expected[11] => 7.2212, xpopstr_expected[12] => 0., 
+xpopstr_expected[13] => 0, xpopstr_expected[14] => 0, 
+xpopstr_expected[15] => 38.0874, xpopstr_expected[16] => 0., 
+xpopstr_expected[17] => 0, xpopstr_expected[18] => 0, 
+xpopstr_expected[19] => 290.984, xpopstr_expected[20] => 0., 
+xpopstr_expected[21] => 0, xpopstr_expected[22] => 0, 
+xpopstr_expected[23] => 0., xpopstr_expected[24] => 0.5, 
+xpopstr_expected[25] => 0, xpopstr_expected[26] => 0, 
+xpopstr_expected[27] => 0., xpopstr_expected[28] => 1.23931, 
+xpopstr_expected[29] => 0, xpopstr_expected[30] => 0, 
+xpopstr_expected[31] => 0., xpopstr_expected[32] => 4.83338, 
+xpopstr_expected[33] => 0, xpopstr_expected[34] => 0, 
+xpopstr_expected[35] => 0., xpopstr_expected[36] => 25.2742, 
+xpopstr_expected[37] => 0, xpopstr_expected[38] => 0, 
+xpopstr_expected[39] => 0., xpopstr_expected[40] => 171.393, 
+xpopstr_expected[41] => 0, xpopstr_expected[42] => 0, 
+xpopstr_expected[43] => 0.305782, xpopstr_expected[44] => 0, 
+xpopstr_expected[45] => 0, xpopstr_expected[46] => 0, 
+xpopstr_expected[47] => -0.181759, xpopstr_expected[48] => 0., 
+xpopstr_expected[49] => 0, xpopstr_expected[50] => 0, 
+xpopstr_expected[51] => -1.47756, xpopstr_expected[52] => 0., 
+xpopstr_expected[53] => 0, xpopstr_expected[54] => 0, 
+xpopstr_expected[55] => -9.10923, xpopstr_expected[56] => 0., 
+xpopstr_expected[57] => 0, xpopstr_expected[58] => 0, 
+xpopstr_expected[59] => -58.4308, xpopstr_expected[60] => 0., 
+xpopstr_expected[61] => 0, xpopstr_expected[62] => 0, 
+xpopstr_expected[63] => -393.285, xpopstr_expected[64] => 0., 
+xpopstr_expected[65] => 0, xpopstr_expected[66] => 0, 
+xpopstr_expected[67] => 0., xpopstr_expected[68] => 0.458672, 
+xpopstr_expected[69] => 0, xpopstr_expected[70] => 0, 
+xpopstr_expected[71] => 0., xpopstr_expected[72] => 0.682085, 
+xpopstr_expected[73] => 0, xpopstr_expected[74] => 0, 
+xpopstr_expected[75] => 0., xpopstr_expected[76] => 1.31136, 
+xpopstr_expected[77] => 0, xpopstr_expected[78] => 0, 
+xpopstr_expected[79] => 0., xpopstr_expected[80] => 5.85395, 
+xpopstr_expected[81] => 0, xpopstr_expected[82] => 0, 
+xpopstr_expected[83] => 0., xpopstr_expected[84] => 121.055, 
+xpopstr_expected[85] => 0, xpopstr_expected[86] => 0, 
+xpopstr_expected[87] => 0.260212, xpopstr_expected[88] => 0, 
+xpopstr_expected[89] => 0, xpopstr_expected[90] => 0, 
+xpopstr_expected[91] => -0.601349, xpopstr_expected[92] => 0., 
+xpopstr_expected[93] => 0, xpopstr_expected[94] => 0, 
+xpopstr_expected[95] => -3.05202, xpopstr_expected[96] => 0., 
+xpopstr_expected[97] => 0, xpopstr_expected[98] => 0, 
+xpopstr_expected[99] => -18.9248, xpopstr_expected[100] => 0., 
+xpopstr_expected[101] => 0, xpopstr_expected[102] => 0, 
+xpopstr_expected[103] => -179.528, xpopstr_expected[104] => 0., 
+xpopstr_expected[105] => 0, xpopstr_expected[106] => 0, 
+xpopstr_expected[107] => -2602.5, xpopstr_expected[108] => 0., 
+xpopstr_expected[109] => 0, xpopstr_expected[110] => 0, 
+xpopstr_expected[111] => 0., xpopstr_expected[112] => 0.65053, 
+xpopstr_expected[113] => 0, xpopstr_expected[114] => 0, 
+xpopstr_expected[115] => 0., xpopstr_expected[116] => 0.0766033, 
+xpopstr_expected[117] => 0, xpopstr_expected[118] => 0, 
+xpopstr_expected[119] => 0., xpopstr_expected[120] => -5.41413, 
+xpopstr_expected[121] => 0, xpopstr_expected[122] => 0, 
+xpopstr_expected[123] => 0., xpopstr_expected[124] => -65.8857, 
+xpopstr_expected[125] => 0, xpopstr_expected[126] => 0, 
+xpopstr_expected[127] => 0., xpopstr_expected[128] => -900.886, 
+xpopstr_expected[129] => 0, xpopstr_expected[130] => 0, 
+xpopstr_expected[131] => 0.347256, xpopstr_expected[132] => 0, 
+xpopstr_expected[133] => 0, xpopstr_expected[134] => 0, 
+xpopstr_expected[135] => -1.47895, xpopstr_expected[136] => 0., 
+xpopstr_expected[137] => 0, xpopstr_expected[138] => 0, 
+xpopstr_expected[139] => -5.36261, xpopstr_expected[140] => 0., 
+xpopstr_expected[141] => 0, xpopstr_expected[142] => 0, 
+xpopstr_expected[143] => -21.9806, xpopstr_expected[144] => 0., 
+xpopstr_expected[145] => 0, xpopstr_expected[146] => 0, 
+xpopstr_expected[147] => -117.932, xpopstr_expected[148] => 0., 
+xpopstr_expected[149] => 0, xpopstr_expected[150] => 0, 
+xpopstr_expected[151] => -780.606, xpopstr_expected[152] => 0., 
+xpopstr_expected[153] => 0, xpopstr_expected[154] => 0, 
+xpopstr_expected[155] => 0., xpopstr_expected[156] => 1.21539, 
+xpopstr_expected[157] => 0, xpopstr_expected[158] => 0, 
+xpopstr_expected[159] => 0., xpopstr_expected[160] => -1.86789, 
+xpopstr_expected[161] => 0, xpopstr_expected[162] => 0, 
+xpopstr_expected[163] => 0., xpopstr_expected[164] => -24.2693, 
+xpopstr_expected[165] => 0, xpopstr_expected[166] => 0, 
+xpopstr_expected[167] => 0., xpopstr_expected[168] => -245.959, 
+xpopstr_expected[169] => 0, xpopstr_expected[170] => 0, 
+xpopstr_expected[171] => 0., xpopstr_expected[172] => -3199.36, 
+xpopstr_expected[173] => 0, xpopstr_expected[174] => 0, 
+xpopstr_expected[175] => 0.61636, xpopstr_expected[176] => 0, 
+xpopstr_expected[177] => 0, xpopstr_expected[178] => 0, 
+xpopstr_expected[179] => -3.94401, xpopstr_expected[180] => 0., 
+xpopstr_expected[181] => 0, xpopstr_expected[182] => 0, 
+xpopstr_expected[183] => -8.18325, xpopstr_expected[184] => 0., 
+xpopstr_expected[185] => 0, xpopstr_expected[186] => 0, 
+xpopstr_expected[187] => 19.0191, xpopstr_expected[188] => 0., 
+xpopstr_expected[189] => 0, xpopstr_expected[190] => 0, 
+xpopstr_expected[191] => 800.881, xpopstr_expected[192] => 0., 
+xpopstr_expected[193] => 0, xpopstr_expected[194] => 0, 
+xpopstr_expected[195] => 18280.6, xpopstr_expected[196] => 0., 
+xpopstr_expected[197] => 0, xpopstr_expected[198] => 0, 
+xpopstr_expected[199] => 0., xpopstr_expected[200] => 2.77362, 
+xpopstr_expected[201] => 0, xpopstr_expected[202] => 0, 
+xpopstr_expected[203] => 0., xpopstr_expected[204] => -9.48987, 
+xpopstr_expected[205] => 0, xpopstr_expected[206] => 0, 
+xpopstr_expected[207] => 0., xpopstr_expected[208] => -80.4034, 
+xpopstr_expected[209] => 0, xpopstr_expected[210] => 0, 
+xpopstr_expected[211] => 0., xpopstr_expected[212] => -623.083, 
+xpopstr_expected[213] => 0, xpopstr_expected[214] => 0, 
+xpopstr_expected[215] => 0., xpopstr_expected[216] => -5645.39, 
+xpopstr_expected[217] => 0, xpopstr_expected[218] => 0, 
+xpopstr_expected[219] => 1.34604, xpopstr_expected[220] => 0, 
+xpopstr_expected[221] => 0, xpopstr_expected[222] => 0, 
+xpopstr_expected[223] => -11.7121, xpopstr_expected[224] => 0., 
+xpopstr_expected[225] => 0, xpopstr_expected[226] => 0, 
+xpopstr_expected[227] => -3.89309, xpopstr_expected[228] => 0., 
+xpopstr_expected[229] => 0, xpopstr_expected[230] => 0, 
+xpopstr_expected[231] => 291.196, xpopstr_expected[232] => 0., 
+xpopstr_expected[233] => 0, xpopstr_expected[234] => 0, 
+xpopstr_expected[235] => 5240.32, xpopstr_expected[236] => 0., 
+xpopstr_expected[237] => 0, xpopstr_expected[238] => 0, 
+xpopstr_expected[239] => 95736.1, xpopstr_expected[240] => 0.
+```
+使用`reading-csv-nonlinear-SDP-x-power-11-standard-value.jl`读取`reading-csv-nonlinear-SDP-x-power-11-standard-value.jl`中的内容，保存至`nonlinear-SDP-x-power-11-standard-m-mat.jl`中。
+
+将`nonlinear-SDP-x-power-11-standard-m-mat.jl`和最近一个block里面关于`xpopstr_expected`结合到`nonlinear-SDP-x-power-11-standard-point.jl`中。
+但是命运和魔鬼不总是睡觉：结果当然是报错了：
+```
+ERROR: Feasibility checker for set type MathOptInterface.PositiveSemidefiniteConeTriangle has not been implemented yet.
+```
+无论如何，可以关闭SDP约束然后做检查。输出结果见`nonlinear-SDP-x-power-11-standard-point-check-oscillator-2-benchmark-with-ode.txt`。
+
+能够观察到一些比较大的infeasible点，但是好像那个都是因为加减乘除过程中的舍入误差（是吗？）
+最大的infeasible值对应如下两行：
+```
+-120 xpopstr_expected[76] - 600 xpopstr_expected[99] + 600 xpopstr_expected[124] + 200 xpopstr_expected[147] - 25 xpopstr_expected[172] - xpopstr_expected[195] + M[47,71] == 0.0    0.1738881602504989
+-120 xpopstr_expected[76] - 600 xpopstr_expected[99] + 600 xpopstr_expected[124] + 200 xpopstr_expected[147] - 25 xpopstr_expected[172] - xpopstr_expected[195] + M[48,72] == 0.0    0.1738881602504989
+```
+对应的`M`分别是
+```
+M[47, 71] => -9782.922911839756,
+M[48, 72] => -9782.922911839756
+```
+计算相对误差为`1.7774663238943776e-5`。这是否是浮点数计算误差？
+另一个数据点是
+```
+-120 xpopstr_expected[99] + 240 xpopstr_expected[124] + 120 xpopstr_expected[147] - 20 xpopstr_expected[172] - xpopstr_expected[195] + M[60,60] == 0.0    0.1322533714774181
+-120 xpopstr_expected[99] + 240 xpopstr_expected[124] + 120 xpopstr_expected[147] - 20 xpopstr_expected[172] - xpopstr_expected[195] + M[59,59] == 0.0    0.1322533714774181
+```
+对应的`M`是
+```
+M[59, 59] => -18013.035746628528,
+M[60, 60] => -18013.035746628528
+```
+相对误差为`7.342092323453684e-6`。
