@@ -2347,7 +2347,8 @@ plot(eigen(M_ode_value).values, legend=false)
 
 ## 2022.3.21
 
-在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-3.nb`中有存放$\lang x^n p^m \rang$的数据。计算策略在这个笔记本里面写得很清楚了。非零部分列举如下：
+在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-3.nb`中有存放$\lang x^n p^m \rang$的数据。计算策略在这个笔记本里面写得很清楚了。
+计算时，首先使用$x^n, n \leq 8$的nonlinear SDP做计算。所得非零部分列举如下：
 ```Mathematica
 {xpOpString[] -> 1, xpOpString[p, p] -> 0.808702 + 0. I, 
  xpOpString[x, p] -> 0. + 0.5 I, xpOpString[x, x] -> 0.301138, 
@@ -2476,4 +2477,204 @@ plot(eigen(M_ode_value).values, legend=false)
  xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, 
    x] -> 451.727}
 ```
-由此获得的$M$矩阵好像并不正定……
+由此获得的$M$矩阵好像并不正定……还有一个问题是，似乎$\lang x^2 p^2 \rang$是负的。哦不过这个好像确实是对的，之前解方程的时候算出来过。
+特征值是
+```
+{-72560.2 + 5.22106*10^-19 I, -18647.5 - 3.62637*10^-14 I, -3472.86 + 
+  3.88545*10^-13 I, -2151.5 + 2.06363*10^-18 I, -184.817 + 
+  3.37672*10^-17 I, 92.3838 - 77.3257 I, 
+ 92.3838 + 77.3257 I, -41.2894 + 5.70591*10^-16 I, -19.772 - 
+  1.35127*10^-15 I, -6.29202 - 2.62852*10^-14 I, 2.75494 - 3.62274 I, 
+ 2.75494 + 3.62274 I, -3.72358 + 6.43788*10^-13 I, 
+ 1.95103 + 1.27914 I, 1.95103 - 1.27914 I, 0.343084 - 0.295659 I, 
+ 0.343084 + 0.295659 I, -0.302859 + 0.0292939 I, -0.302859 - 
+  0.0292939 I, -0.0941271 + 1.48248*10^-13 I, -0.00625381 + 
+  0.0170569 I, -0.00625381 - 0.0170569 I, -0.0153286 - 
+  1.13102*10^-13 I, 
+ 0.0100093 - 2.65962*10^-13 I, -0.00182255 - 
+  0.00680812 I, -0.00182255 + 0.00680812 I, -0.00622958 + 
+  1.45031*10^-13 I, 
+ 0.00338418 - 3.70776*10^-14 I, -1.53504*10^-12 + 9.65472*10^-13 I, 
+ 1.25553*10^-12 + 1.03573*10^-12 I, 
+ 6.45246*10^-13 + 6.56672*10^-13 I, -3.19067*10^-13 - 
+  7.00729*10^-13 I, -3.16211*10^-13 - 3.92248*10^-13 I, 
+ 3.86535*10^-13 - 9.19704*10^-15 I, 2.32805*10^-13 - 2.83706*10^-13 I,
+  4.47278*10^-14 + 1.03133*10^-13 I}
+```
+另一方面，我们有
+```Mathematica
+Product[Eigenvalues[(M /. nonzeroExpected /. 
+     xpOpString[seq__] /; OddQ[Length[{seq}]] -> 0)][[i]], {i, 1, 
+  Length[M]}]
+```
+输出
+```
+9.29718*10^-89 + 6.60311*10^-90 I
+```
+
+实际上，如果我们不包含那么高次的算符，就有
+```Mathematica
+Eigenvalues[(Table[
+     xpNormalOrderedOp[i + j, 0], {i, 0, 10}, {j, 0, 10}] /. 
+    nonzeroExpected /. xpOpString[seq__] /; OddQ[Length[{seq}]] -> 0)]
+```
+输出
+```
+485.275, 127.919, 3.1433, 1.58921, 0.955657, 0.227242, 0.0831391, \
+-0.0774592, -0.0658394, 0.0608265, 0.0198087
+```
+
+最后，或许可以考虑一下检查feasibility。能够通过增大容差来获得勉强令人满意的结果？
+
+以下是$x^n, n\leq 11$的结果：
+```
+{xpOpString[] -> 1, xpOpString[p, p] -> 0.826205 + 0. I, 
+ xpOpString[x, p] -> 0. + 0.5 I, xpOpString[x, x] -> 0.305782, 
+ xpOpString[p, p, p, p] -> 1.93335 + 0. I, 
+ xpOpString[x, p, p, p] -> 0. + 1.23931 I, 
+ xpOpString[x, x, p, p] -> -0.181759 + 0. I, 
+ xpOpString[x, x, x, p] -> 0. + 0.458672 I, 
+ xpOpString[x, x, x, x] -> 0.260212, 
+ xpOpString[p, p, p, p, p, p] -> 7.2212 + 0. I, 
+ xpOpString[x, p, p, p, p, p] -> 0. + 4.83338 I, 
+ xpOpString[x, x, p, p, p, p] -> -1.47756 + 0. I, 
+ xpOpString[x, x, x, p, p, p] -> 0. + 0.682085 I, 
+ xpOpString[x, x, x, x, p, p] -> -0.601349 + 0. I, 
+ xpOpString[x, x, x, x, x, p] -> 0. + 0.65053 I, 
+ xpOpString[x, x, x, x, x, x] -> 0.347256, 
+ xpOpString[p, p, p, p, p, p, p, p] -> 38.0874 + 0. I, 
+ xpOpString[x, p, p, p, p, p, p, p] -> 0. + 25.2742 I, 
+ xpOpString[x, x, p, p, p, p, p, p] -> -9.10923 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p] -> 0. + 1.31136 I, 
+ xpOpString[x, x, x, x, p, p, p, p] -> -3.05202 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p] -> 0. + 0.0766033 I, 
+ xpOpString[x, x, x, x, x, x, p, p] -> -1.47895 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p] -> 0. + 1.21539 I, 
+ xpOpString[x, x, x, x, x, x, x, x] -> 0.61636, 
+ xpOpString[p, p, p, p, p, p, p, p, p, p] -> 290.984 + 0. I, 
+ xpOpString[x, p, p, p, p, p, p, p, p, p] -> 0. + 171.393 I, 
+ xpOpString[x, x, p, p, p, p, p, p, p, p] -> -58.4308 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p, p, p] -> 0. + 5.85395 I, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p] -> -18.9248 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p, p, p] -> 0. - 5.41413 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p] -> -5.36261 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p] -> 0. - 1.86789 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p] -> -3.94401 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p] -> 0. + 2.77362 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x] -> 1.34604, 
+ xpOpString[x, x, p, p, p, p, p, p, p, p, p, p] -> -393.285 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p, p, p, p, p] -> 0. + 121.055 I, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p, p, p] -> -179.528 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p, p, p, p, p] -> 0. - 65.8857 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p] -> -21.9806 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p, p, p] -> 0. - 24.2693 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p] -> -8.18325 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p] -> 0. - 9.48987 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p] -> -11.7121 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p] -> 0. + 7.40324 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x] -> 3.45606, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p, p, p, p, p] -> -2602.5 + 
+   0. I, xpOpString[x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 900.886 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> -117.932 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 245.959 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  19.0191 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 80.4034 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> -3.89309 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 40.7005 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p] -> -38.5306 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 22.4644 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 10.13, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p, p, p, p, 
+   p] -> -780.606 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 3199.36 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> 
+  800.881 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 623.083 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  291.196 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 242.547 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> 
+  61.4837 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 173.895 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -139.045 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 75.975 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 
+  33.2121, xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, 
+   p, p] -> 18280.6 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 5645.39 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> 
+  5240.32 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 938.236 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  1638.83 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 651.351 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> 
+  513.476 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 769.754 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -545.267 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 282.303 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 
+  119.936, xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, 
+   p, p, p, p] -> 95736.1 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, 
+   p] -> 0. + 7266.96 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, 
+   p] -> 22179.5 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, 
+   p] -> 0. + 2422.99 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, 
+   p] -> 7699.63 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, 
+   p] -> 0. - 1186.15 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, 
+   p] -> 3240.54 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, 
+   p] -> 0. - 3571.69 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -2305.31 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, 
+   p] -> 0. + 1139.39 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, 
+   x] -> 471.569}
+```
+正定性的情况有所好转：
+```Mathematica
+Eigenvalues[(Table[
+     xpNormalOrderedOp[i + j, 0], {i, 0, 10}, {j, 0, 10}] /. 
+    nonzeroExpected /. xpOpString[seq__] /; OddQ[Length[{seq}]] -> 0)]
+```
+给出
+```
+{504.899, 130.211, 4.0255, 1.59372, 1.01345, 0.236806, 0.16176, \
+0.0226981, 0.0132164, 0.000721841, 0.000523045}
+```
+此时
+```Mathematica
+Product[Eigenvalues[(M /. nonzeroExpected /. 
+     xpOpString[seq__] /; OddQ[Length[{seq}]] -> 0)][[i]], {i, 1, 
+  Length[M]}]
+```
+给出
+```
+-1.28092*10^-123 + 1.06183*10^-123 I
+```
+
+此时的$M$矩阵保存在`nonlinear-SDP-x-power-10-standard-m-value.csv`中。
