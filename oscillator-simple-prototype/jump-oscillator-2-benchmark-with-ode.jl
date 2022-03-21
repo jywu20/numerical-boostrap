@@ -1,4 +1,4 @@
-using JuMP, CSDP 
+using JuMP, COSMO 
 using LinearAlgebra  
 using OffsetArrays
 using Base.Iterators
@@ -208,7 +208,7 @@ function max_p_power(op::OffsetArray)
     max(map(index_to_ppower, nonzero_terms_idx)...)
 end
 
-model = Model(CSDP.Optimizer)
+model = Model(COSMO.Optimizer)
 set_optimizer_attributes(model)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
@@ -317,9 +317,6 @@ end
 optimize!(model)
 
 @show objective_value(model)
-
-##
-
 
 ##
 

@@ -2257,3 +2257,223 @@ for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
 ```julia
 for x_power in 0 : 2L_max - 4, p_power in 0 : 2L_max - 2
 ```
+
+总结一下目前的进展吧。$\lang O, H \rang = 0$的bug可能没有多少了，正定性的bug也应该没有多少了，为了判断是否真是如此，拿Mathematica算benchmark将是当务之急；如果事后发现Mathematica给出的解确实是feasible的，那么应该说主要问题在优化的技术细节上面了。
+
+此外，改用`COSMO`以后，目标函数变成了-20。可能是SDP约束不到位？
+
+运行诊断代码
+```julia
+using JLD2
+working_path = "D:\\Projects\\numerical-boostrap\\oscillator-simple-prototype\\"
+@load working_path * "xpopstr_expected_ode-dx-0.02-l-10.jld2" xpopstr_expected_ode 
+
+xpopstr_expected_ope_value = zeros(2xpopspace_dim)
+
+for xpopstr_idx in 1 : xpopspace_dim
+    x_power = index_to_xpower(xpopstr_idx)
+    p_power = index_to_ppower(xpopstr_idx)
+    expected_value = xpopstr_expected_ode[x_power, p_power]
+    xpopstr_expected_ope_value[2xpopstr_idx - 1] = real(expected_value)
+    xpopstr_expected_ope_value[2xpopstr_idx] = imag(expected_value)
+end
+
+xpopstr_expected_real_imag_parts_ope_value(i, real_or_imag) = begin
+    if real_or_imag == :real
+        return xpopstr_expected_ope_value[2i - 1]
+    end
+    if real_or_imag == :imag
+        return xpopstr_expected_ope_value[2i]
+    end
+end
+
+variable_list_real_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :real) * I22 for i in 1 : xpopspace_dim]
+variable_list_imag_ope_value = 
+    [xpopstr_expected_real_imag_parts_ope_value(i, :imag) * Im22 for i in 1 : xpopspace_dim]
+xpopstr_basis_real_ope_value = OffsetArray([I22, variable_list_real_ope_value...], xpopspace_index_range)
+xpopstr_basis_imag_ope_value = OffsetArray([O22, variable_list_imag_ope_value...], xpopspace_index_range)
+
+function complex_to_mat_ope_value(coefficients)
+    real_part = transpose(real(coefficients))
+    imag_part = transpose(imag(coefficients))
+    real_part_mat_version = map(x -> x * I22, real_part)
+    imag_part_mat_version = map(x -> x * Im22, imag_part)
+    (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real_ope_value + xpopstr_basis_imag_ope_value)
+end
+
+for x_power in 0 : 2L_max - 4, p_power in 0 : 2L_max - 2
+    op = xpopstr_xp_power(x_power, p_power)
+    cons = comm_with_ham(op)
+    cons_real = real(cons)
+    cons_imag = imag(cons)
+    lhs = complex_to_mat_ope_value(cons)
+    if cons_real == cons_imag == zero_xpopstr
+        continue
+    end
+    if cons_real == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 2])")
+    elseif cons_imag == zero_xpopstr
+        println("$x_power $p_power   $(lhs[1, 1])")
+    else
+        println("$x_power $p_power   $(lhs[1, 2])")
+        println("$x_power $p_power   $(lhs[1, 1])")
+    end
+end
+
+##
+
+M_ode_value = zeros(2 * (L_max + 1)^2, 2 * (L_max + 1)^2)
+
+for i in 1 : (L_max + 1)^2
+    for j in i : (L_max + 1)^2
+        op1_idx = M_index_to_xpopstr_index[i]
+        op2_idx = M_index_to_xpopstr_index[j]
+        op1_idx_xpower = index_to_xpower(op1_idx)
+        op1_idx_ppower = index_to_ppower(op1_idx)
+        op2_idx_xpower = index_to_xpower(op2_idx)
+        op2_idx_ppower = index_to_ppower(op2_idx)
+        op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+
+        M_ode_value[2i - 1 : 2i, 2j - 1 : 2j] = complex_to_mat_ope_value(op_ij)
+    end
+end
+
+plot(eigen(M_ode_value).values, legend=false)
+```
+得到的结果见`m-eigen-value-2022-3-20.png`。无非两种情况：
+- 要么解方程得到的关联函数值非常不精确（目前的配置：`Δx = 0.02; L = 10`）
+- 要么约束就写错了
+
+## 2022.3.21
+
+在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-3.nb`中有存放$\lang x^n p^m \rang$的数据。计算策略在这个笔记本里面写得很清楚了。非零部分列举如下：
+```Mathematica
+{xpOpString[] -> 1, xpOpString[p, p] -> 0.808702 + 0. I, 
+ xpOpString[x, p] -> 0. + 0.5 I, xpOpString[x, x] -> 0.301138, 
+ xpOpString[p, p, p, p] -> 1.88474 + 0. I, 
+ xpOpString[x, p, p, p] -> 0. + 1.21305 I, 
+ xpOpString[x, x, p, p] -> -0.186501 + 0. I, 
+ xpOpString[x, x, x, p] -> 0. + 0.451707 I, 
+ xpOpString[x, x, x, x] -> 0.253782, 
+ xpOpString[p, p, p, p, p, p] -> 7.01002 + 0. I, 
+ xpOpString[x, p, p, p, p, p] -> 0. + 4.71184 I, 
+ xpOpString[x, x, p, p, p, p] -> -1.45084 + 0. I, 
+ xpOpString[x, x, x, p, p, p] -> 0. + 0.660746 I, 
+ xpOpString[x, x, x, x, p, p] -> -0.595472 + 0. I, 
+ xpOpString[x, x, x, x, x, p] -> 0. + 0.634454 I, 
+ xpOpString[x, x, x, x, x, x] -> 0.343358, 
+ xpOpString[p, p, p, p, p, p, p, p] -> 36.8242 + 0. I, 
+ xpOpString[x, p, p, p, p, p, p, p] -> 0. + 24.5351 I, 
+ xpOpString[x, x, p, p, p, p, p, p] -> -8.90225 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p] -> 0. + 1.24922 I, 
+ xpOpString[x, x, x, x, p, p, p, p] -> -2.98912 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p] -> 0. + 0.051031 I, 
+ xpOpString[x, x, x, x, x, x, p, p] -> -1.44281 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p] -> 0. + 1.20175 I, 
+ xpOpString[x, x, x, x, x, x, x, x] -> 0.598177, 
+ xpOpString[p, p, p, p, p, p, p, p, p, p] -> 280.41 + 0. I, 
+ xpOpString[x, p, p, p, p, p, p, p, p, p] -> 0. + 165.709 I, 
+ xpOpString[x, x, p, p, p, p, p, p, p, p] -> -56.5456 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p, p, p] -> 0. + 5.47501 I, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p] -> -18.363 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p, p, p] -> 0. - 5.33909 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p] -> -5.16492 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p] -> 0. - 1.82597 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p] -> -3.90405 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p] -> 0. + 2.6918 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x] -> 1.31284, 
+ xpOpString[x, x, p, p, p, p, p, p, p, p, p, p] -> -378.595 + 0. I, 
+ xpOpString[x, x, x, p, p, p, p, p, p, p, p, p] -> 0. + 119.898 I, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p, p, p] -> -173.651 + 0. I, 
+ xpOpString[x, x, x, x, x, p, p, p, p, p, p, p] -> 0. - 64.0791 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p] -> -21.351 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p, p, p] -> 0. - 23.5749 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p] -> -7.952 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p] -> 0. - 9.44159 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p] -> -11.375 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p] -> 0. + 7.22064 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x] -> 3.40689, 
+ xpOpString[x, x, x, x, p, p, p, p, p, p, p, p, p, p] -> -2545.91 + 
+   0. I, xpOpString[x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 875.37 I, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> -114.049 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 240.416 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  19.3344 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 78.2718 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> -3.34435 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 39.639 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p] -> -37.5785 + 
+   0. I, xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 22.1448 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 9.75835, 
+ xpOpString[x, x, x, x, x, x, p, p, p, p, p, p, p, p, p, 
+   p] -> -718.932 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 3105.63 I, 
+ xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> 
+  785.441 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 598.6 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  283.659 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 236.616 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> 
+  61.1296 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 169.57 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -137.121 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 73.1876 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 
+  32.4658, xpOpString[x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, 
+   p, p] -> 17735.1 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, p] -> 
+  0. - 5504.13 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p] -> 
+  5072.89 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p] -> 
+  0. - 911.61 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p] -> 
+  1608.26 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p] -> 
+  0. - 620.892 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p] -> 
+  500.407 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p] -> 
+  0. - 760.017 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -525.418 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p] -> 
+  0. + 275.96 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x] -> 
+  117.962, xpOpString[x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, 
+   p, p, p, p] -> 93627.8 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, p, 
+   p] -> 0. + 7321.42 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, p, 
+   p] -> 21566.4 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, p, 
+   p] -> 0. + 2427.49 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, p, 
+   p] -> 7417.75 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, p, 
+   p] -> 0. - 1159.55 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, p, 
+   p] -> 3212.02 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, p, 
+   p] -> 0. - 3444.63 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, p, 
+   p] -> -2253.29 + 0. I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, 
+   p] -> 0. + 1120.64 I, 
+ xpOpString[x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, 
+   x] -> 451.727}
+```
+由此获得的$M$矩阵好像并不正定……
