@@ -208,7 +208,7 @@ function max_p_power(op::OffsetArray)
 end
 
 model = Model(COSMO.Optimizer)
-set_optimizer_attributes(model, "max_iter" => 100000)
+set_optimizer_attributes(model, "max_iter" => 10000000)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
@@ -315,8 +315,8 @@ end
 
 optimize!(model)
 
-@show objective_value(model)
-
-##
-
-value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real))
+println("-----------------------------------------------------------")
+println("Results:")
+println("")
+println("Objective value:   $(objective_value(model))")
+println("x square expectation:     $(value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)))")

@@ -2946,3 +2946,27 @@ norm(map(x -> point[x], M)' - map(x -> point[x], M))
 均没有什么问题。因此现在的`jump-oscillator-2-benchmark-with-ode.jl`应该是正确的了？
 
 于是当务之急是，看看它的最终优化结果是什么。
+
+为了避免把我自己的电脑算爆炸，还是去超算上算比较好。
+`print-test.jl`用来看在那个超算上输出是怎么记录的。
+
+将`2022-3-22-run-1.sh`和`jump-oscillator-3.jl`提交，用前者控制计算。
+核对：以上是全部需要提交的文件。`2022-3-22-run-1.sh`的是我需要计算的程序。
+```sh
+sc81233@ln71:~/jinyuanwu/numerical-bootstrap$ sbatch 2022-3-22-run-1.sh
+Submitted batch job 880535
+```
+看输出应该是跑起来了。不过收敛得真的非常、非常慢。可能要将`max_iter`调到更大，，，
+
+观察`slurm-880535.out`可以看到能量确实是一直在下降，但是收敛得非常，非常慢。
+
+将`max_iter`调到一千万？
+
+在`jump-oscillator-3.jl`中做对应的修改。
+
+将`2022-3-22-run-2.sh`和`jump-oscillator-3.jl`提交，用前者控制计算。
+核对：以上是全部需要提交的文件。`2022-3-22-run-1.sh`的是我需要计算的程序。
+```sh
+sc81233@ln71:~/jinyuanwu/numerical-bootstrap$ sbatch 2022-3-22-run-2.sh
+Submitted batch job 880774
+```
