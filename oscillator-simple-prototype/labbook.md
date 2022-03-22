@@ -2836,3 +2836,113 @@ M[59, 59] => -18013.035746628528,
 M[60, 60] => -18013.035746628528
 ```
 相对误差为`7.342092323453684e-6`。
+
+我们来考虑一下`M[60, 60]`这个点。它对应的`M_index`是30, 30，于是运行以下诊断代码：
+```julia
+@show index_to_xpower(M_index_to_xpopstr_index[30])
+@show index_to_ppower(M_index_to_xpopstr_index[30])
+```
+得到
+```
+index_to_xpower(M_index_to_xpopstr_index[30]) = 4
+index_to_ppower(M_index_to_xpopstr_index[30]) = 5
+```
+唉其实也没必要检查什么东西。看着下面的式子：
+```
+-120 * (-18.9248) + 240 * -65.8857 + 120 * -117.932 - 20 * -3199.36 - 18280.6 -18013.035746628528
+```
+我就猜得出来怎么回事了。很明显xpopstr那些变量的有效数字保留少了……
+
+## 2022.3.22
+
+然后我们来诊断`M`矩阵：运行诊断代码
+```julia
+M_at_point = zeros(2 * (L_max + 1)^2, 2 * (L_max + 1)^2)
+for i in 1 : 2 * (L_max + 1)^2
+    for j in i : 2 * (L_max + 1)^2
+        M_at_point[i, j] = point[M[i, j]]
+        M_at_point[j, i] = point[M[i, j]]
+    end
+end
+
+println(eigen(M_at_point).values)
+```
+然后会发现至少有两个问题
+- 其中一个是，`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-3.nb`中
+  $$
+  \ii \to \begin{pmatrix}
+    0 & -1 \\ 1 & 0
+  \end{pmatrix}
+  $$
+  的做法是错误的
+- 第二个问题更大，就是无论是我的Julia代码还是Mathematica代码都没有做$O_i^\dagger O_j$里面的转置
+  恐怕这个才是真正大的问题……（这也解释了为什么只有$x$时正定性条件是成立的）
+
+首先尝试修复Mathematica中的这个问题。
+- 修复后，$M$矩阵的谱形如`M-matrix-benchmark-spectrum.pdf`
+- 矩阵本身保存在`nonlinear-SDP-x-power-11-standard-m-value.csv`中（覆盖原文件）
+
+修改
+```julia
+op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+```
+为
+```julia
+op_ij = xpopstr_normal_ord(0, op1_idx_ppower, op1_idx_xpower + op2_idx_xpower, op2_idx_ppower)
+```
+这么做了以后优化仍然失败，不过至少能够看到进展。
+
+重复`reading-csv-nonlinear-SDP-x-power-11-standard-value.jl`中的步骤，覆盖`nonlinear-SDP-x-power-11-standard-m-mat.jl`和`nonlinear-SDP-x-power-11-standard-point.jl`。
+
+重新做feasible测试。然后这回肯定是暴露出来一些问题了，因为有很多constraint是真的不满足。哦不对，是`nonlinear-SDP-x-power-11-standard-point.jl`中的测试部分写错了。
+
+为了benchmark方便，将扩张后的$M$矩阵的特征值列举如下：
+```
+{152336. + 0. I, 152336. + 0. I, 35073.5 + 0. I, 35073.5 + 0. I, 
+ 7871.89 + 0. I, 7871.89 + 0. I, 3219.71 + 0. I, 3219.71 + 0. I, 
+ 1110.89 + 0. I, 1110.89 + 0. I, 418.283 + 0. I, 418.283 + 0. I, 
+ 143.947 + 0. I, 143.947 + 0. I, 142.996 + 0. I, 142.996 + 0. I, 
+ 34.4983 + 0. I, 34.4983 + 0. I, 25.0739 + 0. I, 25.0739 + 0. I, 
+ 10.7244 + 0. I, 10.7244 + 0. I, 1.07144 + 0. I, 1.07144 + 0. I, 
+ 0.186934 + 5.2322*10^-15 I, 0.186934 - 5.2322*10^-15 I, 
+ 0.0251751 + 9.67326*10^-14 I, 0.0251751 - 9.67326*10^-14 I, 
+ 0.0198789 + 0. I, 
+ 0.0198789 + 0. I, -0.0059278 + 0. I, -0.0059278 + 0. I, 
+ 0.00248624 + 0. I, 0.00248624 + 0. I, 0.0019754 + 0. I, 
+ 0.0019754 + 0. I, -0.00160649 + 0. I, -0.00160649 + 
+  0. I, -0.00122542 + 0. I, -0.00122542 + 0. I, -0.001218 + 
+  0. I, -0.001218 + 0. I, 0.000608623 + 0. I, 0.000608623 + 0. I, 
+ 0.000213875 + 1.46494*10^-14 I, 0.000213875 - 1.46494*10^-14 I, 
+ 0.000120688 + 0. I, 
+ 0.000120688 + 0. I, -0.0000893295 + 0. I, -0.0000893295 + 0. I, 
+ 0.0000463036 + 0. I, 
+ 0.0000463036 + 0. I, -0.0000309406 + 
+  3.27116*10^-15 I, -0.0000309406 - 3.27116*10^-15 I, -0.0000208805 + 
+  0. I, -0.0000208805 + 0. I, 
+ 1.053*10^-12 + 0. I, -7.07614*10^-14 + 0. I, -1.50663*10^-14 + 
+  2.04839*10^-14 I, -1.50663*10^-14 - 2.04839*10^-14 I, 
+ 1.17326*10^-14 + 9.41112*10^-15 I, 
+ 1.17326*10^-14 - 9.41112*10^-15 I, -9.51811*10^-15 + 
+  3.10301*10^-15 I, -9.51811*10^-15 - 3.10301*10^-15 I, 
+ 3.84313*10^-15 + 8.77461*10^-15 I, 3.84313*10^-15 - 8.77461*10^-15 I,
+  2.66106*10^-15 + 6.21263*10^-15 I, 
+ 2.66106*10^-15 - 6.21263*10^-15 I, 
+ 5.67874*10^-15 + 0. I, -4.93221*10^-15 + 0. I, 
+ 3.09633*10^-15 + 0. I, -1.49068*10^-16 + 0. I}
+```
+
+在`nonlinear-SDP-x-power-11-standard-point.jl`中新增的两个测试
+```julia
+##
+
+point[xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)] + 
+    point[xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real)] + 
+    g * point[xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real)]
+
+##
+
+norm(map(x -> point[x], M)' - map(x -> point[x], M))
+```
+均没有什么问题。因此现在的`jump-oscillator-2-benchmark-with-ode.jl`应该是正确的了？
+
+于是当务之急是，看看它的最终优化结果是什么。

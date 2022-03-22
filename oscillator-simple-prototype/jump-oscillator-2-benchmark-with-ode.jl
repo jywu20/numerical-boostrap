@@ -209,7 +209,7 @@ function max_p_power(op::OffsetArray)
 end
 
 model = Model(COSMO.Optimizer)
-set_optimizer_attributes(model)
+set_optimizer_attributes(model, "max_iter" => 100000)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
@@ -296,7 +296,7 @@ for i in 1 : (L_max + 1)^2
         op1_idx_ppower = index_to_ppower(op1_idx)
         op2_idx_xpower = index_to_xpower(op2_idx)
         op2_idx_ppower = index_to_ppower(op2_idx)
-        op_ij = xpopstr_normal_ord(op1_idx_xpower, op1_idx_ppower, op2_idx_xpower, op2_idx_ppower)
+        op_ij = xpopstr_normal_ord(0, op1_idx_ppower, op1_idx_xpower + op2_idx_xpower, op2_idx_ppower)
 
         @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== complex_to_mat(op_ij))
     end
@@ -320,20 +320,4 @@ optimize!(model)
 
 ##
 
-for x_power in 0 : L_max - 4, p_power in 0 : L_max - 2
-    op = xpopstr_xp_power(x_power, p_power)
-    cons = comm_with_ham(op)
-    cons_real = real(cons)
-    cons_imag = imag(cons)
-    lhs = complex_to_mat(cons)
-    if cons_real == cons_imag == zero_xpopstr
-        continue
-    end
-    if cons_real == zero_xpopstr
-        @constraint(model, lhs[1, 2] == 0.0)
-    elseif cons_imag == zero_xpopstr
-        @constraint(model, lhs[1, 1] == 0.0)
-    else
-        @constraint(model, lhs .== O22)
-    end
-end
+value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real))
