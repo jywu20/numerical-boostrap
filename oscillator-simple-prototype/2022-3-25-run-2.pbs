@@ -1,0 +1,8 @@
+#!/bin/sh
+#PBS -l nodes=1:ppn=4
+#PBS -j oe
+#PBS -l walltime=120:00:00
+#PBS -N nb-csdp
+
+cd $PBS_O_WORKDIR
+/storage1/home/shuchang/bin/julia/julia-1.7.2/bin/julia jump-oscillator-3-csdp.jl>2022-3-25-run-2.out 2>2022-3-25-run-2.err

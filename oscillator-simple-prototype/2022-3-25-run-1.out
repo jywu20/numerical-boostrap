@@ -1,0 +1,43 @@
+------------------------------------------------------------------
+          COSMO v0.8.5 - A Quadratic Objective Conic Solver
+                         Michael Garstka
+                University of Oxford, 2017 - 2022
+------------------------------------------------------------------
+
+Problem:  x ∈ R^{2868},
+          constraints: A ∈ R^{5533x2868} (14912 nnz),
+          matrix size to factor: 8401x8401,
+          Floating-point precision: Float64
+Sets:     ZeroSet of dim: 2905
+          DensePsdConeTriangle of dim: 2628 (72x72)
+Settings: ϵ_abs = 1.0e-05, ϵ_rel = 1.0e-10,
+          ϵ_prim_inf = 1.0e-04, ϵ_dual_inf = 1.0e-04,
+          ρ = 0.1, σ = 1e-06, α = 1.6,
+          max_iter = 30000000,
+          scaling iter = 10 (on),
+          check termination every 25 iter,
+          check infeasibility every 40 iter,
+          KKT system solver: QDLDL
+Acc:      Anderson Type2{QRDecomp},
+          Memory size = 15, RestartedMemory,	
+          Safeguarded: true, tol: 2.0
+Setup Time: 779.37ms
+
+Iter:	Objective:	Primal Res:	Dual Res:	Rho:
+1	-2.2670e-01	3.8550e+02	5.1055e+00	1.0000e-01
+25	 6.7754e-01	5.2198e+01	5.2068e+00	1.0000e-01
+50	 1.6636e+00	3.7019e+02	3.2371e+00	8.1863e-03
+75	 3.1687e+00	3.0932e+02	1.7248e+00	8.1863e-03
+
+------------------------------------------------------------------
+>>> Results
+Status: Primal_infeasible
+Iterations: 96 (incl. 15 safeguarding iter)
+Optimal objective: Inf
+Runtime: 4.436s (4436.47ms)
+
+-----------------------------------------------------------
+Results:
+
+Objective value:   Inf
+x square expectation:     0.4871552503368055

@@ -3020,4 +3020,34 @@ set_optimizer_attributes(model, "max_iter" => 10000000, "eps_rel" => 1.0e-10)
 
 ## 2022.3.25
 
-将``
+将`2022-3-24-run-1.pbs`任务的结果保存于`2022-3-24-run-1-out`中。
+顺带着把前几次的运行结果推到Github上面。out文件确实大了一点，是不是要用LFS？
+```
+remote: warning: See http://git.io/iEPt8g for more information.
+remote: warning: File oscillator-simple-prototype/2022-3-24-run-1-out is 61.38 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+To github.com:wujinq/numerical-boostrap.git
+   b0b37b1..f1da28d  main -> main
+```
+
+不过`2022-3-24-run-1-out`确实体现出了一些比较糟糕的东西。优化能量到`4.7624e+00`附近以后，就长时间没有进展了。然后，能量开始缓慢上升。16933250迭代左右往后的计算——总计算时间的一小半——都完全浪费了。
+
+目前可以继续做的事情包括：
+- 更换求解器
+- 固定几个参数，看看会有什么反应（无论如何，先做出来一个收敛的结果再说）
+- 再次检查feasible条件
+
+先从容易的做起吧。固定几个参数，看看有什么反应。
+
+在`jump-oscillator-3-cosmo-opsrel-1e-10-fix-x2.jl`中固定$x^2$。使用`2022-3-25-run-1.pbs`提交此任务。
+核对涉及到的文件
+- `2022-3-25-run-1.pbs`
+- `jump-oscillator-3-cosmo-opsrel-1e-10-fix-x2.jl`
+  
+无误。提交。
+
+结果发现提示infeasible……难道还有隐藏的bug吗？？？文件见`2022-3-25-run-1.out`。
+
+然后更换求解器。在`jump-oscillator-3-csdp.jl`中做这件事。使用使用`2022-3-25-run-2.pbs`提交此任务。核对无误后提交。
+用CSDP发现直接报告lack of progress。
+

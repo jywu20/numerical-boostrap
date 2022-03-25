@@ -1,0 +1,8 @@
+#!/bin/sh
+#PBS -l nodes=1:ppn=4
+#PBS -j oe
+#PBS -l walltime=120:00:00
+#PBS -N nb-cosmo-opsrel-1e-10-x2-fixed
+
+cd $PBS_O_WORKDIR
+~/bin/julia/julia-1.7.2/bin/julia jump-oscillator-3-cosmo-opsrel-1e-10-fix-x2.jl>2022-3-25-run-1.out 2>2022-3-25-run-1.out
