@@ -1,0 +1,9 @@
+#!/bin/sh
+#PBS -l nodes=1:ppn=4
+#PBS -j oe
+#PBS -l walltime=120:00:00
+#PBS -N nb-cosmo-opsrel-1e-10
+#PBS -o 2022-3-24-run-1.out
+#PBS -e 2022-3-24-run-1.err
+
+~/bin/julia/julia-1.7.2/bin/julia jump-oscillator-3-cosmo-opsrel-1e-10.jl>out 2>err

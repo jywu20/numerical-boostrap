@@ -2970,3 +2970,54 @@ Submitted batch job 880535
 sc81233@ln71:~/jinyuanwu/numerical-bootstrap$ sbatch 2022-3-22-run-2.sh
 Submitted batch job 880774
 ```
+
+优化是优化完了，得到的数据是`slurm-880774.out`，但是最后几行是
+```
+3353475	 1.3968e+01	2.3154e+00	7.5731e-04	2.2861e-06
+3353500	 1.3968e+01	2.0787e+00	1.9817e-05	2.2861e-06
+
+------------------------------------------------------------------
+>>> Results
+Status: Solved
+Iterations: 3353517 (incl. 17 safeguarding iter)
+Optimal objective: 13.97
+Runtime: 11580.482s (1.158048171e7ms)
+
+-----------------------------------------------------------
+Results:
+
+Objective value:   13.96763393230745
+x square expectation:     1.6702472405989577
+```
+这个很明显有问题啊，这个表的header是
+```
+Iter:	Objective:	Primal Res:	Dual Res:	Rho:
+```
+
+## 2022.3.23
+
+我们有
+```
+julia> @show get_optimizer_attribute(model, "eps_abs")
+get_optimizer_attribute(model, "eps_abs") = 1.0e-5
+1.0e-5
+
+julia> @show get_optimizer_attribute(model, "eps_rel")
+get_optimizer_attribute(model, "eps_rel") = 1.0e-5
+1.0e-5
+```
+结合COSMO的[收敛条件](https://oxfordcontrol.github.io/COSMO.jl/stable/method/#Termination-criteria)，引入以下配置：
+```
+set_optimizer_attributes(model, "max_iter" => 10000000, "eps_rel" => 1.0e-10)
+```
+保存在`jump-oscillator-3-cosmo.jl`里面。
+
+将`jump-oscillator-3-cosmo.jl`和`2022-3-23-run-1.sh`复制到超算上，检查无误。然后等着吧，超算占用满了……
+
+## 2022.3.24
+
+将`jump-oscillator-3-cosmo.jl`改名为`jump-oscillator-3-cosmo-opsrel-1e-10.jl`，和`2022-3-24-run-1.pbs`复制到超算上，核对无误后运行
+
+## 2022.3.25
+
+将``
