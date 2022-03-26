@@ -3051,3 +3051,77 @@ To github.com:wujinq/numerical-boostrap.git
 然后更换求解器。在`jump-oscillator-3-csdp.jl`中做这件事。使用使用`2022-3-25-run-2.pbs`提交此任务。核对无误后提交。
 用CSDP发现直接报告lack of progress。
 
+## 2022.3.26
+
+那么，看起来我们需要再次检查是不是约束写错了。实际上就是再次检查feasibility。我们在`jump-oscillator-3-feasibility-checking.jl`里面做这件事。
+
+运行诊断代码
+```julia
+value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real) + 
+    xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real) + 
+    g * xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real), v -> point[v])
+```
+得到`1.3921990000000002`。因此能量没问题。
+
+然后看`M`矩阵。运行诊断代码
+```julia
+eigen(value.(M, v -> point[v])).values
+```
+得到
+```
+72-element Array{Complex{Float64},1}:
+  -0.005927795262277084 + 0.0im
+ -0.0059277952622316015 + 0.0im
+ -0.0016064864154372303 + 0.0im
+ -0.0016064864154119894 + 0.0im
+ -0.0012254218691151704 - 1.2406040499328298e-14im
+ -0.0012254218691151704 + 1.2406040499328298e-14im
+ -0.0012179953852214963 + 0.0im
+ -0.0012179953851737479 + 0.0im
+  -8.932946992171226e-5 + 0.0im
+  -8.932946990707611e-5 + 0.0im
+  -3.094063366678461e-5 - 1.4616356095333473e-14im
+                        ⋮
+     1110.8909248175623 + 0.0im
+     1110.8909248175642 + 0.0im
+     3219.7065089519874 + 0.0im
+     3219.7065089519892 + 0.0im
+      7871.886495860934 + 0.0im
+      7871.886495860938 + 0.0im
+      35073.54735146827 + 0.0im
+      35073.54735146832 + 0.0im
+      152336.1523407796 + 0.0im
+     152336.15234077966 + 0.0im
+```
+
+在`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-4.nb`中获得更加精确的`xpopstr_expected`值。
+根据结果，修改`nonlinear-SDP-x-power-11-standard-point.jl`。
+这回，运行
+```julia
+max(collect(values(infeasible_report))...)
+```
+得到的就是`5.820766091346741e-11`，且infeasibility report的大小也缩水了很多。因此基本上可以确定是数值原因导致了之前的“大的infeasibility”。
+
+运行
+```julia
+real_part_eigen_m = eigen(value.(M, v -> point[v])).values |> real
+min(real_part_eigen_m[real_part_eigen_m .< 0]...)
+```
+得到-0.006左右的值。绝对值也不算小了，虽然所有特征值的乘积的绝对值非常非常小。与`calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-4.nb`相比看不出明显区别。
+因此，大概率我们又遇到了一个数值误差。
+
+因此，基本可以确定，下面我们要做的事情是纯粹的优化技巧问题。
+
+首先将`nonlinear-SDP-x-power-11-standard-point.jl`中的`point`分离出来，单独放在文件`nonlinear-SDP-x-power-11-standard-point-def.jl`里面。
+看看能否固定变量，至少先跑出来一个feasible的解。
+
+修改`jump-oscillator-3-cosmo-opsrel-1e-10-fix-x2.jl`。在`2022-3-26-run-1.sh`中调用它。
+
+将如下文件：
+- `jump-oscillator-3-cosmo-opsrel-1e-10-fix-x2.jl`
+- `2022-3-26-run-1.sh`
+- `nonlinear-SDP-x-power-11-standard-point-def.jl`
+
+提交到服务器。核对无误。然后又是Batch job submission failed。匪夷所思。
+
+更换服务器以后发现还是“infeasible”……

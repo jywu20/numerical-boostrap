@@ -208,7 +208,7 @@ function max_p_power(op::OffsetArray)
 end
 
 model = Model(COSMO.Optimizer)
-set_optimizer_attributes(model, "max_iter" => 30000000, "eps_rel" => 1.0e-10)
+set_optimizer_attributes(model, "max_iter" => 10000000)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
@@ -306,31 +306,5 @@ end
     xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real) + 
     g * xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real))
 
-# The initial value of E and ⟨x²⟩ are [1.37, 0.298], and therefore 
-# x⁴ = (E - 2x²) / 3g = 0.258 
-# x²_0 = 0.298
-# x⁴_0 = 0.258
-# set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real), x²_0)
-# set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real), x⁴_0)
+##
 
-# Fix some varialbes and see what's going on
-include("nonlinear-SDP-x-power-11-standard-point-def.jl")
-
-fixed_variable_set = [
-    xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real),
-    xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :imag)
-]
-for var in fixed_variable_set
-    fix(var, benchmark_point[var])
-end
-
-optimize!(model)
-
-println("-----------------------------------------------------------")
-println("Results:")
-println("")
-println("Objective value:   $(objective_value(model))")
-
-for opstr_idx in 1:2xpopspace_dim
-    println("xpopstr_expected[$opstr_idx]  $(value(xpopstr_expected[opstr_idx]))")
-end
