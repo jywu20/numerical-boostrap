@@ -3125,3 +3125,19 @@ min(real_part_eigen_m[real_part_eigen_m .< 0]...)
 提交到服务器。核对无误。然后又是Batch job submission failed。匪夷所思。
 
 更换服务器以后发现还是“infeasible”……
+
+## 2022.4.6
+
+应该将`jump-oscillator-3-feasibility-checking.jl`中的
+```julia
+for j in i : (L_max + 1)^2
+```
+中的`i : `替换成`1 : `。替换后运行`nonlinear-SDP-x-power-11-standard-point.jl`中的
+```julia
+max(collect(values(infeasible_report))...)
+```
+得到`5.820766091346741e-11`。因此约束无误。由于$M$包含所有$x^n p^m$，这应该给出了完整的$\lang O^\dagger \rangle = \lang O \rang^*$。
+
+在`jump-oscillator-3-cosmo-opsrel-1e-10.jl`中做同样的修改。
+
+使用`2022-4-6-run-1.pbs`提交任务。核对涉及的文件为`jump-oscillator-3-cosmo-opsrel-1e-10.jl`，无误，输出文件名称无误。

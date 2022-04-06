@@ -82,7 +82,7 @@ end
 @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2])
 
 for i in 1 : (L_max + 1)^2
-    for j in i : (L_max + 1)^2
+    for j in 1 : (L_max + 1)^2
         op1_idx = M_index_to_xpopstr_index[i]
         op2_idx = M_index_to_xpopstr_index[j]
         op1_idx_xpower = index_to_xpower(op1_idx)
