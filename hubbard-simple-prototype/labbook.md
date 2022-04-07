@@ -149,3 +149,22 @@ $\mathcal{C}_2$其实没有必要被显式地构造；反正唯一会用到$O \i
 ## 2022.4.6
 
 我感觉我好像搞错了什么。在之前关于$x$和$p$的问题中，$\lang O^\dagger \rangle = \lang O \rang^*$被考虑进去了没有？
+
+## 2022.4.7
+
+似乎有一种方法可以绕过（姑且这么说）在$\mathcal{C}_2$中构造非常复杂的算符空间的必要性。你想，(2)中的算符都是$O^\dag O$这种形式的，那么显然它们可以被normal order，然后其中的每一项的产生算符部分的$l$值当然都小于$K$，湮灭算符当然也是。
+另一方面，我们有
+> $\mathcal{C}_1$ spanned by the strings that appear in the products of two operators in $\mathcal{C}_2$
+
+因此，看起来，可以使用类似于谐振子的方法，如下定义$M$矩阵和constraint：使用产生算符
+
+这样就没有必要显式构造$\mathcal{C}_2$了，从而免去了将`operator-string.jl`的结果重新标上产生和湮灭标签的时间。
+因此，只需要保证`operator-string.jl`的结果的完备性就可以了。或者其实完备性也用不着保证，反正如果计算过程中有算符落在$\mathcal{C}_1$外面就忽略这个计算。
+好得很，好得很，，，
+
+然后，既然现在某个`current_op_str`不再是一个$\mathcal{C}_1$算符中所有产生湮灭算符的标签，显然我们需要允许它完全没有经过原点。
+平移对称性的事情怎么引入呢？不知道，但总之`operator-string.jl`不是讨论这个问题的地方。
+
+现在的任务包括：
+- 修改`operator-string.jl`使之能够容纳原点一次也没有出现的点序列
+- 开发`operators.jl`

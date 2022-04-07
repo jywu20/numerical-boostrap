@@ -165,7 +165,7 @@ end
 
 #endregion
 
-#region Construct all operator involved
+#region Construct all operator involved (see labbook.md#2022.4.7 for some discussion)
 
 FermionicOperatorType = Union{:create, :annhilate}
 SpinLabel = Union{:up, :dn}
