@@ -168,3 +168,25 @@ $\mathcal{C}_2$其实没有必要被显式地构造；反正唯一会用到$O \i
 现在的任务包括：
 - 修改`operator-string.jl`使之能够容纳原点一次也没有出现的点序列
 - 开发`operators.jl`
+
+先做第一件事。将
+```julia
+current_op_str = [:up]
+```
+修改为
+```julia
+current_op_str = [:no]
+```
+看看会怎么样
+
+## 2022.4.10
+
+无论如何要开始好好实现了。
+
+在`operator-string.jl`中运行
+```julia
+sort(values(hubbard_opstr_index) |> collect) == 1 : length(hubbard_opstr_basis)
+```
+得到`true`。
+
+算费米子乘积的normal ordering似乎比我想象的要简单。

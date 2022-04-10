@@ -1,11 +1,12 @@
 using LinearAlgebra
 using ProgressMeter
+using Match
 
 #region Give indexes to sites that may be involved. Note that here we have already invoked the translational 
 # symmetry 
 
 # l(O) ≤ K
-K = 4
+K = 5
 site_num = (2K + 1)^2
 
 site_list = Vector{Int}[]
@@ -49,7 +50,7 @@ spin_status_on_one_site = [:no, :up, :dn, :both]
 # DFS of possible operator string
 # Whether there is no operator, a spin-up operator, a spin-down operator or both a spin-up and a spin-down 
 # operator on each site. The index of current_op_str is the same as the index of site_list
-current_op_str = [:up]
+current_op_str = [:no]
 # For an operator string with r operators, its size is r + ∑_i |x_i|_1, where x_i is the coordinate of 
 # the i-th operator
 current_op_str_size = 1
@@ -167,14 +168,61 @@ end
 
 #region Construct all operator involved (see labbook.md#2022.4.7 for some discussion)
 
-FermionicOperatorType = Union{:create, :annhilate}
-SpinLabel = Union{:up, :dn}
-HubbardOperator = Tuple{FermionicOperatorType, Int, SpinLabel}
+fermionic_operator_types = [:cdag, :c]
+spin_label = [:up, :dn]
+HubbardOperator = Tuple{Symbol, Int, Symbol}
 HubbardOperatorString = Vector{HubbardOperator}
-qualified_opstr = Vector{HubbardOperatorString}[]
+qualified_opstr_create_half = HubbardOperatorString[]
+qualified_opstr_annihilate_half = HubbardOperatorString[]
 
-for occupation_configuration in qualified_opstr_site_configuration
-    
+for current_op_str in qualified_opstr_site_configuration
+    current_create_half = HubbardOperator[]
+    current_annihilate_half = HubbardOperator[]
+    for i in 1 : length(site_list)
+        @match current_op_str[i] begin
+            :no => Nothing
+            :up => begin
+                push!(current_create_half, (:cdag, i, :up));
+                pushfirst!(current_annihilate_half, (:c, i, :up))
+            end
+            :dn => begin
+                push!(current_create_half, (:cdag, i, :dn));
+                pushfirst!(current_annihilate_half, (:c, i, :dn))
+            end
+            :both => begin
+                push!(current_create_half, (:cdag, i, :up));
+                push!(current_create_half, (:cdag, i, :dn));
+                pushfirst!(current_annihilate_half, (:c, i, :dn));
+                pushfirst!(current_annihilate_half, (:c, i, :up));
+            end
+        end
+    end
+    push!(qualified_opstr_create_half, current_create_half)
+    push!(qualified_opstr_annihilate_half, current_annihilate_half)
 end
+
+hubbard_opstr_basis = reshape(map(seq_pair -> begin
+        cdag_seq, c_seq = seq_pair
+        [cdag_seq..., c_seq...]
+    end, 
+    Iterators.product(qualified_opstr_create_half, qualified_opstr_annihilate_half) |> collect), 
+    length(qualified_opstr_create_half)^2)
+
+hubbard_opstr_size(opstr) = begin
+    if opstr == []
+        return 0.0
+    end
+    sum(map(op -> site_norm_1_from_center[op[2]], opstr)) + length(opstr)
+end
+
+filter!(opstr -> hubbard_opstr_size(opstr) ≤ K, hubbard_opstr_basis)
+hubbard_opstr_basis = convert(Vector{Vector{Tuple{Symbol, Int, Symbol}}}, hubbard_opstr_basis)
+
+hubbard_opstr_index = Dict{Vector{Tuple{Symbol, Int, Symbol}}, Int}()
+for opstr_index in 1 : length(hubbard_opstr_basis)
+    hubbard_opstr_index[hubbard_opstr_basis[opstr_index]] = opstr_index
+end
+
+hubbard_opstr_basis_length = length(hubbard_opstr_basis)
 
 #endregion
