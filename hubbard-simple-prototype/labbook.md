@@ -190,3 +190,46 @@ sort(values(hubbard_opstr_index) |> collect) == 1 : length(hubbard_opstr_basis)
 得到`true`。
 
 算费米子乘积的normal ordering似乎比我想象的要简单。
+
+## 2022.4.11
+
+今天需要做两件事：
+- 一个是完全技术性的，就是让`operator-string.jl`中横行的全局变量包到`begin ... end`块里面
+- 一个是使用QuantumAlgebra.jl来做费米子代数
+
+第一件事似乎已经完成了；我感觉应该将`operator-string.jl`重命名为`operator-label.jl`，而将`operator.jl`重命名为`operator-algebra.jl`。
+我也将`operator-string.jl`最后一个region挪到了`operator-algebra.jl`里面。
+
+需要将`:up`替换成`:↑`。否则会报
+```
+ERROR: ArgumentError: index names must be single character, got up.
+Stacktrace:
+ [1] QuantumAlgebra.QuIndex(::String) at C:\Users\wujin\.julia\packages\QuantumAlgebra\6pQhc\src\operator_defs.jl:37
+ [2] QuIndex at C:\Users\wujin\.julia\packages\QuantumAlgebra\6pQhc\src\operator_defs.jl:33 [inlined]     
+ [3] iterate at .\generator.jl:47 [inlined]
+ [4] collect_to!(::Array{QuantumAlgebra.QuIndex,1}, ::Base.Generator{Tuple{Int64,Symbol},Type{QuantumAlgebra.QuIndex}}, ::Int64, ::Int64) at .\array.jl:732
+ [5] collect_to_with_first! at .\array.jl:710 [inlined]
+ [6] collect(::Base.Generator{Tuple{Int64,Symbol},Type{QuantumAlgebra.QuIndex}}) at .\array.jl:691        
+ [7] make_indices(::Int64, ::Symbol) at C:\Users\wujin\.julia\packages\QuantumAlgebra\6pQhc\src\operator_defs.jl:70
+ [8] FermionDestroy(::QuantumAlgebra.QuOpName, ::Int64, ::Vararg{Any,N} where N) at C:\Users\wujin\.julia\packages\QuantumAlgebra\6pQhc\src\operator_defs.jl:119
+ [9] c(::Int64, ::Vararg{Any,N} where N) at C:\Users\wujin\.julia\packages\QuantumAlgebra\6pQhc\src\operator_defs.jl:248
+ [10] top-level scope at REPL[9]:1
+```
+
+记得要引人家的包！
+
+注意到
+```
+julia> normal_form(c(1,:↑) * c(2,:↑))
+c(1↑) c(2↑)
+
+julia> normal_form(cdag(1,:↑) * cdag(2,:↑))
+c†(1↑) c†(2↑)
+```
+如果我们要c†(1↑) c†(2↑) c(2↑) c(1↑)这种效果，可能需要去访问`QuExpr`的`items`成员然后手动把负号加上去。
+
+目前，我们**不**采用这种做法，就是说直接自乘，不去保持c†(1↑) c†(2↑) c(2↑) c(1↑)。
+
+现在算符代数部分写应该是写完了，对不对那就不知道了……
+新增一个文件`configuration.jl`，用于保存各种参数。
+
