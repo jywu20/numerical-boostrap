@@ -233,3 +233,20 @@ c†(1↑) c†(2↑)
 现在算符代数部分写应该是写完了，对不对那就不知道了……
 新增一个文件`configuration.jl`，用于保存各种参数。
 
+`Construct the M matrix`一节是有问题的，这样只能够剩下
+```
+julia> M_mat_spanning_opstr_indices
+1-element Array{Int64,1}:
+ 1
+```
+
+目前的问题是
+```
+KeyError: key c†(1-1) c†(11) not found
+```
+
+这个解决了。
+
+然后处理等式约束。这个需要
+- 根据$O$中涉及的算符构造哈密顿量
+- 构造对称性（也许可以先放放？在这里和哈密顿量对易能够隐式施加对称性约束吗？）

@@ -6,8 +6,11 @@ using QuantumAlgebra
 
 @fermion_ops c
 
+↑ = 1
+↓ = -1
+
 begin
-    local HubbardOperator = Tuple{Symbol, Int, Symbol}
+    local HubbardOperator = Tuple{Symbol, Int, Int}
     local HubbardOperatorString = Vector{HubbardOperator}
     local qualified_opstr_create_half = HubbardOperatorString[]
     local qualified_opstr_annihilate_half = HubbardOperatorString[]
@@ -20,18 +23,25 @@ begin
             @match current_op_str[i] begin
                 :no => Nothing
                 :up => begin
-                    push!(current_create_half, (:cdag, i, :↑));
-                    push!(current_annihilate_half, (:c, i, :↑))
+                    # QuantumAlgebra recognize :↑ and :↓ as indices, so δ(↑↓) may appear in normal ordered 
+                    # operators. We need to avoid this case. Using string instead of symbol to label spins
+                    # creates the same problem. Nor can we label spins as 1/2 or 1//2, since QuantumAlgebra
+                    # don't support float or rational. Nor can we use c↑.
+                    # The only choice is to use 1 to denote ↑ and -1 ↓.
+                    push!(current_create_half, (:cdag, i, ↑));
+                    push!(current_annihilate_half, (:c, i, ↑))
                 end
                 :dn => begin
-                    push!(current_create_half, (:cdag, i, :↓));
-                    push!(current_annihilate_half, (:c, i, :↓))
+                    push!(current_create_half, (:cdag, i, ↓));
+                    push!(current_annihilate_half, (:c, i, ↓))
                 end
                 :both => begin
-                    push!(current_create_half, (:cdag, i, :↑));
-                    push!(current_create_half, (:cdag, i, :↓));
-                    push!(current_annihilate_half, (:c, i, :↑));
-                    push!(current_annihilate_half, (:c, i, :↓));
+                    # Later we need to multiply all operators together, and QuantumAlgebra places ↓ before ↑,
+                    # so we also need to do so
+                    push!(current_create_half, (:cdag, i, ↓));
+                    push!(current_create_half, (:cdag, i, ↑));
+                    push!(current_annihilate_half, (:c, i, ↓));
+                    push!(current_annihilate_half, (:c, i, ↑));
                 end
             end
         end
@@ -56,14 +66,17 @@ begin
     end
 
     filter!(opstr -> hubbard_opstr_size(opstr) ≤ K, hubbard_opstr_basis)
-    hubbard_opstr_basis = convert(Vector{Vector{Tuple{Symbol, Int, Symbol}}}, hubbard_opstr_basis)
+    hubbard_opstr_basis = convert(Vector{Vector{Tuple{Symbol, Int, Int}}}, hubbard_opstr_basis)
+
     #endregion
 
     #region output
 
     hubbard_opstr_basis_length = length(hubbard_opstr_basis)
 
-    hubbard_opstr_sites = map(opstr -> map(op -> op[2], opstr), hubbard_opstr_basis)
+    hubbard_opstr_basis_sites = map(opstr -> map(op -> op[2], opstr), hubbard_opstr_basis)
+
+    hubbard_opstr_basis_size = map(hubbard_opstr_size, hubbard_opstr_basis)
 
     # Turning operator labels into actual QuantumAlgebra objects. Redefine `hubbard_opstr_basis`.
     # 
@@ -74,7 +87,7 @@ begin
     # They are truncated when constructing `hubbard_opstr_normal_order`.
     hubbard_opstr_basis = map(hubbard_opstr_basis) do opstr_labels
         if length(opstr_labels) == 0
-            return zero(QuExpr)
+            return one(QuExpr)
         end
         map(opstr_labels) do op_label
             if op_label[1] == :c
@@ -100,18 +113,19 @@ begin
 
     hubbard_opstr_zero = zeros(ComplexF64, length(hubbard_opstr_basis))
 
-    hubbard_opstr_basis_coefficients = map(hubbard_opstr_basis) do opstr
+    function hubbard_opstr_coefficients(opstr)
         res = copy(hubbard_opstr_zero)
         for basis_coefficient_pair in opstr.terms
             # Note: `opstr.terms`'s key type is QuantumAlgebra.QuTerm, a private type, 
             # so here we need to get the QuTerm object corresponding to `basis`
             basis = QuExpr(Dict(basis_coefficient_pair[1] => 1))
+
             coefficient = basis_coefficient_pair[2]
             res[hubbard_opstr_index[basis]] = coefficient
         end
         res
     end
-
+    
     #endregion
 end
 
@@ -124,27 +138,27 @@ hubbard_opstr_normal_order = Matrix{Vector{ComplexF64}}(undef,
 
 # Indices of operators qualified to span the M matrix in `hubbard_opstr_basis`
 # The condition: O_i is qualified if ⟨ O†_i O_j ⟩ is in `hubbard_opstr_basis` for any O_j
-M_mat_spanning_opstr_indices = Int[]
+M_mat_spanning_opstr_indices = filter(collect(1 : hubbard_opstr_basis_length)) do opstr_index
+    hubbard_opstr_basis_size[opstr_index] ≤ K / 2
+end
 
-for opstr_index_1 in 1 : hubbard_opstr_basis_length
-    needed_cutoff = false 
-    for opstr_index_2 in 1 : hubbard_opstr_basis_length
+M_coefficient = Matrix{Vector{Float64}}(undef, 
+    length(M_mat_spanning_opstr_indices), length(M_mat_spanning_opstr_indices))
+
+for (i, opstr_index_1) in enumerate(M_mat_spanning_opstr_indices)
+    for (j, opstr_index_2) in enumerate(M_mat_spanning_opstr_indices)
         opstr_1 = hubbard_opstr_basis[opstr_index_1]
         opstr_2 = hubbard_opstr_basis[opstr_index_2]
 
         Mij = normal_form(opstr_1' * opstr_2)
-        if ! issubset(Set(values(Mij.terms)), Set(hubbard_opstr_basis))
-            needed_cutoff = true 
-            break
-        end
-    end
-    if ! needed_cutoff
-        push!(M_mat_spanning_opstr_indices, opstr_index_1)
+        M_coefficient[i, j] = hubbard_opstr_coefficients(Mij)
     end
 end
 
 #endregion
 
 #region Construct equational constraints
+
+
 
 #endregion
