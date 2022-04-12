@@ -23,4 +23,6 @@ t = 1.0
 K = 5
 site_num = (2K + 1)^2
 
+max_iter = 10000
+
 #endregion

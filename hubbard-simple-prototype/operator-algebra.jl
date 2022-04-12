@@ -74,7 +74,7 @@ begin
 
     hubbard_opstr_basis_length = length(hubbard_opstr_basis)
 
-    hubbard_opstr_basis_sites = map(opstr -> map(op -> op[2], opstr), hubbard_opstr_basis)
+    hubbard_opstr_basis_sites = map(opstr -> map(op -> op[2], opstr) |> Set |> collect, hubbard_opstr_basis)
 
     hubbard_opstr_basis_size = map(hubbard_opstr_size, hubbard_opstr_basis)
 
@@ -121,6 +121,9 @@ begin
             basis = QuExpr(Dict(basis_coefficient_pair[1] => 1))
 
             coefficient = basis_coefficient_pair[2]
+            if ! haskey(hubbard_opstr_index, basis)
+                return Nothing
+            end
             res[hubbard_opstr_index[basis]] = coefficient
         end
         res
@@ -142,7 +145,7 @@ M_mat_spanning_opstr_indices = filter(collect(1 : hubbard_opstr_basis_length)) d
     hubbard_opstr_basis_size[opstr_index] ≤ K / 2
 end
 
-M_coefficient = Matrix{Vector{Float64}}(undef, 
+M_coefficient = Matrix{Vector{ComplexF64}}(undef, 
     length(M_mat_spanning_opstr_indices), length(M_mat_spanning_opstr_indices))
 
 for (i, opstr_index_1) in enumerate(M_mat_spanning_opstr_indices)
@@ -159,6 +162,31 @@ end
 
 #region Construct equational constraints
 
+begin 
+    H_hubbard = zero(QuExpr)
+    local displacements = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    for (i, i_pos) in enumerate(site_list)
+        # println(H_hubbard)
+        # The U-term: U n_{i↑} n_{i↓}
+        global H_hubbard += U * normal_form(cdag(i, ↑) * c(i, ↑) * cdag(i, ↓) * c(i, ↓))
+        # The t-term
+        for d in displacements
+            j_pos = i_pos + d
+            if haskey(inverse_list, j_pos)
+                j = inverse_list[j_pos]
+                global H_hubbard += - t * (cdag(j, ↑) * c(i, ↑) + cdag(j, ↓) * c(i, ↓))
+            end
+        end
+    end
+end
 
+H_constraints_coefficients = Vector{ComplexF64}[]
+for opstr_basis_index in 1 : hubbard_opstr_basis_length
+    coefficients = 
+        comm(H_hubbard, hubbard_opstr_basis[opstr_basis_index]) |> normal_form |> hubbard_opstr_coefficients
+    if coefficients != Nothing
+        push!(H_constraints_coefficients, coefficients)
+    end
+end
 
 #endregion

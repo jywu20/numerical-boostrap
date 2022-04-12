@@ -1,34 +1,39 @@
 using LinearAlgebra
-using ProgressMeter
 using Match
 
 #region Give indexes to sites that may be involved. Note that here we have already invoked the translational 
 # symmetry 
 
 site_list = Vector{Int}[]
+inverse_list = Dict{Vector{Int}, Int}()
 
 let current_site = [0, 0]
     for n in 1 : K
         for i in 1 : 2n - 1
             push!(site_list, current_site)
+            push!(inverse_list, current_site => length(site_list))
             current_site += [0, 1]
         end
         for i in 1 : 2n - 1
             push!(site_list, current_site)
+            push!(inverse_list, current_site => length(site_list))
             current_site -= [1, 0]
         end
         for i in 1 : 2n
             push!(site_list, current_site)
+            push!(inverse_list, current_site => length(site_list))
             current_site -= [0, 1]
         end
         for i in 1 : 2n
             push!(site_list, current_site)
+            push!(inverse_list, current_site => length(site_list))
             current_site += [1, 0]
         end
     end
 
     for i in 1 : 2K + 1
         push!(site_list, current_site)
+        push!(inverse_list, current_site => length(site_list))
         current_site += [0, 1]
     end
 end

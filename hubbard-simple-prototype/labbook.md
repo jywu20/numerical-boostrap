@@ -250,3 +250,12 @@ KeyError: key c†(1-1) c†(11) not found
 然后处理等式约束。这个需要
 - 根据$O$中涉及的算符构造哈密顿量
 - 构造对称性（也许可以先放放？在这里和哈密顿量对易能够隐式施加对称性约束吗？）
+
+## 2022.4.12
+
+现在需要解决这个问题：计算算符和哈密顿量的对易关系时，hopping term要怎么构造？我感觉好像能够hop到的点都是在`site_list`里面。
+就是你想，如果$l(O) \leq K$，那么一个格点的$1-$范数应该小于等于$K-1$，就是说其每个坐标的绝对值小于等于$K-1$，但是，`site_list`里面的点排成$(2K+1)^2$方阵。
+
+`hopping-legs.pdf`展现了应该如何不double counting地写下hopping terms：找所有格点，写下每个格点向周围跑的hopping term，就可以（黄色方框标出了一个完整的hopping term $- t \sum_{\lang \boldsymbol{i}, \boldsymbol{j} \rang, \sigma} c^\dagger_{\boldsymbol{i} \sigma} c_{\boldsymbol{j} \sigma}$）
+
+现在不知道为什么`H_hubbard`都是零。

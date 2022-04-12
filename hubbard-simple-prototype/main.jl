@@ -1,3 +1,4 @@
+#region Start up
 # Load configuration
 include("configuration.jl")
 
@@ -15,17 +16,32 @@ open(full_output_name, "w") do file
     println(file, "Configuration loaded.")
     println(file, "")
 end
+#endregion
 
-# Generate labels for operators (i.e. "site 34, spin ↑")
+#region Generate labels for operators (i.e. "site 34, spin ↑")
 include("operator-label.jl")
 
 open(full_output_name, "a") do file
     println(file, "Operator labels constructed.")
 end
+#endregion
 
+#region Find M matrix and 
 include("operator-algebra.jl")
+
+open(full_output_name, "a") do file
+    println(file, "Constraints and M matrix assembled.")
+end
+#endregion
+
+#region Construct the Optimization problem
+
+include("optimization_problem.jl")
 
 open(full_output_name, "a") do file
     println(file, "Optimization problem constructed. Starting optimizing.")
     println(file, "--------------------------------------")
+    println(file)
 end
+
+#endregion
