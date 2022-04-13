@@ -259,3 +259,17 @@ KeyError: key c†(1-1) c†(11) not found
 `hopping-legs.pdf`展现了应该如何不double counting地写下hopping terms：找所有格点，写下每个格点向周围跑的hopping term，就可以（黄色方框标出了一个完整的hopping term $- t \sum_{\lang \boldsymbol{i}, \boldsymbol{j} \rang, \sigma} c^\dagger_{\boldsymbol{i} \sigma} c_{\boldsymbol{j} \sigma}$）
 
 现在不知道为什么`H_hubbard`都是零。
+
+## 2022.4.13
+
+有待做的事情：
+- 单个格点的哈密顿量
+    $$
+    \begin{aligned}
+        H_1 &= -t \sum_{\sigma} c^\dagger_{1 \sigma} (c_{2 \sigma} + c_{4 \sigma} + c_{6 \sigma} + c_{8 \sigma}) + U n_{1 \uparrow} n_{1 \downarrow} 
+    \end{aligned}
+    $$
+
+    注意这里没有h.c.项，即没有从1到2, 4, 6, 8号格点的跃迁，以免double counting。
+- 平移对称性；实际上，需要先施加平移对称性，才能够保证以单格点哈密顿量为优化目标是合理的
+

@@ -44,4 +44,6 @@ open(full_output_name, "a") do file
     println(file)
 end
 
+include("run_optimization.jl")
+
 #endregion
