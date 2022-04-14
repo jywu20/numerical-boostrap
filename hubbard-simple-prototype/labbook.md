@@ -277,3 +277,17 @@ KeyError: key c†(1-1) c†(11) not found
 
 反之总之是写完了，错肯定是有的，先看看跑起来效果怎么样吧……
 
+需要的文件：
+- `main.jl`
+- `configuration.jl`
+- `operator-label.jl`
+- `operator-algebra.jl`
+- `optimization_problem.jl`
+- `run_optimization.jl`
+- `correlation-functions.jl`
+- `2022-4-14-1.pbs`
+
+核对
+- PBS文件执行的确实是`main.jl`
+- 命名正确
+

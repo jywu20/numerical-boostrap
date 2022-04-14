@@ -1,0 +1,8 @@
+#!/bin/sh
+#PBS -l nodes=1:ppn=4
+#PBS -j oe
+#PBS -l walltime=120:00:00
+#PBS -N hubbard-cosmo
+
+cd $PBS_O_WORKDIR
+/storage1/home/shuchang/bin/julia/julia-1.7.2/bin/julia main.jl>2022-4-14-run-1.out 2>2022-4-14-run-1.err

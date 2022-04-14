@@ -3160,3 +3160,25 @@ max(collect(values(infeasible_report))...)
 
 一种可能的做法是，把奇数个算符乘积直接设置成零，$p$出现偶数次只有实部，出现奇数次只有虚部。
 
+尝试以`jump-oscillator-3-cosmo-opsrel-1e-10.jl`为蓝本，做一些优化。在`jump-oscillator-4.jl`里面做这件事。
+
+我们希望尽可能少地引入改动。
+```julia
+xpopstr_expected_real_imag_parts(i, real_or_imag) = begin
+```
+一行往后的内容不应该改动。一种做到这一点的方式是，更改
+```julia
+@variable(model, xpopstr_expected[1 : 2xpopspace_dim])
+```
+一行，用
+```julia
+x_binding = @variable(model, base_name = "x")
+```
+
+提交任务：
+- `2022-4-14-run-2.pbs`
+- `jump-oscillator-4.jl`
+
+核对
+- 命名无误
+- 执行的程序无误

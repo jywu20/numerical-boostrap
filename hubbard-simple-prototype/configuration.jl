@@ -9,7 +9,7 @@ const full_output_name = working_path * output_name
 const no_conflict = false
 
 # Display operators involved in the bootstrap process
-const show_hubbard_opstr_basis = true
+const show_hubbard_opstr_basis = false 
 
 #endregion
 
