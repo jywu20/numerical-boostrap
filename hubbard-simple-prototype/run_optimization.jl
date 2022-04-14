@@ -1,4 +1,6 @@
-optimize!(model)
+if ! no_optimization
+    optimize!(model)
+end
 
 open(full_output_name, "a") do file
     println(file, "-----------------------------------------------------------")
@@ -8,6 +10,5 @@ open(full_output_name, "a") do file
 
     println(file)
     println(file, "-----------------------------------------------------------")
+    println(file)
 end
-
-# TODO: print correlation functions

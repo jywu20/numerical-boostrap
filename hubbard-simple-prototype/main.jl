@@ -46,4 +46,6 @@ end
 
 include("run_optimization.jl")
 
+include("correlation-functions.jl")
+
 #endregion

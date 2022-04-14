@@ -8,6 +8,9 @@ set_optimizer_attributes(model, "max_iter" => max_iter)
 # real variables
 @variable(model, hubbard_opstr_basis_expected[1 : 2hubbard_opstr_basis_length])
 
+"""
+- `i`: the indices in `hubbard_opstr_basis`
+"""
 function hubbard_opstr_basis_expected_real_imag_parts(i, real_or_imag) 
     if real_or_imag == :real
         return hubbard_opstr_basis_expected[2i - 1]

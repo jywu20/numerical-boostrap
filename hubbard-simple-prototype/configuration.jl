@@ -23,6 +23,8 @@ t = 1.0
 K = 5
 site_num = (2K + 1)^2
 
+# When this flag is `true`, no actual optimization will be done. For debugging only.
+no_optimization = true
 max_iter = 10000
 
 #endregion
