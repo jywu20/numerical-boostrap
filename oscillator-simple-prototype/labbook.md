@@ -3182,3 +3182,44 @@ x_binding = @variable(model, base_name = "x")
 核对
 - 命名无误
 - 执行的程序无误
+
+好吧直接报infeasible了。
+
+## 2022.4.15
+
+虽然感觉不太可能，但是还是有必要检查一下`jump-oscillator-4.jl`是不是真的不feasible。万一真的约束写错了呢。
+
+```
+julia> xpopstr_basis_imag
+121-element OffsetArray(::Array{Array{Float64,2},1}, 0:120) with eltype Array{Float64,2} with indices 0:120:
+ [0.0 0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ ⋮
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+ [0.0 -0.0; 0.0 0.0]
+```
+
+好家伙，真的写错了。
+
+好像是少写了两个continue。
+
+现在在`jump-oscillator-4.jl`中做feasibility checking，得到
+```
+Feasibility check:
+Max infeasibility: 5.820766091346741e-11
+
+M eigenvalue with max abs: 152336.15234077966
+M eigenvalue abs val product: 1.3927459896685796e-253
+```
+
+那么应该是没啥问题了.
+
+使用脚本`2022-4-15-1.sh`做提交。

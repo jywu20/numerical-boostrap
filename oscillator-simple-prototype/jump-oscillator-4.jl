@@ -18,6 +18,10 @@ xpopspace_dim = (2L_max + 1)^2 - 1
 xpoppower_range = 0 : 2L_max
 # The complete range of indexes of operators, the length of which is xpopspace_dim + 1 = (2L_max + 1)^2
 xpopspace_index_range = 0 : xpopspace_dim
+# Building the model only, without actual optimization. For debugging only
+no_optimization = true
+# Check feasibility. For debugging only
+check_feasibility = true
 
 # Define variables. We label the expectation values as the follows: x^m p^n is labeled as m * (K + 1) + n 
 # Note: the index starts from 0 and should be used together with an OffsetArray
@@ -218,7 +222,7 @@ set_optimizer_attributes(model, "max_iter" => 30000000, "eps_rel" => 1.0e-10)
 # @variable(model, xpopstr_expected[1 : 2xpopspace_dim])
 # by the following code, eliminating the need to declare variables for expectation 
 # values that are bound to be zero
-xpopstr_expected = Vector{Float64, VariableRef}(undef, 2xpopspace_dim)
+xpopstr_expected = Vector{Union{Float64, VariableRef}}(undef, 2xpopspace_dim)
 for opstr_index in 1 : xpopspace_dim
     x_power = index_to_xpower(opstr_index)
     p_power = index_to_ppower(opstr_index)
@@ -226,12 +230,14 @@ for opstr_index in 1 : xpopspace_dim
     if isodd(x_power + p_power)
         xpopstr_expected[2opstr_index - 1] = 0.0
         xpopstr_expected[2opstr_index] = 0.0
+        continue
     end
 
     if isodd(p_power)
         # Imaginary part only
         xpopstr_expected[2opstr_index - 1] = 0.0
         xpopstr_expected[2opstr_index] = @variable(model, base_name = "im(x^$x_power p^$p_power)")
+        continue
     end
 
     # iseven(p_power)
@@ -310,7 +316,14 @@ end
 # To check if the opeartors are correct, run
 # map(idx -> xpopstr_power_str(index_to_xpower(idx), index_to_ppower(idx)), M_index_to_xpopstr_index) 
 
-@variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2], PSD)
+# Note that since feasibility checking for PSD constraints are not implemented yet, 
+# when doing feasibility checking, we need to turn down the PSD constraint.
+# This means we'd better not do optimization if this task is to do feasibility checking
+if ! check_feasibility
+    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2], PSD)
+else
+    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2])
+end
 
 for i in 1 : (L_max + 1)^2
     for j in 1 : (L_max + 1)^2
@@ -331,6 +344,25 @@ end
     xpopstr_expected_real_imag_parts(xpopstr_index(0, 2), :real) + 
     g * xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real))
 
+# Check feasibility
+if check_feasibility
+    include("nonlinear-SDP-x-power-11-standard-point-def.jl")
+    println("Feasibility check: ")
+    feasibility_report = primal_feasibility_report(model, 
+        Dict{VariableRef, Float64}(filter(benchmark_point) do p
+            typeof(first(p)) == VariableRef
+        end))
+    
+    println("Max infeasibility:            ", max(values(feasibility_report)...))
+    println()
+
+    # It's possible that the standard point has something wrong, so we check the positivity of M, too
+    M_standard = map(x -> benchmark_point[x], M)
+    M_standard_eigvals = abs.(eigen(M_standard).values)
+    println("M eigenvalue with max abs:    ", max(M_standard_eigvals...))
+    println("M eigenvalue abs val product: ", prod(M_standard_eigvals))
+end
+
 # The initial value of E and ⟨x²⟩ are [1.37, 0.298], and therefore 
 # x⁴ = (E - 2x²) / 3g = 0.258 
 # x²_0 = 0.298
@@ -338,10 +370,14 @@ end
 # set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real), x²_0)
 # set_start_value(xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real), x⁴_0)
 
-optimize!(model)
+# When doing feasibility checking, we need to turn down optimization,
+# because in this case, the PSD constraint is not imposed
+if (! no_optimization) && (! check_feasibility)
+    optimize!(model)
 
-println("-----------------------------------------------------------")
-println("Results:")
-println("")
-println("Objective value:   $(objective_value(model))")
-println("x square expectation:     $(value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)))")
+    println("-----------------------------------------------------------")
+    println("Results:")
+    println("")
+    println("Objective value:        $(objective_value(model))")
+    println("x square expectation:   $(value(xpopstr_expected_real_imag_parts(xpopstr_index(2, 0), :real)))")
+end

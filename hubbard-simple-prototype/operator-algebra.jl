@@ -1,5 +1,6 @@
 # Functionalities concerning operator algebra
 using QuantumAlgebra
+using Match
 
 #region Construct all operator involved (see labbook.md#2022.4.7 for some discussion), and do purely 
 # symbolic calculation of operator multiplication

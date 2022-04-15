@@ -1,4 +1,4 @@
-benchmark_point = Dict{VariableRef, Float64}(
+benchmark_point = Dict{Union{VariableRef, Float64}, Float64}(
     xpopstr_expected[1] => 0, xpopstr_expected[2] => 0, 
     xpopstr_expected[3] => 0.8262054670573559, xpopstr_expected[4] => 0., 
     xpopstr_expected[5] => 0, xpopstr_expected[6] => 0, 
