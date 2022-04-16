@@ -296,3 +296,19 @@ KeyError: key c†(1-1) c†(11) not found
 ## 2022.4.15
 
 现在可以做的事情包括：检测`@match`怎么回事。
+
+## 2022.4.16
+
+用`2022-4-16-run-1.sh`提交
+- `main.jl`
+- `configuration.jl`
+- `operator-label.jl`
+- `operator-algebra.jl`
+- `optimization_problem.jl`
+- `run_optimization.jl`
+- `correlation-functions.jl`
+- `2022-4-14-1.pbs`
+
+依照报错修改代码，修改`optimization_problem.jl`。
+
+不feasible可还行。

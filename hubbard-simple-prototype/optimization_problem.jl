@@ -54,20 +54,20 @@ end
 # Here i and j are indices of O_i and O_j which define M_{ij} = ⟨O_i O_j⟩
 for i in 1 : length(M_mat_spanning_opstr_indices)
     for j in 1 : length(M_mat_spanning_opstr_indices)
-        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== M_coefficient[i, j])
+        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== complex_to_mat(M_coefficient[i, j]))
     end
 end
 
 # Use the Hamiltonian on a single site as the optimization target
-H_1 = - t * map(Iterators.product([2, 4, 6, 8], [↑, ↓])) do label
+H_1 = - t * sum(map(Iterators.product([2, 4, 6, 8], [↑, ↓])) do label
     i = label[1]
     σ = label[2]
     cdag(1, σ) * c(i, σ)
-end |> sum + U * cdag(1, ↑) * c(1, ↑) * cdag(1, ↓) * c(1, ↓)
+end) + U * cdag(1, ↑) * c(1, ↑) * cdag(1, ↓) * c(1, ↓)
 
 H_1 = normal_form(H_1)
 
 # hubbard_opstr_coefficients(H_1) is supposed to be real, so we take its real part
-@objective(model, hubbard_opstr_coefficients(H_1)[1, 1])
+@objective(model, Min, complex_to_mat(hubbard_opstr_coefficients(H_1))[1, 1])
 
 #endregion

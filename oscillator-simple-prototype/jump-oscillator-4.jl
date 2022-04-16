@@ -19,9 +19,9 @@ xpoppower_range = 0 : 2L_max
 # The complete range of indexes of operators, the length of which is xpopspace_dim + 1 = (2L_max + 1)^2
 xpopspace_index_range = 0 : xpopspace_dim
 # Building the model only, without actual optimization. For debugging only
-no_optimization = true
+no_optimization = false 
 # Check feasibility. For debugging only
-check_feasibility = true
+check_feasibility = false 
 
 # Define variables. We label the expectation values as the follows: x^m p^n is labeled as m * (K + 1) + n 
 # Note: the index starts from 0 and should be used together with an OffsetArray
