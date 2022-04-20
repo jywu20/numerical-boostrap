@@ -1,4 +1,4 @@
-using JuMP, COSMO 
+using JuMP, SCS 
 using LinearAlgebra  
 using OffsetArrays
 using Base.Iterators
@@ -211,8 +211,8 @@ function max_p_power(op::OffsetArray)
     max(map(index_to_ppower, nonzero_terms_idx)...)
 end
 
-model = Model(COSMO.Optimizer)
-set_optimizer_attributes(model, "max_iter" => 60000000, "eps_rel" => 1.0e-10)
+model = Model(SCS.Optimizer)
+set_optimizer_attributes(model, "max_iters" => 1000)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 

@@ -1,0 +1,19 @@
+2D square lattice Hubbard model bootstrap
+Configuration loaded.
+
+Operator labels constructed.
+Constraints and M matrix assembled.
+Optimization problem constructed. Starting optimizing.
+--------------------------------------
+
+-----------------------------------------------------------
+Optimization results:
+
+Objective value:   -Inf
+
+-----------------------------------------------------------
+
+Expected ⟨n_i⟩:  4.790308397116915e9
+
+Expected ⟨Sz_i⟩:  2.453502655029297
+

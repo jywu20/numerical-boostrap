@@ -6,7 +6,7 @@ const output_name = "2022-4-16-run-1-res"
 const full_output_name = working_path * output_name
 
 # If there exists working_path * output_name already, throw an error
-const no_conflict = true
+const no_conflict = false
 
 # Display operators involved in the bootstrap process
 const show_hubbard_opstr_basis = false 
@@ -24,7 +24,7 @@ K = 5
 site_num = (2K + 1)^2
 
 # When this flag is `true`, no actual optimization will be done. For debugging only.
-no_optimization = false
+no_optimization = false 
 max_iter = 10000
 
 #endregion

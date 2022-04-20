@@ -3230,3 +3230,190 @@ M eigenvalue abs val product: 1.3927459896685796e-253
 大概率一天是跑不完的。slurm id是1104687
 
 现在1281450迭代附近，能量优化到了10左右；老版本这个时候能量在20左右。
+
+眼下的能量是5.7314；能量回升已经发生过，不知道会不会再发生。
+
+## 2022.4.17
+
+既然需要花很多力气来实施约束（导致能量反复上升），是否可以考虑将一些变量用另一些变量表示？
+
+可以做的事情：先让`jump-oscillator-4.jl`跑起来，然后另外写一个`jump-oscillator-5.jl`。
+`xpopstr_expected`的内容全部都可以在`M`矩阵里面找到，所以按理说不会特别复杂……
+
+将`max_iter`改成`80000000`，许可的运行时间是三天，然后运行`2022-4-15-1.sh`。slurm id为1109159。
+
+`jump-oscillator-5.jl`中的主要难点可能是怎么样把“有些变量就是零”给弄进去。
+
+## 2022.4.19
+
+正式开始修改`jump-oscillator-5.jl`。关于两条路线，可以同时实现。
+
+## 2022.4.20
+
+1109159任务给出的能量最低值是4.7369e+00，然后残差是5.5234e-02。这是目前取得的最好的结果了，并且确定无疑之前的。
+然后目前需要做下面的事情：
+- warm start
+- 换用SCS
+- 增大时长
+
+有一件事很重要，就是超算的时间限制一定要大于运行到`max_iter`需要的时间，否则就白白算了。
+
+下面的链接可能有用：https://jump.dev/JuMP.jl/stable/tutorials/conic/start_values/
+
+下面是我提的问题：
+https://discourse.julialang.org/t/warmstart-in-cosmo-jl-with-jump/79727
+
+看起来，运行如下代码：
+```julia
+model = Model(SCS.Optimizer)
+set_optimizer_attributes(model, "max_iter" => 60000000, "eps_rel" => 1.0e-10)
+```
+没有报错。
+
+所以`jump-oscillator-4-scs.jl`应该是没有bug的。
+
+如果没有人回答我的话今天先不交任务了……
+
+在`jump-storage-scs.jl`中演示如何保存模型状态并做热启动。代码来自 https://jump.dev/JuMP.jl/stable/tutorials/conic/start_values/
+
+出了一些非常麻烦的事情，JuMP突然无法编译了；需要重新配置`jump`环境。
+
+`jump-storage-scs.jl`的输出是：
+```
+First run
+
+------------------------------------------
+----------------------------------------------------------------------------
+        SCS v2.1.4 - Splitting Conic Solver
+        (c) Brendan O'Donoghue, Stanford University, 2012
+----------------------------------------------------------------------------
+Lin-sys: sparse-direct, nnz in A = 20
+eps = 1.00e-005, alpha = 1.50, max_iters = 5000, normalize = 1, scale = 1.00
+acceleration_lookback = 10, rho_x = 1.00e-003
+Variables n = 10, constraints m = 11
+Cones:  linear vars: 11
+Setup time: 1.13e-002s
+SCS using variable warm-starting
+----------------------------------------------------------------------------
+ Iter | pri res | dua res | rel gap | pri obj | dua obj | kap/tau | time (s)
+----------------------------------------------------------------------------
+     0|3.56e-001 3.41e-001 3.66e-001 -1.38e+001 -6.15e+000 0.00e+000 7.35e-003
+    31|1.90e-011 2.38e-011 2.90e-011 -1.00e+001 -1.00e+001 1.59e-015 8.35e-003
+----------------------------------------------------------------------------
+Status: Solved
+Timing: Solve time: 8.57e-003s
+        Lin-sys: nnz in L factor: 41, avg solve time: 4.75e-007s
+        Cones: avg projection time: 9.06e-008s
+        Acceleration: avg step time: 6.33e-006s
+----------------------------------------------------------------------------
+Error metrics:
+dist(s, K) = 3.3845e-017, dist(y, K*) = 0.0000e+000, s'y/|s||y| = -1.0513e-017
+primal res: |Ax + s - b|_2 / (1 + |b|_2) = 1.9029e-011
+dual res:   |A'y + c|_2 / (1 + |c|_2) = 2.3810e-011
+rel gap:    |c'x + b'y| / (1 + |c'x| + |b'y|) = 2.9001e-011
+----------------------------------------------------------------------------
+c'x = -10.0000, -b'y = -10.0000
+============================================================================
+
+        
+        
+Second run
+
+------------------------------------------
+----------------------------------------------------------------------------
+        SCS v2.1.4 - Splitting Conic Solver
+        (c) Brendan O'Donoghue, Stanford University, 2012
+----------------------------------------------------------------------------
+Lin-sys: sparse-direct, nnz in A = 20
+eps = 1.00e-005, alpha = 1.50, max_iters = 5000, normalize = 1, scale = 1.00
+acceleration_lookback = 10, rho_x = 1.00e-003
+Variables n = 10, constraints m = 11
+Cones:  linear vars: 11
+Setup time: 7.32e-003s
+SCS using variable warm-starting
+----------------------------------------------------------------------------
+ Iter | pri res | dua res | rel gap | pri obj | dua obj | kap/tau | time (s)
+----------------------------------------------------------------------------
+     0|1.90e-011 1.56e-011 1.19e-011 -1.00e+001 -1.00e+001 0.00e+000 6.82e-003
+----------------------------------------------------------------------------
+Status: Solved
+Timing: Solve time: 6.97e-003s
+        Lin-sys: nnz in L factor: 41, avg solve time: 2.20e-006s
+        Cones: avg projection time: 6.00e-007s
+        Acceleration: avg step time: 1.00e-007s
+----------------------------------------------------------------------------
+Error metrics:
+dist(s, K) = 3.3845e-017, dist(y, K*) = 0.0000e+000, s'y/|s||y| = -2.4449e-017
+primal res: |Ax + s - b|_2 / (1 + |b|_2) = 1.9007e-011
+dual res:   |A'y + c|_2 / (1 + |c|_2) = 1.5591e-011
+rel gap:    |c'x + b'y| / (1 + |c'x| + |b'y|) = 1.1920e-011
+----------------------------------------------------------------------------
+c'x = -10.0000, -b'y = -10.0000
+============================================================================
+```
+看起来设置初始值确实是有用的。
+
+在`jump-storage-cosmo.jl`中看`COSMO.jl`能不能做类似的操作。
+
+`COSMO`好像是不支持的：我们有如下错误信息：
+```
+ERROR: MathOptInterface.UnsupportedAttribute{MathOptInterface.ConstraintPrimalStart}: Attribute MathOptInterface.ConstraintPrimalStart() is not supported by the model.
+```
+
+因此现在应该干这些事：
+- 首先观察SCS能不能算得动`jump-oscillator-4-scs.jl`
+- 顺带观察COSMO有没有做设置初始值的可能
+
+懒得把`jump-oscillator-4-scs.jl`搬到服务器上了，我先把`max_iter`弄得小一点，在自己的电脑上面试一试吧。
+
+看起来，`SCS`做得并没有很好。以下是`max_iter`设置为1000的输出：
+```
+----------------------------------------------------------------------------
+        SCS v2.1.4 - Splitting Conic Solver
+        (c) Brendan O'Donoghue, Stanford University, 2012
+----------------------------------------------------------------------------
+Lin-sys: sparse-direct, nnz in A = 12267
+eps = 1.00e-005, alpha = 1.50, max_iters = 1000, normalize = 1, scale = 1.00
+acceleration_lookback = 10, rho_x = 1.00e-003
+Variables n = 2688, constraints m = 8051
+Cones:  primal zero / dual free vars: 5423
+        sd vars: 2628, sd blks: 1
+Setup time: 1.66e-002s
+SCS using variable warm-starting
+----------------------------------------------------------------------------
+ Iter | pri res | dua res | rel gap | pri obj | dua obj | kap/tau | time (s)
+----------------------------------------------------------------------------
+     0|2.66e+000 1.79e+000 8.68e-001 -4.64e-001 6.09e+000 0.00e+000 1.75e-002 
+   100|1.18e+019 5.18e+018 9.75e-001 3.36e+018 2.65e+020 2.68e+020 7.20e-001 
+   200|4.77e+018 6.32e+017 9.96e-001 7.20e+017 3.97e+020 3.95e+020 1.43e+000 
+   300|1.09e+000 6.48e-001 5.95e-001 8.81e-004 -1.47e+000 0.00e+000 2.14e+000 
+   400|1.58e+018 7.73e+016 9.98e-001 2.13e+017 2.17e+020 2.16e+020 2.85e+000 
+   500|1.77e+018 1.23e+017 9.99e-001 6.98e+016 1.98e+020 1.98e+020 3.58e+000 
+   600|1.08e+018 2.33e+016 9.99e-001 1.07e+017 1.79e+020 1.79e+020 4.26e+000 
+   700|1.48e+018 6.08e+016 9.99e-001 6.50e+016 1.46e+020 1.46e+020 4.92e+000 
+   800|1.12e+018 4.53e+016 9.99e-001 6.87e+016 1.26e+020 1.26e+020 5.59e+000 
+   900|6.90e+018 1.17e+018 1.00e+000 -2.14e+017 2.29e+020 2.28e+020 6.30e+000 
+  1000|6.73e+018 3.11e+017 9.92e-001 2.24e+017 5.32e+019 5.30e+019 6.95e+000 
+----------------------------------------------------------------------------
+Status: Infeasible/Inaccurate
+Hit max_iters, solution may be inaccurate, returning best found solution.
+Timing: Solve time: 6.95e+000s
+        Lin-sys: nnz in L factor: 24179, avg solve time: 1.11e-004s
+        Cones: avg projection time: 5.50e-003s
+        Acceleration: avg step time: 1.13e-003s
+----------------------------------------------------------------------------
+Certificate of primal infeasibility:
+dist(y, K*) = 1.4660e-009
+|A'y|_2 * |b|_2 = 6.7838e+000
+b'y = -1.0000
+============================================================================
+-----------------------------------------------------------
+```
+可以看到，和COSMO相比，SCS更不容易找到一个比较feasible的解。
+
+这件事是很奇怪的，因为韩希之声称他确实是用以SCS为代表的solver得到的成果。
+
+因此不能够因为SCS能比较容易地warmstart就轻易抛弃COSMO。不过这倒是让我想到SCS能不能根据参考值至少先收敛到一个解上面……
+
+有没有一种办法，能够微调一个比较接近正定的矩阵让它正定？那当然是可以的，把负的本征值投影掉就可以。
+这么看，将所有约束都拿`M`矩阵中的变量表示可能确实是有好处的。

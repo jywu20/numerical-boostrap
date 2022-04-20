@@ -312,3 +312,9 @@ KeyError: key c†(1-1) c†(11) not found
 依照报错修改代码，修改`optimization_problem.jl`。
 
 不feasible可还行。
+
+## 2022.4.20
+
+所以benchmark的数据去哪里找呢……
+
+为了benchmark，至少有一件事是可以做的，就是把`M`矩阵和约束都打印出来。
