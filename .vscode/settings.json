@@ -160,5 +160,6 @@
         // Non standard notations, but quite useful
         "\\bigO": "\\mathcal{O}(#1)",
         "\\pair": "\\langle #1 \\rangle"
-    }
+    },
+    "fortran.ignoreWarning.fortls": true
 }

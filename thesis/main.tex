@@ -1,0 +1,182 @@
+\documentclass[oneside]{fduthesis}
+
+\fdusetup{
+  style = {
+    font = lm,
+    % 西文字体（包括数学字体）
+    % 允许选项：
+    %   font = garamond|libertinus|lm|palatino|times
+    %
+    % 注意：
+    %   1. LaTeX 默认风格是 lm
+    %   2. Satoshi 的讲义风格是 palatino
+    %
+    cjk-font = windows,
+    % 中文字体
+    % 允许选项：
+    %   cjk-font = adobe|fandol|founder|mac|sinotype|sourcehan|windows
+    %
+    % 注意：
+    %   1. 中文字体设置高度依赖于系统。各系统建议方案：
+    %        windows：cjk-font = windows
+    %        mac：    cjk-font = mac
+    %        linux：  cjk-font = fandol（默认值）
+    %   2. 除 fandol 和 sourcehan 外，其余字体均为商用字体，请注意版权问题
+    %   3. 但 fandol 字体缺字比较严重，而 sourcehan 没有配备楷体和仿宋体
+    %   4. 某些字体会有 Font "xxx" does not contain requested Script "CJK" 的警告，可以忽略
+    %
+    font-size    = -4,
+    bib-backend  = bibtex,
+    bib-resource = {main.bib},
+  },
+  info = {
+      title            = {xxx},
+      % title            = {如果标题很长,可以用英文逗号分成两行},
+      author           = {xxx},
+      department       = {物理学系},
+      major            = {物理学},
+      supervisor       = {xxx},
+      supervisor-title = {xxx},
+      affiliation      = {物理学系},
+      student-id       = {xxx},
+      keywords         = {中文关键字, 关键字二},
+      keywords*        = {English keywords, physics},
+      % 中英文关键字均使用英文逗号分隔
+  }
+}
+
+% 需要的宏包可以自行调用
+\usepackage{booktabs}
+\usepackage{physics}
+\usepackage[linkcolor=black,menucolor=black]{hyperref}
+\usepackage{prettyref}
+
+\newrefformat{chap}{第\ref{#1}章}
+\newrefformat{sec}{第\ref{#1}节}
+\newrefformat{note}{注\ref{#1}}
+\newrefformat{fig}{图\ref{#1}}
+\newrefformat{alg}{算法\ref{#1}}
+
+\newcommand{\hilbertH}{\symcal{H}}
+\newcommand{\ee}{\symrm{e}}
+\newcommand{\ii}{\symrm{i}}
+
+% Disable unsupported commands in bookmark titles 
+\pdfstringdefDisableCommands{%
+  \def\\{}%
+  \def\texttt#1{<#1>}%
+  \def\mathbb#1{#1}%
+}
+\pdfstringdefDisableCommands{\def\eqref#1{(\ref{#1})}}
+
+\makeatletter
+\pdfstringdefDisableCommands{\let\HyPsd@CatcodeWarning\@gobble}
+\makeatother
+
+% 图片路径
+% \graphicspath{{images/}}
+
+% 目录深度，只保留到 \section
+\setcounter{tocdepth}{2}
+
+\begin{document}
+
+% 前置部分包含目录、中英文摘要以及符号表等
+\frontmatter
+
+% 目录
+\tableofcontents
+% 插图目录
+%\listoffigures
+% 表格目录
+% \listoftables
+
+\begin{abstract}
+摘要摘要
+\end{abstract}
+
+\begin{abstract*}
+If using Overleaf, you can upload all the files and use \verb|xelatex| to compile.
+\end{abstract*}
+
+% 主体部分是论文的核心
+\mainmatter
+
+\ctexset{chapter/pagestyle=fancy}
+
+% 建议采用多文件编译的方式
+% 比较好的做法是把每一章放进一个单独的 tex 文件里，并在这里用 \include 导入，例如
+%   \include{chapter1}
+%   \include{chapter2}
+%   \include{chapter3}
+
+\chapter{绪论}
+
+\section{引言}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics{example-image.pdf}
+  \caption{模型示意图}
+  \label{fig:example}
+\end{figure}
+
+\section{Bootstrap技术示例：共性Bootstrap}
+
+\section{数值Bootstrap的形式理论}
+
+\chapter{一维非线性谐振子的数值bootstrap}
+
+\section{一维非线性谐振子——一个$0+1$维非微扰场论}
+
+\section{非线性SDP优化}
+
+\subsection{$\expval{x^n}$的非线性递推关系}
+
+\subsection{可行域，基态和第一激发态}
+
+\subsection{非线性SDP在大规模问题上的不可行性}
+
+\section{线性SDP优化}
+
+\subsection{对易子和等式关系的符号计算}
+
+\subsection{构建优化问题}
+
+\subsection{收敛性问题}
+
+\begin{figure}[h]
+  \centering
+  \caption{试验合金的马氏体相变温度 Ms 及反铁磁转变温度 TN}
+  \begin{tabular}{ccccc}
+    \toprule
+      & 1\# & 2\# & 3\# & 4\# \\
+    \midrule
+      Mn (at\%) & 86.4 & 80.8 & 71.3  & 61.4    \\
+      TN / °C   & 173  & 157  & 128   & 208     \\
+      Ms / °C   & 180  & 20   & $-40$ & $< -60$ \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:example}
+\end{figure}
+
+\chapter{Hubbard模型的数值bootstrap}
+
+\section{}
+
+\chapter{总结与展望}
+
+
+引用~\cite{feynman2011feynman}，行内引用~\parencite{feynman2011feynman}。
+
+% 后置部分包含参考文献、声明页（自动生成）等
+\backmatter
+
+% 打印参考文献列表
+\printbibliography
+
+\chapter{致\quad 谢}
+
+\chapter{附\quad 录}
+
+\end{document}
