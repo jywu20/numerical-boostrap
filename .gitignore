@@ -15,4 +15,5 @@ references/*.pdf
 *.run.xml
 *.nav
 *.snm
+*.xdv
 !oscillator-simple-prototype/*.out
