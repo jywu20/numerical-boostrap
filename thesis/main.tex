@@ -48,6 +48,7 @@
 % 需要的宏包可以自行调用
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{mathtools}
 \usepackage{siunitx}
 \usepackage{physics}
 \usepackage{tikz}
@@ -128,9 +129,9 @@ TODO
 
 \section{引言}
 
+凝聚态物理分析
 
-
-\section{Bootstrap技术示例：共性Bootstrap}
+\section{Bootstrap技术示例：共形Bootstrap}
 
 最为著名的bootstrap方法可能是所谓的共形bootstrap，即针对共形场论（conformal field theory, CFT）的bootstrap。
 共形对称性对两点和三点关联函数的形式有着强烈的要求：关于标量算符$\mathcal{O}$的两点函数只能够取
@@ -147,9 +148,13 @@ TODO
 在已知两点函数和三点函数之后，可以通过算符乘积展开将更高阶的关联函数递归地计算出来。于是，确定一个CFT需要的数据就是$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$。
 我们随后可以通过一系列约束条件，获得关于这些数据的不等式，从而确定自洽的CFT的$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$组合。
 通过这种方式，在给定一类CFT的基本自由度之后，我们实际上已经知道这整整一类CFT的行为以及理论空间的边界了\cite{Poland_2016,2019}。
-在凝聚态物理中，共形bootstrap可以为一个体系的临界行为是不是能够使用CFT描述提供一定提示，如通过比较三维伊辛模型和一类CFT的临界指数，我们有很强的信心表明三维伊辛模型的临界行为可能就是一个落在可行域边界上的CFT\cite{prd2012ising,Poland_2016}。
 
-\section{数值Bootstrap的形式理论}
+在凝聚态物理中，$1+1$维无能隙体系常常可以使用CFT描述，如Luttinger液体及其推广，如霍尔效应边界态\cite{Degiovanni_1998}。
+共形bootstrap可以为一个体系的临界行为是不是能够使用CFT描述提供一定提示，如通过比较三维伊辛模型和一类CFT的临界指数，我们有很强的信心表明三维伊辛模型的临界行为可能就是一个落在可行域边界上的CFT\cite{prd2012ising,Poland_2016}。
+
+\section{数值bootstrap}
+
+\subsection{形式理论}
 
 实际问题中会遇到的模型大多不像CFT那样容易做bootstrap：我们没有像\eqref{eq:two-point-conformal}和
 \eqref{eq:three-point-conformal}这么强的对关联函数的约束条件，一般情况下也不能解析地将高阶关联函数转化为低阶关联函数的多项式。
@@ -169,7 +174,12 @@ TODO
   \item 输入哈密顿量$H$、系统对称性算符集合$\{C_i\}$和参与bootstrap的关联函数涉及的算符组成的集合$\{O_i\}$。
   \item 根据\eqref{eq:sym-constraint}和\eqref{eq:h-constraint}，自动确定不同的$\expval*{O}$之间的关系。
   \item 构建矩阵$M_{ij} = \expval*{O_i^\dagger O_j}$，其中$O_i^\dagger O_j$在经过一定的算符正规排序之后，可以使用$\{O_i\}$为基底展开；$\{O_i\}$张成的算符空间中的形如$O^\dagger O$的算符的期望值不小于零，当且仅当$M$是正定的。
-  \item 在第2步的等式约束（这个约束的地位等同于CFT中的算符乘积展开）、$M$必须半正定的约束下，以牵涉到的全体算符期望值为优化变量，最优化$\expval*{H}$。这是一个半正定规划（semidefinite programming, SDP）问题。
+  \item 在第2步的等式约束（这个约束的地位等同于CFT中的算符乘积展开）、$M$必须半正定的约束下，以牵涉到的全体算符期望值为优化变量，最优化
+  \begin{equation}
+      E \coloneqq \expval*{H} = \sum_i c_i \expval*{O_i}.
+      \label{eq:target-function}
+  \end{equation}
+  这是一个半正定规划（semidefinite programming, SDP）问题。
 \end{enumerate}
 
 约束\eqref{eq:h-constraint}和\eqref{eq:sym-constraint}在经过算符正规排序后，都是$\{\expval*{O_i}\}$的仿射变换，而$\expval*{H}$也是$\{\expval*{O_i}\}$的仿射变换。
@@ -181,18 +191,38 @@ TODO
     \label{eq:nonlinear-energy}
 \end{equation}
 在实际计算时，由于$E$是算符$H$的期望值，是未知的，\eqref{eq:nonlinear-energy}的右边将出现$\expval*{O_1} \expval*{O_2}$形式的项，即会出现优化变量的乘积，因此，包含\eqref{eq:nonlinear-energy}约束的数值bootstrap问题将是一个非线性半正定规划问题（以下简称非线性SDP）。
+由于线性SDP允许系统的密度矩阵不是纯态，线性SDP的$\{O_i\}$的可行域应当比非线性SDP大。
+\prettyref{fig:feasibility-compare}是一个离散能级系统
+\begin{equation}
+    H = \sum_i c_i O_i
+\end{equation}
+的线性SDP和非线性SDP可行域的示意图。非线性SDP中，可行域有若干彼此不连通的连通分支，每一个均为某个能级上的物理量期望值的范围。
+线性SDP的可行域是包含所有非线性SDP可行域的一个凸集。
 
-线性SDP
-\begin{figure}[h]
+\begin{figure}
     \centering
     \input{sdp-feasible.tex}
-    \caption{线性SDP和非线性SDP：}
+    \caption{线性SDP和非线性SDP：蓝色和绿色区域是非线性SDP的可行域，蓝色区域近似给出基态$E_0$上的物理量期望值，绿色区域近似给出基态$E_1$上的物理量期望值，灰色区域是线性SDP问题的可行域，虚线代表不同$E$对应的$\sum_i c_i \expval{O_i} = E$超平面，其中$c_i$为哈密顿量$H = \sum_i c_i O_i$的系数。}
+    \label{fig:feasibility-compare}
 \end{figure}
+
+虽然非线性SDP能够让我们看清楚系统的激发态结构，目前尚无足够成熟的非线性求解器能够求解物理上需要的非线性SDP问题\cite{kazakov2021analytic}。
+已报道的非线性SDP均仅限于单粒子量子力学，通过递推关系，将所有物理量约化至$E$和$\expval*{x^2}$上，然后暴力搜索\cite{han_matrix,bhattacharya2021}。
+我们将在\prettyref{sec:nonlinear-sdp-oscillator}中复现\parencite{han_matrix}的工作。
+
+\subsection{数值bootstrap的若干应用}
 
 由于bootstrap不依赖于哈密顿量中各项的大小，它显然是处理非微扰问题的有力武器。
 已有若干关于不同体系的数值bootstrap研究出现，如关于难以微扰解决的单粒子量子力学问题和矩阵模型\cite{han_matrix,bhattacharya2021,kazakov2021analytic}以及强关联电子模型\cite{han_manybody}。
-这些研究展示了bootstrap方法能够处理各种非微扰效应：能够正确地捕捉到二势阱模型中的非微扰瞬子效应\cite{bhattacharya2021}，解决一度被认为是不可能处理的矩阵模型\cite{kazakov2021analytic}，在Hubbard模型上的表现和已有的方法吻合\cite{han_manybody}。
-由于物理学中大量未解决的问题最终都归结为如何处理非微扰效应，进一步研究数值bootstrap方法无疑有很大意义。
+
+文献\parencite{bhattacharya2021}使用了以$E$和$\expval*{x^2}$为优化变量、暴力搜索的单粒子量子力学非线性SDP，捕捉到了二势阱模型中的非微扰瞬子效应，并与通过稀薄瞬子假设计算出的基态能量比较，直观展示了稀薄瞬子假设的成立条件；验证了互为对偶的超对称量子力学哈密顿量的谱的确是一致的；验证了$O(N)$向量模型的低能部分在强耦合极限下，基态能量和耦合常数的分数幂次关系，并确认其与解析结果一致。
+\parencite{kazakov2021analytic}开发了一套处理矩阵模型的数值bootstrap中的矩阵自由度在大$N$极限下满足的非线性约束
+\begin{equation}
+    \left\langle\operatorname{Tr} M^{l} \operatorname{Tr} M^{m}\right\rangle=\left\langle\operatorname{Tr} M^{l}\right\rangle\left\langle\operatorname{Tr} M^{m}\right\rangle+\mathcal{O}\left(1 / N^{2}\right)
+\end{equation}
+的方法，验证了它在求解可以解析处理的矩阵模型时的有效性，并借此解决了无法解析处理的一类二矩阵矩阵模型。%
+\footnote{这套方法对非线性SDP的作用可能有限，因为此时\eqref{eq:nonlinear-energy}和\eqref{eq:target-function}联立将导致任意高幂次的非线性约束，而矩阵模型中由于矩阵自由度的非线性约束幂次最多到2。}%
+文献\parencite{han_manybody}将线性SDP数值boostrap技术应用在一维和二维Hubbard模型上，所得结果和常规的DQMC、DMRG等方法吻合。
 
 \section{关于本文}
 
@@ -202,7 +232,22 @@ TODO
 
 \section{一维非线性谐振子——一个$0+1$维非微扰场论}
 
-\section{非线性SDP优化}
+一维非线性谐振子
+\begin{equation}
+    H = p^2 + x^2 + g x^4
+\end{equation}
+可以看成一个$0+1$维的$\phi^4$量子场论。它常常被用作量子力学中微扰论的例子，但实际上可以证明，其基态能量的微扰级数是发散的\cite{PhysRev.184.1231}。
+这个发散可以看成$\phi^4$量子场论中的发散的一个特例。大部分量子场论中，相互作用均导致的微扰级数在最好的情况下也是渐进级数\cite{Jackiw_effective}。%
+\footnote{此处所说的是朴素地将物理量展开成关于耦合常数$g$的幂次的级数后，会发现这个级数不收敛。在量子场论中这个级数的每一项都可能不收敛，因为动量积分时发生紫外发散。后一种不收敛和此处的讨论没有直接关系。然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，而重整化微扰论的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
+
+由于一维非线性谐振子归根到底是一个量子力学模型，可以通过求解离散定态薛定谔方程的方法精确地处理它。
+它和$3+1$维多体问题的相似性又意味着，用于一般的多体问题的方法也可以用在它上面。
+一维非线性谐振子的简单形式和它的非微扰本质意味着它是测试多体问题研究方法的一个理想的玩具模型：可以通过比较这些数值或是解析方法和求解离散定态薛定谔方程的结果来预计这些方法的有效性，并分析这些方法为何有效或无效。
+一维非线性谐振子已被做大量不同的话题的例子，包括泛函重整化群\cite{Nagy-2010fv}、Rayleigh-Schrödinger微扰论的高阶行为\cite{bender199041}、重整化微扰论的收敛性\cite{Bender-1970uz}、量子多尺度分析\cite{Bender_1996}。
+
+之后几节将重复
+
+\section{非线性SDP优化}\label{sec:nonlinear-sdp-oscillator}
 
 \subsection{$\expval{x^n}$的非线性递推关系}
 
