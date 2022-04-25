@@ -58,6 +58,8 @@
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{extarrows}
+\usepackage{listings}
+\usepackage{subcaption}
 \usepackage[linkcolor=black,menucolor=black]{hyperref}
 \usepackage{prettyref}
 
@@ -71,10 +73,13 @@
 \newrefformat{note}{注\ref{#1}}
 \newrefformat{fig}{图\ref{#1}}
 \newrefformat{alg}{算法\ref{#1}}
+\newrefformat{tbl}{表\ref{#1}}
 
 \newcommand{\hilbertH}{\symcal{H}}
 \newcommand{\ee}{\symrm{e}}
 \newcommand{\ii}{\symrm{i}}
+
+\newcommand{\concept}[1]{\textbf{#1}}
 
 % Disable unsupported commands in bookmark titles 
 \pdfstringdefDisableCommands{%
@@ -154,7 +159,7 @@ TODO
 
 \section{数值bootstrap}
 
-\subsection{形式理论}
+\subsection{形式理论}\label{sec:formalism}
 
 实际问题中会遇到的模型大多不像CFT那样容易做bootstrap：我们没有像\eqref{eq:two-point-conformal}和
 \eqref{eq:three-point-conformal}这么强的对关联函数的约束条件，一般情况下也不能解析地将高阶关联函数转化为低阶关联函数的多项式。
@@ -183,14 +188,14 @@ TODO
 \end{enumerate}
 
 约束\eqref{eq:h-constraint}和\eqref{eq:sym-constraint}在经过算符正规排序后，都是$\{\expval*{O_i}\}$的仿射变换，而$\expval*{H}$也是$\{\expval*{O_i}\}$的仿射变换。
-因此，相应的数值bootstrap问题是一个线性半正定规划问题（以下简称线性SDP）。线性SDP问题属于凸优化问题\cite{vandenberghe1996semidefinite,Bofill_2014}，已有SCS\cite{scs,ocpb:16}，CSDP\cite{csdp}，COSMO\cite{Garstka_2021}等成熟的求解器。
+因此，相应的数值bootstrap问题是一个线性半正定规划问题（以下简称\concept{线性SDP}）。线性SDP问题属于凸优化问题\cite{vandenberghe1996semidefinite,Bofill_2014}，已有SCS\cite{scs,ocpb:16}，CSDP\cite{csdp}，COSMO\cite{Garstka_2021}等成熟的求解器。
 
 在$\rho(E)$实际上对应$H$的某个能量本征态时，\eqref{eq:h-constraint}可以加强为如下形式：
 \begin{equation}
     \expval*{HO} = \mel{n}{H O}{n} = E \mel{n}{O}{n} = E \expval*{O}.
     \label{eq:nonlinear-energy}
 \end{equation}
-在实际计算时，由于$E$是算符$H$的期望值，是未知的，\eqref{eq:nonlinear-energy}的右边将出现$\expval*{O_1} \expval*{O_2}$形式的项，即会出现优化变量的乘积，因此，包含\eqref{eq:nonlinear-energy}约束的数值bootstrap问题将是一个非线性半正定规划问题（以下简称非线性SDP）。
+在实际计算时，由于$E$是算符$H$的期望值，是未知的，\eqref{eq:nonlinear-energy}的右边将出现$\expval*{O_1} \expval*{O_2}$形式的项，即会出现优化变量的乘积，因此，包含\eqref{eq:nonlinear-energy}约束的数值bootstrap问题将是一个非线性半正定规划问题（以下简称\concept{非线性SDP}）。
 由于线性SDP允许系统的密度矩阵不是纯态，线性SDP的$\{O_i\}$的可行域应当比非线性SDP大。
 \prettyref{fig:feasibility-compare}是一个离散能级系统
 \begin{equation}
@@ -208,7 +213,11 @@ TODO
 
 虽然非线性SDP能够让我们看清楚系统的激发态结构，目前尚无足够成熟的非线性求解器能够求解物理上需要的非线性SDP问题\cite{kazakov2021analytic}。
 已报道的非线性SDP均仅限于单粒子量子力学，通过递推关系，将所有物理量约化至$E$和$\expval*{x^2}$上，然后暴力搜索\cite{han_matrix,bhattacharya2021}。
-我们将在\prettyref{sec:nonlinear-sdp-oscillator}中复现\parencite{han_matrix}的工作。
+
+相比于同样基于最优化的变分法（包括各种张量网络方法），数值bootstrap有一个独特的优势：只要优化能够正确完成，它能够确定系统能量的\emph{下界}。
+这是因为体系的各个物理量期望值必定让\eqref{eq:h-constraint}，\eqref{eq:sym-constraint}和正定性条件成立，即一定在SDP问题的可行域当中，而数值bootstrap给出的能量数值值为可行域中的$\expval{H}$的\emph{最小值}。
+因此，数值bootstrap给出的能量数值值必定小于等于能量真实值。
+传统的最优化方法给出的则是能量的\emph{上界}。相互比较两种方法的结果，可以将系统基态能量的可能范围确定得非常小。
 
 \subsection{数值bootstrap的若干应用}
 
@@ -222,11 +231,11 @@ TODO
 \end{equation}
 的方法，验证了它在求解可以解析处理的矩阵模型时的有效性，并借此解决了无法解析处理的一类二矩阵矩阵模型。%
 \footnote{这套方法对非线性SDP的作用可能有限，因为此时\eqref{eq:nonlinear-energy}和\eqref{eq:target-function}联立将导致任意高幂次的非线性约束，而矩阵模型中由于矩阵自由度的非线性约束幂次最多到2。}%
-文献\parencite{han_manybody}将线性SDP数值boostrap技术应用在一维和二维Hubbard模型上，所得结果和常规的DQMC、DMRG等方法吻合。
+文献\parencite{han_manybody}将线性SDP数值bootstrap技术应用在一维和二维Hubbard模型上，所得结果和常规的DQMC、DMRG等方法吻合。
 
 \section{关于本文}
 
-本文将探讨
+本文将在\prettyref{sec:nonlinear-sdp-oscillator}中复现\parencite{han_matrix}的工作。
 
 \chapter{一维非线性谐振子的数值bootstrap}
 
@@ -245,15 +254,200 @@ TODO
 一维非线性谐振子的简单形式和它的非微扰本质意味着它是测试多体问题研究方法的一个理想的玩具模型：可以通过比较这些数值或是解析方法和求解离散定态薛定谔方程的结果来预计这些方法的有效性，并分析这些方法为何有效或无效。
 一维非线性谐振子已被做大量不同的话题的例子，包括泛函重整化群\cite{Nagy-2010fv}、Rayleigh-Schrödinger微扰论的高阶行为\cite{bender199041}、重整化微扰论的收敛性\cite{Bender-1970uz}、量子多尺度分析\cite{Bender_1996}。
 
-之后几节将重复
-
 \section{非线性SDP优化}\label{sec:nonlinear-sdp-oscillator}
+
+本节我们复现文献\parencite{han_matrix}中对非简谐振子
+\begin{equation}
+    H = p^2 + x^2 + g x^4
+    \label{eq:anharmonic-hamiltonian}
+\end{equation}
+的非线性SDP计算。由于空间反演不变性，可以确认$n$为奇数时$\expval*{x^n} = 0$。
+我们将正规序算符基底$\{O_i\}$选取为$\{x^{2n}\}, n \leq K$。
+为此，有必要在不同的$\expval*{x^{2n}}$期望值之间建立非线性递推关系，最终将$n \geq 2$时的所有期望值都转化为能量期望值$E$和$x$的二阶矩$\expval*{x^2}$的多项式。
+建立这种递推关系之后，根据矩阵
+\begin{equation}
+    M_{ij} = \expval*{x^{i + j}}
+\end{equation}
+的半正定性，即可得到$E$和$\expval*{x^2}$的范围。
+由于此时独立的优化变量只有$E$和$\expval*{x^2}$，可以直接通过暴力搜索完成bootstrap。
+我们使用Mathematica的\texttt{FindMinimum}函数即可完成整个计算流程。
 
 \subsection{$\expval{x^n}$的非线性递推关系}
 
+本节我们展示如何导出\parencite{han_matrix}中的方程(6)。根据$\expval*{OH} = E \expval*{O}$以及\eqref{eq:anharmonic-hamiltonian}，并取$O = x^{t-1}$，我们有
+\begin{equation}
+    E \expval*{x^{t-1}} = \expval*{x^{t-1} p^2} + \expval*{x^{t+1}} + g \expval*{x^{t+3}}.
+    \label{eq:e-h-o-constraint-oscillator}
+\end{equation}
+上式中出现了$p$的依赖，这会导致递推关系不封闭；此外，$E$也包含$\expval*{p^2}$的期望值。我们需要设法寻找一个包含$\expval*{x^{t-1} p^2}$和$\langle x^n \rangle$的递推关系。
+
+$E$的期望值中的$\expval*{p^2}$可以通过在$\expval*{\comm{O}{H}} = 0$中取$O = xp$而消去。
+我们有
+\[
+    \comm{p^2}{xp} = p \underbrace{[p, xp]}_{= [p, x] p = - \ii p} + [p, xp] p = - \ii p^2 - \ii p ^2 = - 2 \ii p^2,
+\]
+\[
+    \comm{x^2}{xp} = x\comm{x^2}{p} = x \cdot (2 \ii x) = 2 \ii x^2,
+\]
+\[
+    \comm{x^4}{xp} = x \comm{x^4}{p} = x \cdot (4 \ii x^3) = 4 \ii x^4,
+\]
+于是约束$\expval*{\comm{O}{H}} = 0$意味着
+\[
+    - 2 \ii \expval*{p^2} + 2 \ii \expval*{x^2} + 4 g \ii \expval*{x^4} = 0,
+\]
+于是
+\begin{equation}
+    \begin{aligned}
+        E &= \expval*{p^2} + \expval*{x^2} + g \expval*{x^4} \\
+        &= \expval*{x^2} + 2 g \expval*{x^4} + \expval*{x^2} + g \expval*{x^4} = 2 \expval*{x^2} + 3 g \expval*{x^4}.
+    \end{aligned}
+    \label{eq:e-x-2-x-4}
+\end{equation}
+
+我们仍然需要计算一般的$\expval*{x^{t-1} p^2}$。显然，通过在$\expval*{\comm{O}{H}} = 0$中取$O = x^t p$，由于
+\[
+    \begin{aligned}
+        \comm{x^t p}{p^2} &= p \comm{x^t p}{p} + \comm{x^t p }{p} p = p \comm{x^t}{p} p + \comm{x^t}{p} p^2 \\
+        &= p \ii t x^{t - 1} p + \ii t x^{t - 1} p^2 = \ii t (\comm{p}{x^{t-1}} p + 2 x^{t-1} p^2) \\
+        &= \ii t (- \ii (t - 1) x^{t - 2} p + 2 x^{t-1} p^2) \\
+        &= t(t-1) x^{t-2} p + 2 \ii t x^{t-1} p^2,
+    \end{aligned}
+\]
+我们可以在得到的约束条件中看到一个$x^{t-1} p^2$项，但是同样出现了$x^{t-2} p$项，而这个项在\eqref{eq:e-h-o-constraint-oscillator}中是没有出现的。
+因此，我们需要另一个只关于$\langle x^n p \rangle$和$\expval*{x^m}$的约束来消去这个项。
+这样的约束是容易得到的：注意到
+\[
+    \begin{aligned}
+        \comm{x^s}{p^2} &= p \comm{x^s}{p} + \comm{x^s}{p} p = p \cdot \ii s x^{s-1} + \ii s x^{s-1} p \\
+        &= \ii s ( 2 x^{s-1} p + \comm{p}{x^{s-1}} ) = \ii s (2 x^{s-1} p - \ii (s-1) x^{s-2}) \\
+        &= 2 \ii s x^{s-1} p + s (s-1) x^{s-2},
+    \end{aligned}
+\]
+而$x^s$和$H$中关于$x$的项当然是对易的。于是$O= x^s, x^t p$的$\expval*{\comm{O}{H}} = 0$约束即可得到将$\expval*{x^{t-1} p^2}$和$\expval*{x^n}$的关系。
+$O = x^s$的约束条件我们已经得到，它是
+\begin{equation}
+    0 = \expval*{\comm{x^s}{H}} = \expval*{\comm{x^s}{p^2}} = 2 \ii s \expval*{x^{s-1} p} + s (s-1) \expval*{x^{s-2}}.
+    \label{eq:x-s-constraint}
+\end{equation}
+我们已经计算了$O = x^t p$和$p^2$的对易关系，它和$x^2, x^4$的对易关系分别是
+\[
+    \comm{x^t p}{x^2} = x^t \comm{p}{x^2} = x^t \cdot (- 2 \ii x) = - 2 \ii x^{t + 1},
+\]
+以及
+\[
+    \comm{x^t p}{x^4} = x^t \comm{p}{x^4} = x^t \cdot (- 4 \ii x^3) = - 4 \ii x^{t + 3}.
+\]
+这样$O = x^t p$给出的约束就是
+\begin{equation}
+    t(t-1) \expval*{x^{t-2} p} + 2 \ii t \expval*{t^{t-1} p^2} - 2 \ii \expval*{x^{t+1}} - 4 \ii g \expval*{x^{t+3}} = 0.
+    \label{eq:x-t-p-constraint}
+\end{equation}
+在\eqref{eq:x-s-constraint}中代入$s=t-1$，并联立\eqref{eq:x-s-constraint}和\eqref{eq:x-t-p-constraint}，消去$x^{t-2} p$，就得到
+\[
+    - t(t-1) \cdot \frac{t - 2}{2 \ii} \expval*{x^{t-3}} + 2 \ii t \expval*{x^{t-1} p^2} - 2 \ii \expval*{x^{t+1}} - 4 \ii g \expval*{x^{t+3}} = 0,
+\]
+即
+\begin{equation}
+    4 t \expval*{x^{t-1} p^2} = 4 \expval*{x^{t+1}} + 8 g \expval*{x^{t+3}} - t(t-1)(t-2) \expval*{x^{t-3}}.
+\end{equation}
+这就消去了\eqref{eq:e-h-o-constraint-oscillator}中的$\expval*{x^{t-1} p}$项，我们得到
+\begin{equation}
+    4 t E \expval*{x^{t-1}} + t(t-1)(t-2) \expval*{x^{t-3}} - 4 (t+1) \expval*{x^{t+1}} - 4g(t+2) \expval*{x^{t+3}} = 0.
+\end{equation}
+这个递推关系中的$x^n$的期望值中，如果其中一个是偶数幂次的，那么全部都是偶数幂次的。在$E$和$\expval*{x^2}$给定后，根据\eqref{eq:e-x-2-x-4}可以计算出$\expval*{x^4}$，于是即可递推出$\expval*{x^6}, \expval*{x^8}, \ldots$，于是就能够构造出全部$\expval*{x^{2n}}$。
+这样，即可将矩阵$M_{ij} = \expval*{x^{i+j}}$完全用两个变量$E$和$\expval*{x^2}$表示出来。
+
+至此我们已经构造完成了关于非简谐振子的诸$\expval*{x^n}$的非线性SDP问题，它是
+\begin{equation}
+    \begin{aligned}
+        &\min E, \quad \text{s.t.} \expval*{x^n} = 0 \quad \text{for odd $n$}, \\
+        &\quad M_{ij} = \expval{x^{i + j}}, \quad M \geq 0, \\
+        &\quad E = 2 \expval*{x^2} + 3 g \expval*{x^4} , \\
+        &\quad 4 t E \expval*{x^{t-1}} + t(t-1)(t-2) \expval*{x^{t-3}} - 4 (t+1) \expval*{x^{t+1}} - 4g(t+2) \expval*{x^{t+3}} = 0.
+    \end{aligned}
+    \label{eq:nonlinear-sdp-problem}
+\end{equation}
+在实际求解时，需要将$i$和$j$约束在范围
+\begin{equation}
+    0 \leq i, j \leq K
+\end{equation}
+中，$K$是对算符幂次上限的一个截断。
+
 \subsection{可行域，基态和第一激发态}
 
-\subsection{严格对角化基准测试}
+我们在Mathematica中先为变量\texttt{g}赋值，然后执行以下代码：
+\lstset{language=Mathematica,basicstyle=\small\ttfamily}
+% Code from oscillator-simple-prototype/2022-1-20.nb
+\begin{lstlisting}
+    expectedX[0] := 1;
+    expectedX[2] := x2;
+    expectedX[4] := 1/(3 g) (E0 - 2 x2);
+    expectedX[u_?EvenQ] := 1 / (4 g ((-3 + u) + 2)) * (
+        4 (-3 + u) E0 expectedX[(-3 + u) - 1] 
+        + (-3 + u) ((-3 + u) - 1) ((-3 + u) - 2) *
+            expectedX[(-3 + u) - 3] 
+        - 4 ((-3 + u) + 1) expectedX[(-3 + u) + 1]);
+
+    matPositive[K_] := 
+        Table[expectedX[i+j], {i, 0, K}, {j, 0, K}];
+\end{lstlisting}
+则函数\texttt{matPositive[K]}就给出了表示成变量\texttt{x2}（代表期望值$\expval{x^2}$）和变量\texttt{E0}（代表$E$；这里我们没有使用\texttt{E}，因为Mathematica中符号\texttt{E}默认用于表示自然对数的底）的$M_{ij}$矩阵，参数\texttt{K}即为其幂次截断$K$。
+之后，可以通过检查一个正方形区域内，不同的\texttt{E0}和\texttt{x2}值给出的\texttt{matPositive[K]}的特征值是否大于等于零，搜索得到非简谐振子的非线性SDP的可行域。
+通过以下代码
+\begin{lstlisting}
+    RegionPlot[
+        AllTrue[Eigenvalues[matPositive[9] /. g -> 1], 
+        # >= 0 &], 
+        {E0, 1.35, 1.44}, {x2, 0.294, 0.311}, 
+    PlotPoints -> 100]
+\end{lstlisting}
+可以绘制$K$取为9时，$g=1$的非简谐振子（以下均取$g=1$）的非线性SDP可行域的一部分。比照通过其它手段获得的结果（见下一节），可以确定此处的可行域对应非简谐振子的基态。
+通过以下代码
+\begin{lstlisting}
+    FindMinimum[{E0, 
+        AllTrue[Eigenvalues[matPositive[9] /. g -> 1], # >= 0 &]}, 
+        {{x2, 0.307}, {E0, 1.40}}]
+\end{lstlisting}
+可以计算给定$K$为9时的\texttt{E0}的极小值，以及此时\texttt{x2}的值。
+注意，由于非线性SDP中，属于不同的能级的可行域经常是分散的，在使用\texttt{FindMinimum}寻找极小值点时需要指定初始值，初始值落在哪个能级的可行域中，\texttt{FindMinimum}就给出哪个能级的$E$和$\expval*{x^2}$估计值。
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{nonlinear-oscillator-nonlinear-sdp-k-7-region.pdf}
+        \subcaption{}
+    \end{subfigure}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{nonlinear-oscillator-nonlinear-sdp-k-7-8-9-region.pdf}
+        \subcaption{}
+    \end{subfigure}
+    \caption{(a) 取$K$为7时的基态的$E$和$\expval{x^2}$的范围 (b) $K$为7, 8, 9时的基态的$E$和$\expval{x^2}$的范围}
+    \label{fig:ground-state-e-x2-plot}
+\end{figure}
+
+\prettyref{fig:ground-state-e-x2-plot}给出了非线性SDP问题\eqref{eq:nonlinear-sdp-problem}中不同$K$时的基态的$E$和$\expval{x^2}$的可行域。（文献\parencite{han_matrix}的图1给出了几乎一样的图形，可以推测作者也是使用Mathematica完成的非线性SDP）
+可以看到，随着$K$的增大，可行域快速缩小。实际上，当$K=9$时，可行域已经缩得如此之小，以至于\texttt{RegionPlot}的默认采样密度下，绘制出来的可行域是一片空白；需要将\texttt{PlotPoints}设置到至少100才能够绘制出正确的可行域。
+
+类似的，如\prettyref{fig:first-excited-nonlinear-oscillator}所示，在第一激发态的能量附近做暴力搜索，同样可以发现一个可行域的连通分支。
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.48\textwidth]{nonlinear-oscillator-nonlinear-sdp-k-10-first-excited-region.pdf}
+    \caption{$K=10$时的第一激发态的$E$和$\expval{x^2}$的范围}
+    \label{fig:first-excited-nonlinear-oscillator}
+\end{figure}
+
+\input{oscillator-e-x2-table.tex}
+
+\prettyref{tbl:nonlinear-different-k}给出了不同截断下的非线性SDP结果。观察可以发现，随着$K$的提升，基态能量计算结果呈现上升趋势，并且似乎在逐渐收敛。
+这和\prettyref{sec:formalism}中所述的基态能量计算值是真实值的下界一致，也表明，通过扩大问题规模，可以系统地提升计算精度。
+
+\subsection{定态薛定谔方程基准测试}
+
+为测试\prettyref{tbl:nonlinear-different-k}的可靠性，我们
+
+\subsection{计算$\langle x^m p^n \rangle$参考值}
 
 \subsection{非线性SDP在大规模问题上的不可行性}
 
