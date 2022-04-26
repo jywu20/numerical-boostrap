@@ -134,11 +134,19 @@ TODO
 
 \section{引言}
 
-凝聚态物理分析
+凝聚态物理中的传统量子多体方法从电子在周期性势场中产生的能带结构出发，通过费曼图微扰地处理库仑相互作用；大体上说，这种范式对应于朗道费米液体理论及其修正\cite{mahan2013many}。
+在强关联体系中，费米液体图像失效，在量子多体理论中体现为有相互作用格林函数和无相互作用格林函数无法建立绝热演化的关系，LW泛函出现多值性等现象\cite{Gunnarsson_2017}。
+已有多种数值方法可用于求解强关联系统。对自旋模型，可使用世界线蒙特卡洛、随机级数展开，对电子模型，可使用行列式蒙特卡洛，不过这些方法均可能存在符号问题，即在容易想到的基底下，不同系统构型的权重是复数而不是实数，从而无法通过马尔可夫链抽样\cite{sign_problem}。
+张量网络方法是近年来发展较快的一种方法，通过构造能够容纳系统基态的纠缠结构的张量网络波函数拟设，通过变分法来获得系统基态。
+一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
+
+本文Bootstrap技术是一种新兴的非微扰方法\cite{han_matrix,bhattacharya2021,kazakov2021analytic,han_manybody}。
+与前述的常规数值方法不同，bootstrap技术不直接处理波函数、算符、（离散）路径积分这些对象，而是通过在待求解的物理量期望值之间建立\emph{解析}的等式和不等式关系，据此它们的取值范围。
+通过这种方法，不需要使用正则量子化或是路径积分的语言，我们即可“凭空”求解一个体系。
 
 \section{Bootstrap技术示例：共形Bootstrap}
 
-最为著名的bootstrap方法可能是所谓的共形bootstrap，即针对共形场论（conformal field theory, CFT）的bootstrap。
+最为著名的bootstrap方法可能是所谓的共形bootstrap，即针对共形场论（conformal field theory, CFT）的bootstrap\cite{Poland_2016}。
 共形对称性对两点和三点关联函数的形式有着强烈的要求：关于标量算符$\mathcal{O}$的两点函数只能够取
 \begin{equation}
     \expval*{\mathcal{O}(x) \mathcal{O}(y)} = \frac{1}{{\abs*{x - y}}^{2 \Delta_{\mathcal{O}}}}
@@ -151,7 +159,11 @@ TODO
 \end{equation}
 的形式。如果$\mathcal{O}$有自旋$l_{\mathcal{O}}$，分子上可能还会出现一些因子。
 在已知两点函数和三点函数之后，可以通过算符乘积展开将更高阶的关联函数递归地计算出来。于是，确定一个CFT需要的数据就是$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$。
-我们随后可以通过一系列约束条件，获得关于这些数据的不等式，从而确定自洽的CFT的$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$组合。
+
+我们随后可以向这些数据施加一系列自洽条件。在量子场论中，幺正性会导致光学定理，从而施加一个约束。
+另一个约束是算符乘积展开的自洽性：将四点函数以一种方式和另一种方式展开应该得到相同的结果，图示为
+\input{cft-ope-consistent.tex}
+可以适当放宽其中的一些约束，将它们从等式变成不等式，结合剩下的等式约束，即可确定自洽的CFT的$\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$组合。
 通过这种方式，在给定一类CFT的基本自由度之后，我们实际上已经知道这整整一类CFT的行为以及理论空间的边界了\cite{Poland_2016,2019}。
 
 在凝聚态物理中，$1+1$维无能隙体系常常可以使用CFT描述，如Luttinger液体及其推广，如霍尔效应边界态\cite{Degiovanni_1998}。
@@ -247,7 +259,8 @@ TODO
 \end{equation}
 可以看成一个$0+1$维的$\phi^4$量子场论。它常常被用作量子力学中微扰论的例子，但实际上可以证明，其基态能量的微扰级数是发散的\cite{PhysRev.184.1231}。
 这个发散可以看成$\phi^4$量子场论中的发散的一个特例。大部分量子场论中，相互作用均导致的微扰级数在最好的情况下也是渐进级数\cite{Jackiw_effective}。%
-\footnote{此处所说的是朴素地将物理量展开成关于耦合常数$g$的幂次的级数后，会发现这个级数不收敛。在量子场论中这个级数的每一项都可能不收敛，因为动量积分时发生紫外发散。后一种不收敛和此处的讨论没有直接关系。然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，而重整化微扰论的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
+\footnote{此处所说的是朴素地将物理量展开成关于耦合常数$g$的幂次的级数后，会发现这个级数不收敛。在量子场论中这个级数的每一项都可能不收敛，因为动量积分时发生紫外发散。后一种不收敛和此处的讨论没有直接关系。
+然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，并且确实可以在非简谐振子中重复，它在非简谐振子中的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
 
 由于一维非线性谐振子归根到底是一个量子力学模型，可以通过求解离散定态薛定谔方程的方法精确地处理它。
 它和$3+1$维多体问题的相似性又意味着，用于一般的多体问题的方法也可以用在它上面。
@@ -426,7 +439,7 @@ $O = x^s$的约束条件我们已经得到，它是
     \label{fig:ground-state-e-x2-plot}
 \end{figure}
 
-\prettyref{fig:ground-state-e-x2-plot}给出了非线性SDP问题\eqref{eq:nonlinear-sdp-problem}中不同$K$时的基态的$E$和$\expval{x^2}$的可行域。（文献\parencite{han_matrix}的图1给出了几乎一样的图形，可以推测作者也是使用Mathematica完成的非线性SDP）
+\prettyref{fig:ground-state-e-x2-plot}是\texttt{RegionPlot}函数的输出，给出了非线性SDP问题\eqref{eq:nonlinear-sdp-problem}中不同$K$时的基态的$E$和$\expval{x^2}$的可行域。文献\parencite{han_matrix}的图1给出了几乎一样的图形，可以推测作者也是使用Mathematica完成的非线性SDP。
 可以看到，随着$K$的增大，可行域快速缩小。实际上，当$K=9$时，可行域已经缩得如此之小，以至于\texttt{RegionPlot}的默认采样密度下，绘制出来的可行域是一片空白；需要将\texttt{PlotPoints}设置到至少100才能够绘制出正确的可行域。
 
 类似的，如\prettyref{fig:first-excited-nonlinear-oscillator}所示，在第一激发态的能量附近做暴力搜索，同样可以发现一个可行域的连通分支。
