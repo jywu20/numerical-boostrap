@@ -45,6 +45,8 @@
   }
 }
 
+\unimathsetup{math-style=TeX}
+
 % 需要的宏包可以自行调用
 \usepackage{booktabs}
 \usepackage{amsmath}
@@ -140,7 +142,7 @@ TODO
 张量网络方法是近年来发展较快的一种方法，通过构造能够容纳系统基态的纠缠结构的张量网络波函数拟设，通过变分法来获得系统基态。
 一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
 
-本文Bootstrap技术是一种新兴的非微扰方法\cite{han_matrix,bhattacharya2021,kazakov2021analytic,han_manybody}。
+本文讨论的bootstrap技术是一种新兴的非微扰方法\cite{han_matrix,bhattacharya2021,kazakov2021analytic,han_manybody}。
 与前述的常规数值方法不同，bootstrap技术不直接处理波函数、算符、（离散）路径积分这些对象，而是通过在待求解的物理量期望值之间建立\emph{解析}的等式和不等式关系，据此它们的取值范围。
 通过这种方法，不需要使用正则量子化或是路径积分的语言，我们即可“凭空”求解一个体系。
 
@@ -458,7 +460,26 @@ $O = x^s$的约束条件我们已经得到，它是
 
 \subsection{定态薛定谔方程基准测试}
 
-为测试\prettyref{tbl:nonlinear-different-k}的可靠性，我们
+\input{stationary-oscillator-benchmark.tex}
+
+为测试\prettyref{tbl:nonlinear-different-k}的可靠性，我们选择求解定态薛定谔方程来模拟非简谐振子。相应的薛定谔方程为
+\begin{equation}
+    - \laplacian \psi + x^2 \psi = E \psi, \quad \psi(x \to \pm \infty) = 0.
+    \label{eq:schrodinger-oscillator}
+\end{equation}
+为了做数值求解，采用步长为$\Delta x$的有限差分格式，则$\laplacian$近似为一个矩阵，其中
+\begin{equation}
+    \laplacian_{i, i} = -2 / \Delta x^2, \quad \laplacian_{i, i - 1} = \laplacian_{i, i+1} = 1 / \Delta x^2,
+\end{equation}
+其余矩阵元为零，$\hat{x}$算符近似为一个对角矩阵，$x_{ii}$为$i$点的坐标。
+进一步，将求解域限制在$- L \leq x \leq L$上。设求解域被离散化为$N$个点。在$L$充分大时，可以认为波函数在求解域的两端为零，于是在$i=1$和$i = N$时分别有
+\begin{equation}
+    \laplacian_{1, 1} = -2, \quad \laplacian_{1, 2} = 1, \quad \laplacian_{N, N} = -2, \quad \laplacian_{N, N-1} = 1.
+\end{equation}
+于是，$\laplacian$被截断为一个$N \times N$维矩阵。求解\eqref{eq:schrodinger-oscillator}等价于对角化矩阵$-\laplacian + x^2$。
+我们采用Arpack-NG库（用于大型矩阵对角化的Arpack库的一个实现）\cite{arpackcode}的Julia封装\texttt{Arpack.jl}\cite{arpackjl}完成这项工作。取$L=10$以及不同的$\Delta x$，使用\texttt{Arpack.jl}计算$-\laplacian + x^2$的最低本征态，即系统基态，所得结果见\prettyref{tbl:stationary-benchmark}。
+表中不同的$\Delta x$对应的波函数均平滑。
+可以看到，\prettyref{tbl:nonlinear-different-k}和\prettyref{tbl:stationary-benchmark}给出的值非常接近。取两者中计算精度最高的值（\prettyref{tbl:nonlinear-different-k}中$K=12$和\prettyref{tbl:stationary-benchmark}中的$\Delta x = 0.005$），计算相对偏差，发现$E$的相对偏差为\num{1.1e-4}，$\expval*{x^2}$的相对偏差为\num{1.0e-4}，两者符合程度较好。
 
 \subsection{计算$\langle x^m p^n \rangle$参考值}
 
@@ -472,7 +493,9 @@ $O = x^s$的约束条件我们已经得到，它是
 
 \subsection{使用非线性SDP为线性SDP做基准测试}
 
-\subsection{收敛性问题}
+\subsection{计算结果与收敛性问题}
+
+\input{linear-sdp-oscillator-result.tex}
 
 \chapter{Hubbard模型的数值bootstrap}
 

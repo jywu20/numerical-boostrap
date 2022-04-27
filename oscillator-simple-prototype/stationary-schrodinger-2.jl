@@ -4,7 +4,7 @@ using Plots
 using OffsetArrays
 using JLD2
 
-Δx = 0.02
+Δx = 0.005
 L = 10
 # The list of all x coordinate points included 
 xs = - L : Δx : L
@@ -33,9 +33,13 @@ V = diagm(xs.^2 + g * xs.^4)
 H = - ∇² + V
 result = eigs(H, nev = 10, which = :SM)
 
-##
 
 ψ_ground = result[2][:, 1]
+
+@show Δx
+@show ψ_ground' * diagm(xs.^2) * ψ_ground / (ψ_ground' * ψ_ground)
+@show ψ_ground' * H * ψ_ground / (ψ_ground' * ψ_ground)
+
 plot(xs, ψ_ground, legend = false)
 
 ##

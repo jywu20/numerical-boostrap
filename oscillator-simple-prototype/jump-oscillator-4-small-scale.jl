@@ -3,8 +3,6 @@ using LinearAlgebra
 using OffsetArrays
 using Base.Iterators
 
-#region Configuration
-
 # Interaction strength
 g = 1.0
 # Maximal length of x operator sequence and p operator sequence ever considered in this program.
@@ -12,7 +10,7 @@ g = 1.0
 # so that when computing commutation relation with the Hamiltonian,
 # there will be no out of bound error. Similarly, when constructing the M matrix, we need to 
 # make sure that 2K ≤ L.
-L_max = 5 
+L_max = 3 
 # The dimension of the operator space; the -1 term comes from the fact that a constant is not 
 # considered as an operator 
 xpopspace_dim = (2L_max + 1)^2 - 1
@@ -21,21 +19,15 @@ xpoppower_range = 0 : 2L_max
 # The complete range of indexes of operators, the length of which is xpopspace_dim + 1 = (2L_max + 1)^2
 xpopspace_index_range = 0 : xpopspace_dim
 # Building the model only, without actual optimization. For debugging only
-no_optimization = true 
+no_optimization = false 
 # Check feasibility. For debugging only
-check_feasibility = true 
-# Max iteration 
-max_iter = 50
+check_feasibility = false 
 
 # Define variables. We label the expectation values as the follows: x^m p^n is labeled as m * (K + 1) + n 
 # Note: the index starts from 0 and should be used together with an OffsetArray
 xpopstr_index(x_power, p_power) = x_power * (2L_max + 1) + p_power
 index_to_xpower(idx) = Int(floor(idx / (2L_max + 1)))
 index_to_ppower(idx) = idx % (2L_max + 1)
-
-#endregion
-
-#region Operator algebra
 
 """
 The coefficient list of a constant "operator" c.
@@ -219,97 +211,42 @@ function max_p_power(op::OffsetArray)
     max(map(index_to_ppower, nonzero_terms_idx)...)
 end
 
-#endregion
-
 model = Model(COSMO.Optimizer)
-set_optimizer_attributes(model, "max_iter" => max_iter, "eps_rel" => 1.0e-10)
+set_optimizer_attributes(model)
+# set_optimizer_attributes(model, "max_iter" => 60000000, "eps_rel" => 1.0e-10)
 # Only non-constant operators have uncertain expectations
 # Note: since a generic O is not Hermitian, we need to replace O, O† by (O + O†), i (O - O†)
 # Note that we need to record both the imaginary part and the real part of each ⟨O⟩, so the 
 # number of variables is doubled
 
-I22 = Matrix(1*I, 2, 2)
-O22 = 0.0 * I22
-Im22 = [
-    0   -1 ; 
-    1    0
-]
-
-zero_xpopstr = xpopstr_const(0.0)
-
-# Construct the M matrix and impose the semidefinite constraint 
-# The range of two indices of M matrix defined in papers is from 0 to L; note that this is NOT the index in the 
-# JuMP constraint @variable(model, M[...]), because 1. we need to replace 0 with I and i with [0 -1; 1 0], 
-# so the size of the PSD matrix is twice as much as the size of the M matrix in analytical calculation, and
-# 2. in JuMP we count from 1 not 0 and OffsetArray cannot be created using @variable
-#
-# Note that since feasibility checking for PSD constraints are not implemented yet, 
-# when doing feasibility checking, we need to turn down the PSD constraint.
-# This means we'd better not do optimization if this task is to do feasibility checking
-if ! check_feasibility
-    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2], PSD)
-else
-    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2])
-end
-
-# An index of M_ij ranges from 0 to x^L p^L, so there are (L_max + 1)^2 possible value of this index.
-# Since in JuMP, the index of a matrix variable start from 1, the possible values of an index 
-# of M in JuMP is 1 : (L_max + 1)^2 - actually 1 : 2(L_max + 1)^2, because we need to replace 
-# a complex number by a real 2×2 matrix
-M_index_to_xpopstr_index = zeros(Int, (L_max + 1)^2)
-for i in 0 : L_max
-    for j in 0 : L_max
-        # Index of `M` start from 1, so we have `+ 1`
-        M_idx = i * (L_max + 1) + j + 1
-        M_index_to_xpopstr_index[M_idx] = xpopstr_index(i, j)
-    end
-end
-
-# We take the following steps:
-# 1. Pick up x^m p^n variables in `M` and assemble `xpopstr_expected`
-# and at the same time, constraint Im(even p) = 0 and Re(odd p) = 0
-# 2. Impose the relation between other M components and `xpopstr_expected`
-# 3. Impose all the equational constraints on `xpopstr_expected`
-
-#region Pick up x^m p^n variables
-
-# In this version we use variables in the M matrix to construct `xpopstr_expected`
+# To speed up, we replace 
+# @variable(model, xpopstr_expected[1 : 2xpopspace_dim])
+# by the following code, eliminating the need to declare variables for expectation 
+# values that are bound to be zero
 xpopstr_expected = Vector{Union{Float64, VariableRef}}(undef, 2xpopspace_dim)
+for opstr_index in 1 : xpopspace_dim
+    x_power = index_to_xpower(opstr_index)
+    p_power = index_to_ppower(opstr_index)
 
-# We start from j = 2, because i = 1, j = 1 means the constant "opeartor", which is not 
-# included in `xpopstr_expected`
-for j in 2 : (L_max + 1)^2
-    # M_ij = O_i† O_j = p^op1_idx_ppower x^op1_idx_xpower x^op1_idx_xpower p^op2_idx_ppower
-    # so we extract x^m p^n variables from the first two *rows* (not columns) of `M`
-    op2_idx = M_index_to_xpopstr_index[j]
-    op2_idx_xpower = index_to_xpower(op2_idx)
-    op2_idx_ppower = index_to_ppower(op2_idx)
-    xpopstr_basis_id = xpopstr_index(op2_idx_xpower, op2_idx_ppower)
-
-    if isodd(op2_idx_xpower + op2_idx_ppower)
-        @constraint(model, M[1:2, 2j - 1 : 2j] .== O22)      
-        xpopstr_expected[2xpopstr_basis_id - 1 : 2xpopstr_basis_id] .= 0.0
+    if isodd(x_power + p_power)
+        xpopstr_expected[2opstr_index - 1] = 0.0
+        xpopstr_expected[2opstr_index] = 0.0
         continue
     end
 
-    if isodd(op2_idx_ppower)
-        @constraint(model, M[1, 2j - 1] == 0.0)  
-        @constraint(model, M[2, 2j] == 0.0)
-        @constraint(model, M[1, 2j] == - M[2, 2j - 1])
-        xpopstr_expected[2xpopstr_basis_id - 1] = 0.0
-        xpopstr_expected[2xpopstr_basis_id] = M[2, 2j - 1]
+    if isodd(p_power)
+        # Imaginary part only
+        xpopstr_expected[2opstr_index - 1] = 0.0
+        xpopstr_expected[2opstr_index] = @variable(model, base_name = "im(x^$x_power p^$p_power)")
         continue
     end
 
-    # iseven(op_idx_ppower)
-    @constraint(model, M[1, 2j] == 0.0)
-    @constraint(model, M[2, 2j - 1] == 0.0)
-    @constraint(model, M[1, 2j - 1] == M[2, 2j])
-    xpopstr_expected[2xpopstr_basis_id] = 0.0
-    xpopstr_expected[2xpopstr_basis_id - 1] = M[1, 2j - 1]
+    # iseven(p_power)
+    # Real part only 
+    xpopstr_expected[2opstr_index - 1] = @variable(model, base_name = "re(x^$x_power p^$p_power)")
+    xpopstr_expected[2opstr_index] = 0.0
 end
 
-# Map the index `i` in `xpopspace_index_range` to the corresponding JuMP variable 
 xpopstr_expected_real_imag_parts(i, real_or_imag) = begin
     if real_or_imag == :real
         return xpopstr_expected[2i - 1]
@@ -319,9 +256,14 @@ xpopstr_expected_real_imag_parts(i, real_or_imag) = begin
     end
 end
 
-#endregion
+I22 = Matrix(1*I, 2, 2)
+O22 = 0.0 * I22
+Im22 = [
+    0   -1 ; 
+    1    0
+]
 
-#region Impose the relation between other M components and `xpopstr_expected`
+zero_xpopstr = xpopstr_const(0.0)
 
 variable_list_real = [xpopstr_expected_real_imag_parts(i, :real) * I22 for i in 1 : xpopspace_dim]
 variable_list_imag = [xpopstr_expected_real_imag_parts(i, :imag) * Im22 for i in 1 : xpopspace_dim]
@@ -335,48 +277,6 @@ function complex_to_mat(coefficients)
     imag_part_mat_version = map(x -> x * Im22, imag_part)
     (real_part_mat_version + imag_part_mat_version) * (xpopstr_basis_real + xpopstr_basis_imag)
 end
-
-for i in 1 : (L_max + 1)^2
-    for j in 1 : (L_max + 1)^2
-        op1_idx = M_index_to_xpopstr_index[i]
-        op2_idx = M_index_to_xpopstr_index[j]
-        op1_idx_xpower = index_to_xpower(op1_idx)
-        op1_idx_ppower = index_to_ppower(op1_idx)
-        op2_idx_xpower = index_to_xpower(op2_idx)
-        op2_idx_ppower = index_to_ppower(op2_idx)
-        # M_ij = O_i† O_j = p^op1_idx_ppower x^op1_idx_xpower x^op1_idx_xpower p^op2_idx_ppower
-        op_ij = xpopstr_normal_ord(0, op1_idx_ppower, op1_idx_xpower + op2_idx_xpower, op2_idx_ppower)
-
-        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== complex_to_mat(op_ij))
-    end
-end
-
-#endregion
-
-# The following code are legacy in `jump-oscillator-4.jl`, which is duplicate of the "Pick up x^m p^n variables"
-# block 
-# for opstr_index in 1 : xpopspace_dim
-#     x_power = index_to_xpower(opstr_index)
-#     p_power = index_to_ppower(opstr_index)
-# 
-#     if isodd(x_power + p_power)
-#         xpopstr_expected[2opstr_index - 1] = 0.0
-#         xpopstr_expected[2opstr_index] = 0.0
-#         continue
-#     end
-# 
-#     if isodd(p_power)
-#         # Imaginary part only
-#         xpopstr_expected[2opstr_index - 1] = 0.0
-#         xpopstr_expected[2opstr_index] = @variable(model, base_name = "im(x^$x_power p^$p_power)")
-#         continue
-#     end
-# 
-#     # iseven(p_power)
-#     # Real part only 
-#     xpopstr_expected[2opstr_index - 1] = @variable(model, base_name = "re(x^$x_power p^$p_power)")
-#     xpopstr_expected[2opstr_index] = 0.0
-# end
 
 # Building constraints
 # make sure the size of OH does not cause any out of bound error.
@@ -397,6 +297,46 @@ for x_power in 0 : 2L_max - 4, p_power in 0 : 2L_max - 2
         @constraint(model, lhs[1, 1] == 0.0)
     else
         @constraint(model, lhs .== O22)
+    end
+end
+
+# Construct the M matrix and impose the semidefinite constraint 
+# The range of two indices of M matrix defined in papers is from 0 to L; note that this is NOT the index in the 
+# JuMP constraint @variable(model, M[...]), because 1. we need to replace 0 with I and i with [0 -1; 1 0], 
+# so the size of the PSD matrix is twice as much as the size of the M matrix in analytical calculation, and
+# 2. in JuMP we count from 1 not 0 and OffsetArray cannot be created using @variable
+
+M_index_to_xpopstr_index = zeros(Int, (L_max + 1)^2)
+for i in 0 : L_max
+    for j in 0 : L_max
+        M_idx = i * (L_max + 1) + j + 1
+        M_index_to_xpopstr_index[M_idx] = xpopstr_index(i, j)
+    end
+end
+
+# To check if the opeartors are correct, run
+# map(idx -> xpopstr_power_str(index_to_xpower(idx), index_to_ppower(idx)), M_index_to_xpopstr_index) 
+
+# Note that since feasibility checking for PSD constraints are not implemented yet, 
+# when doing feasibility checking, we need to turn down the PSD constraint.
+# This means we'd better not do optimization if this task is to do feasibility checking
+if ! check_feasibility
+    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2], PSD)
+else
+    @variable(model, M[1 : 2 * (L_max + 1)^2, 1 : 2 * (L_max + 1)^2])
+end
+
+for i in 1 : (L_max + 1)^2
+    for j in 1 : (L_max + 1)^2
+        op1_idx = M_index_to_xpopstr_index[i]
+        op2_idx = M_index_to_xpopstr_index[j]
+        op1_idx_xpower = index_to_xpower(op1_idx)
+        op1_idx_ppower = index_to_ppower(op1_idx)
+        op2_idx_xpower = index_to_xpower(op2_idx)
+        op2_idx_ppower = index_to_ppower(op2_idx)
+        op_ij = xpopstr_normal_ord(0, op1_idx_ppower, op1_idx_xpower + op2_idx_xpower, op2_idx_ppower)
+
+        @constraint(model, M[2i - 1 : 2i, 2j - 1 : 2j] .== complex_to_mat(op_ij))
     end
 end
 
