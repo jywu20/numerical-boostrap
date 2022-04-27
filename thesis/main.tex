@@ -39,7 +39,7 @@
       supervisor-title = {研究员},
       affiliation      = {物理学系},
       student-id       = {18307110155},
-      keywords         = {Bootstrap, Hubbard模型, 非线性谐振子},
+      keywords         = {Bootstrap, Hubbard模型, 非简谐振子},
       keywords*        = {Bootstrap, Hubbard model, nonlinear oscillator},
       % 中英文关键字均使用英文逗号分隔
   }
@@ -102,6 +102,9 @@
 \setcounter{tocdepth}{2}
 
 \begin{document}
+
+\renewcommand{\Re}{\mathrm{Re}}
+\renewcommand{\Im}{\mathrm{Im}}
 
 % 前置部分包含目录、中英文摘要以及符号表等
 \frontmatter
@@ -171,7 +174,7 @@ TODO
 在凝聚态物理中，$1+1$维无能隙体系常常可以使用CFT描述，如Luttinger液体及其推广，如霍尔效应边界态\cite{Degiovanni_1998}。
 共形bootstrap可以为一个体系的临界行为是不是能够使用CFT描述提供一定提示，如通过比较三维伊辛模型和一类CFT的临界指数，我们有很强的信心表明三维伊辛模型的临界行为可能就是一个落在可行域边界上的CFT\cite{prd2012ising,Poland_2016}。
 
-\section{数值bootstrap}
+\section{数值bootstrap}\label{sec:numerical-boostrap-intro}
 
 \subsection{形式理论}\label{sec:formalism}
 
@@ -251,11 +254,11 @@ TODO
 
 本文将在\prettyref{sec:nonlinear-sdp-oscillator}中复现\parencite{han_matrix}的工作。
 
-\chapter{一维非线性谐振子的数值bootstrap}
+\chapter{一维非简谐振子的数值bootstrap}
 
-\section{一维非线性谐振子——一个$0+1$维非微扰场论}
+\section{一维非简谐振子——一个$0+1$维非微扰场论}
 
-一维非线性谐振子
+一维非简谐振子
 \begin{equation}
     H = p^2 + x^2 + g x^4
 \end{equation}
@@ -264,10 +267,10 @@ TODO
 \footnote{此处所说的是朴素地将物理量展开成关于耦合常数$g$的幂次的级数后，会发现这个级数不收敛。在量子场论中这个级数的每一项都可能不收敛，因为动量积分时发生紫外发散。后一种不收敛和此处的讨论没有直接关系。
 然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，并且确实可以在非简谐振子中重复，它在非简谐振子中的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
 
-由于一维非线性谐振子归根到底是一个量子力学模型，可以通过求解离散定态薛定谔方程的方法精确地处理它。
+由于一维非简谐振子归根到底是一个量子力学模型，可以通过求解离散定态薛定谔方程的方法精确地处理它。
 它和$3+1$维多体问题的相似性又意味着，用于一般的多体问题的方法也可以用在它上面。
-一维非线性谐振子的简单形式和它的非微扰本质意味着它是测试多体问题研究方法的一个理想的玩具模型：可以通过比较这些数值或是解析方法和求解离散定态薛定谔方程的结果来预计这些方法的有效性，并分析这些方法为何有效或无效。
-一维非线性谐振子已被做大量不同的话题的例子，包括泛函重整化群\cite{Nagy-2010fv}、Rayleigh-Schrödinger微扰论的高阶行为\cite{bender199041}、重整化微扰论的收敛性\cite{Bender-1970uz}、量子多尺度分析\cite{Bender_1996}。
+一维非简谐振子的简单形式和它的非微扰本质意味着它是测试多体问题研究方法的一个理想的玩具模型：可以通过比较这些数值或是解析方法和求解离散定态薛定谔方程的结果来预计这些方法的有效性，并分析这些方法为何有效或无效。
+一维非简谐振子已被做大量不同的话题的例子，包括泛函重整化群\cite{Nagy-2010fv}、Rayleigh-Schrödinger微扰论的高阶行为\cite{bender199041}、重整化微扰论的收敛性\cite{Bender-1970uz}、量子多尺度分析\cite{Bender_1996}。
 
 \section{非线性SDP优化}\label{sec:nonlinear-sdp-oscillator}
 
@@ -369,6 +372,7 @@ $O = x^s$的约束条件我们已经得到，它是
 这就消去了\eqref{eq:e-h-o-constraint-oscillator}中的$\expval*{x^{t-1} p}$项，我们得到
 \begin{equation}
     4 t E \expval*{x^{t-1}} + t(t-1)(t-2) \expval*{x^{t-3}} - 4 (t+1) \expval*{x^{t+1}} - 4g(t+2) \expval*{x^{t+3}} = 0.
+    \label{eq:recursive-nonlinear-sdp-relation}
 \end{equation}
 这个递推关系中的$x^n$的期望值中，如果其中一个是偶数幂次的，那么全部都是偶数幂次的。在$E$和$\expval*{x^2}$给定后，根据\eqref{eq:e-x-2-x-4}可以计算出$\expval*{x^4}$，于是即可递推出$\expval*{x^6}, \expval*{x^8}, \ldots$，于是就能够构造出全部$\expval*{x^{2n}}$。
 这样，即可将矩阵$M_{ij} = \expval*{x^{i+j}}$完全用两个变量$E$和$\expval*{x^2}$表示出来。
@@ -477,25 +481,104 @@ $O = x^s$的约束条件我们已经得到，它是
     \laplacian_{1, 1} = -2, \quad \laplacian_{1, 2} = 1, \quad \laplacian_{N, N} = -2, \quad \laplacian_{N, N-1} = 1.
 \end{equation}
 于是，$\laplacian$被截断为一个$N \times N$维矩阵。求解\eqref{eq:schrodinger-oscillator}等价于对角化矩阵$-\laplacian + x^2$。
-我们采用Arpack-NG库（用于大型矩阵对角化的Arpack库的一个实现）\cite{arpackcode}的Julia封装\texttt{Arpack.jl}\cite{arpackjl}完成这项工作。取$L=10$以及不同的$\Delta x$，使用\texttt{Arpack.jl}计算$-\laplacian + x^2$的最低本征态，即系统基态，所得结果见\prettyref{tbl:stationary-benchmark}。
+我们采用Arpack-NG库（用于大型矩阵对角化的Arpack库的一个实现）\cite{arpackcode}的Julia封装Arpack.jl\cite{arpackjl}完成这项工作。取$L=10$以及不同的$\Delta x$，使用Arpack.jl计算$-\laplacian + x^2$的最低本征态，即系统基态，所得结果见\prettyref{tbl:stationary-benchmark}。
 表中不同的$\Delta x$对应的波函数均平滑。
 可以看到，\prettyref{tbl:nonlinear-different-k}和\prettyref{tbl:stationary-benchmark}给出的值非常接近。取两者中计算精度最高的值（\prettyref{tbl:nonlinear-different-k}中$K=12$和\prettyref{tbl:stationary-benchmark}中的$\Delta x = 0.005$），计算相对偏差，发现$E$的相对偏差为\num{1.1e-4}，$\expval*{x^2}$的相对偏差为\num{1.0e-4}，两者符合程度较好。
 
 \subsection{计算$\langle x^m p^n \rangle$参考值}
 
-\subsection{非线性SDP在大规模问题上的不可行性}
+在已经获得了精度较高的$E$和$\expval*{x^2}$数据之后，我们可以% TODO
 
 \section{线性SDP优化}
 
+本节讨论如何使用线性SDP实施非简谐振子的数值bootstrap。在\prettyref{sec:nonlinear-sdp-oscillator}中，我们能够分析第一激发态处的物理量，而在线性SDP中我们只能讨论基态性质。
+然而，由于非线性SDP在大规模问题上是不可行的（见\prettyref{sec:numerical-boostrap-intro}的讨论），线性SDP对凝聚态体系基本上是唯一的选择。
+因此，本节将非简谐振子当作一个玩具模型，用它演示如何做线性SDP，为在凝聚态体系中做数值bootstrap做准备。
+
 \subsection{对易子和等式关系的符号计算}
+
+非简谐振子线性SDP的问题可以叙述如下：设
+\begin{equation}
+    O_i^\dagger O_j = \sum_{k} c_{ij}^k O_k,
+\end{equation}
+\begin{equation}
+    \comm{H}{O_i} = \sum_j h_j^k O_k,
+\end{equation}
+则我们有
+\begin{equation}
+    \begin{aligned}
+        &\min E, \quad \text{s.t.} \quad E = \expval*{p^2} + \expval*{x^2} + g \expval*{x^4}, \\
+        &\quad M_{ij} \coloneqq \sum_k c^k_{ij} \expval*{O_i}, \quad M \geq 0, \quad M_{ij} = M_{ji}^* , \\
+        &\quad \sum_j h_j^k \expval*{O_k} = 0.
+    \end{aligned}
+    \label{eq:oscillator-linear-sdp}
+\end{equation}
+注意，在以上问题中，$\expval*{O_i}$应该\emph{整体}当成一个优化变量；线性SDP求解器不关心它是否是某个物理量的期望值。
+约束条件$M_{ij} = M_{ji}^*$保证了$\expval*{O^\dagger} = \expval*{O}^*$。
+
+使用$\{x^m p^n\}$满足$0 \leq m, n \leq L$的子集，按照$\expval*{O_i^\dagger O_j}$的方法构建$M$矩阵。
+这可以保证$\{x^m p^n\}$中的每个算符都出现在$M$矩阵中，不至于浪费优化变量。
+显然，$M$矩阵的边长为$(L+1)^2$。
+
+此时没有类似\eqref{eq:recursive-nonlinear-sdp-relation}这样较为精简的递推公式，$c_{ij}^k$和$h_j^k$的计算需要自动进行。
+我们取$\{O_i\}$为$\{x^m p^n\}$，并将其张成的空间设为$\mathcal{C}$。我们对$\{x^m p^n\}$施加如下截断：要求
+\begin{equation}
+    0 \leq m, n \leq 2 L,
+\end{equation}
+其中$L$是一个正整数。我们将$x^m p^n$算符编号为$m(2L+1) + n$，这样，基底$\{x^m p^n\}$的编号就从0一直连续取到$(2L+1)^2-1$，$\mathcal{C}$是一个$(2L+1)^2$维的线性空间。
+我们有McCoy公式\cite{McCoyOnCF}
+\begin{equation}
+    {\left[{ {x}}^{n},{ {p}}^{m}\right]=\sum _{k=1}^{\min \left(m,n\right)}{{\frac {-\left(-i\hbar \right)^{k}n!m!}{k!\left(n-k\right)!\left(m-k\right)!}}{ {x}}^{n-k}{ {p}}^{m-k}}},
+\end{equation}
+将这个公式代入
+\begin{equation}
+    {x^{m_1} p^{n_1}}{x^{m_2} p^{n_2}} = x^{m_1 + m_2} p^{n_1 + n_2} - x^{m_1} \comm{x^{m_2}}{p^{n_1}} p^{n_2}
+    \label{eq:oscillator-normal-ordering-scheme}
+\end{equation}
+等式右边就已经是正规排序的了。于是，可以实现一个函数 \texttt{xpopstr\_normal\_ord} ，输入$m_1, n_1, m_2, n_2$，输出\eqref{eq:oscillator-normal-ordering-scheme}右边在基底$\{x^m p^n\}$下的系数。于是，我们就能够自动计算$p^{n_1} x^{m_1} x^{m_2} p^{n_2}$，于是$c^k_{ij}$即可自动计算。
+通过将${x^{m_1} p^{n_1}}{x^{m_2} p^{n_2}}$和${x^{m_2} p^{n_2}}{x^{m_1} p^{n_1}}$的系数向量相减，$\comm{O_1}{O_2}$的系数向量也可以自动计算，于是$h^k_j$也可以自动计算。
+这就给出了基底$\{x^m p^n\}$下自动计算$h_j^k$和$c^k_{ij}$的方法。
 
 \subsection{构建优化问题}
 
+我们使用JuMP\cite{DunningHuchetteLubin2017}和COSMO\cite{Garstka_2021}构建并求解优化问题\eqref{eq:oscillator-linear-sdp}。
+JuMP是一个优化器前端，可以通过\eqref{eq:oscillator-linear-sdp}这样的记号，高可读性地构建优化问题，而无需手动将\eqref{eq:oscillator-linear-sdp}中的约束组装成系数矩阵再传给优化器。
+COSMO是一个大规模凸优化问题求解器，适用于线性SDP问题。
+
+由于COSMO不支持复数变量，在构建优化问题时需要将$\langle x^m p^n \rangle$的实部和虚部声明为不同的变量。
+注意到在一维束缚态问题中，如果$m+n$是奇数，那么$\expval*{x^m p^n} = 0$，否则，如果$m$是偶数，那么$\expval*{x^m p^n}$是纯实数，如果$n$是奇数，那么$\expval*{x^m p^n}$是纯虚数。
+因此，可以只对$m+n$为偶数的那些$\expval*{x^m p^n}$声明优化变量，且对每个期望值只声明一个变量，代表其实部或虚部。
+
+在声明完优化变量之后，可以使用JuMP提供的\texttt{@constraint}宏，对这些变量施加\eqref{eq:oscillator-linear-sdp}中由$h_j^k$确定的那些约束。
+
+由于\eqref{eq:oscillator-linear-sdp}中的$M$矩阵包含复数，在JuMP中构建优化问题时，需要把它的每一个矩阵元$M_{ij}$替换为
+\begin{equation}
+    \Re(M_{ij}) \pmqty{1 & 0 \\ 0 & 1} + \Im(M_{ij}) \pmqty{0 & -1 \\ 1 & 0}.
+\end{equation}
+我们可以在JuMP中声明一个边长为$2(L+1)^2$的半正定矩阵变量，然后使用\texttt{@constraint}宏将$M_{ij}$和$\{\expval*{O_i}\}$联系起来。
+由于在大部分线性SDP求解器中，被声明为半正定的矩阵变量一定是对称的%
+\footnote{可以运行几次迭代，然后用\texttt{value.(M)}检查此时的\texttt{M}的值。计算其本征值，会发现有绝对值很小的负值，但是比较它和它的转置，会发现两者完全相同。}%
+，将$M_{ij}$的每个矩阵元都和$\{\expval*{O_i}\}$联系起来之后，$\expval*{O^\dagger} = \expval*{O}^*$的约束就自动被施加了。
+
 \subsection{使用非线性SDP为线性SDP做基准测试}
+
+由于已经有了非线性SDP计算出的数据，非简谐振子线性SDP程序的调试将变得容易很多，因为可以直接检查非线性SDP的计算结果是否满足线性SDP程序中的各种约束，从而检查程序是否正确。
 
 \subsection{计算结果与收敛性问题}
 
 \input{linear-sdp-oscillator-result.tex}
+
+$L = 2, 3, 4$时的线性SDP计算结果见\prettyref{tbl:linear-sdp-oscillator-result}。%
+\footnote{本例中使用的代码见\url{https://github.com/wujinq/numerical-boostrap/blob/main/oscillator-simple-prototype/jump-oscillator-4-small-scale.jl}。}%
+可以看到，在$L=2, 3$时，使用非常短的时间，线性SDP就能够达到\prettyref{tbl:nonlinear-different-k}中$K=10$的精度。
+在联想T480笔记本电脑上，$L=10$的非线性SDP需要耗费几分钟，而线性SDP只需要两秒，体现了SDP求解器相对暴力搜索的巨大优势。
+
+% 见2022.4.27的oscillator-simple-prototype\labbook.md
+然而，$L=4$时，存在严重的收敛性问题。COSMO的默认容差无法达到要求的精度：程序运行至19698迭代后，能量达到25.31，提示收敛。
+% 见2022.3.22的oscillator-simple-prototype\labbook.md
+$L=5$时COSMO的默认容差同样无法达到要求的精度：在经过漫长的3353517次迭代之后，程序运行到能量约为13.9，提示收敛。
+% 见2022.4.20的oscillator-simple-prototype\labbook.md
+改用CSDP求解器，会提示“Lack of progress”；SCS求解器直接报告问题不可解。
 
 \chapter{Hubbard模型的数值bootstrap}
 
