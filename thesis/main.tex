@@ -538,6 +538,7 @@ $O = x^s$的约束条件我们已经得到，它是
 等式右边就已经是正规排序的了。于是，可以实现一个函数 \texttt{xpopstr\_normal\_ord} ，输入$m_1, n_1, m_2, n_2$，输出\eqref{eq:oscillator-normal-ordering-scheme}右边在基底$\{x^m p^n\}$下的系数。于是，我们就能够自动计算$p^{n_1} x^{m_1} x^{m_2} p^{n_2}$，于是$c^k_{ij}$即可自动计算。
 通过将${x^{m_1} p^{n_1}}{x^{m_2} p^{n_2}}$和${x^{m_2} p^{n_2}}{x^{m_1} p^{n_1}}$的系数向量相减，$\comm{O_1}{O_2}$的系数向量也可以自动计算，于是$h^k_j$也可以自动计算。
 这就给出了基底$\{x^m p^n\}$下自动计算$h_j^k$和$c^k_{ij}$的方法。
+注意，对一些$\mathcal{C}$中的$O$，$\comm{O}{H}$可能在$\mathcal{C}$外，此时我们丢弃它对应的等式约束。
 
 \subsection{构建优化问题}
 
@@ -574,23 +575,60 @@ $L = 2, 3, 4$时的线性SDP计算结果见\prettyref{tbl:linear-sdp-oscillator-
 在联想T480笔记本电脑上，$L=10$的非线性SDP需要耗费几分钟，而线性SDP只需要两秒，体现了SDP求解器相对暴力搜索的巨大优势。
 
 % 见2022.4.27的oscillator-simple-prototype\labbook.md
-然而，$L=4$时，存在严重的收敛性问题。COSMO的默认容差无法达到要求的精度：程序运行至19698迭代后，能量达到25.31，提示收敛。
+然而，$L=4$时，存在严重的收敛性问题。COSMO的默认容差（线性约束被违反的程度——见COSMO的文档\parencite{cosmo-method}）无法达到要求的精度：程序运行至19698迭代后，能量达到25.31，提示收敛。
 % 见2022.3.22的oscillator-simple-prototype\labbook.md
 $L=5$时COSMO的默认容差同样无法达到要求的精度：在经过漫长的3353517次迭代之后，程序运行到能量约为13.9，提示收敛。
 % 见2022.4.20的oscillator-simple-prototype\labbook.md
 改用CSDP求解器，会提示“Lack of progress”；SCS求解器直接报告问题不可解。
 
+% 见2022.4.29的oscillator-simple-prototype\labbook.md
+将容差参数\texttt{eps\_rel}从默认值\num{1e-5}缩小至\num{1e-10}，$L=4$时的线性SDP能够收敛，但是耗时增长高得可观。
+检查优化器输出，发现与$L=2, 3$时的优化器输出相比，至少存在以下几个不同。$L=4$时，需要约50000迭代让能量到达10左右，在此之前会经历能量上百的阶段，而$L=2, 3$时没有这种情况，能量只需要25迭代就到达了非简谐振子的基态能量的量级。
+$L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常的，因为大规模求解器不会施加硬约束，半正定约束和线性约束都是通过向目标函数引入柔化的指示函数完成的\cite{cosmo-method}，因此，一个让能量下降的优化过程很可能以轻微违反各种约束为代价，后续收紧约束的优化过程当然也可能会让能量上升。然而，在$L=4$的优化过程中，会出现非常长周期的能量振荡：可能出现几万个迭代的能量上升，然后是一段能量下降的过程，接着又是长时间的能量振荡。
+在能量已经接近目标时，优化过程非常慢。例如，7000000迭代时，能量已经到达1.54，然而还要经过比这多一个量级的迭代数目才能够最终收敛。
+推测这也是加细约束过程中的能量振荡导致的，只不过振荡的量级小于\num{1e-4}，没有在优化器输出中显示。
+
+% 见2022.4.7的oscillator-simple-prototype\labbook.md
+将容差参数\texttt{eps\_rel}从默认值\num{1e-5}缩小至\num{1e-10}后，$L=5$时的线性SDP未能完成。在经过了80000000个迭代之后，能量到达5.3690，此时系统能量仍然在前述和收紧约束有关的缓慢振荡中。
+
 \chapter{Hubbard模型的数值bootstrap}
 
 \section{一维Hubbard模型的数值bootstrap}
 
-\subsection{算符空间的选取和截断}
+\subsection{算符空间截断}
+
+\begin{figure}
+    \centering
+    \input{1d-lattice-indexing.tex}
+    \caption{一维简单晶格的格点编号方案}
+\end{figure}
+
+我们遵从\parencite{han_manybody}中的做法，使用以下标准来截断算符空间：我们以正规排序的形如
+\begin{equation}
+    O = c^\dagger_{{x}_1 \sigma_1} c^\dagger_{x_2 \sigma_2} \cdots c^\dagger_{x_m \sigma_m} c_{x_{m+1} \sigma_{m+1}} \cdots c_{x_{n} \sigma_n}
+\end{equation}
+算符乘积为基底，只有满足
+\begin{equation}
+    l(O) \coloneqq n + \sum_{i=1}^n \left\| x_{i} \right\|_1 \leq K
+\end{equation}
+的算符被纳入我们考虑的算符空间，
 
 \subsection{等式约束和半正定约束的符号计算}
+
+我们使用QuantumAlgebra.jl包\cite{Sanchez-Barquilla2020,QuantumAlgebra.jl}自动完成费米子算符的对易关系和正规排序计算。
+
 
 \subsection{DMRG基准测试}
 
 \section{二维Hubbard模型的数值bootstrap}
+
+\subsection{算符空间的选取和截断}
+
+\begin{figure}
+    \centering
+    \input{2d-square-lattice-indexing.tex}
+    \caption{二维正方晶格的格点编号方案}
+\end{figure}
 
 \chapter{总结与展望}
 
