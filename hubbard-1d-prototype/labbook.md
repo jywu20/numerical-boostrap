@@ -51,3 +51,4 @@ Stacktrace:
  [2] top-level scope at d:\Projects\numerical-boostrap\hubbard-1d-prototype\operator-algebra.jl:158        
 in expression starting at d:\Projects\numerical-boostrap\hubbard-1d-prototype\operator-algebra.jl:152  
 ```
+看起来这里头的问题是，用于span出M矩阵的算符中选两个做乘积得到的某些算符并不在算符空间中。

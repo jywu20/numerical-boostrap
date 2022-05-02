@@ -487,7 +487,19 @@ $O = x^s$的约束条件我们已经得到，它是
 
 \subsection{计算$\langle x^m p^n \rangle$参考值}
 
-在已经获得了精度较高的$E$和$\expval*{x^2}$数据之后，我们可以% TODO
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{oscillator-expectations.pdf}
+    \caption{非简谐振子的非线性SDP计算得到的$K=11$时的$\langle x^m p^n \rangle$参考值}
+    \label{fig:oscillator-expectation}
+\end{figure}
+
+% calculate-all-correlation-functions-in-xp-oscillator-for-benchmark-4.nb
+在已经获得了精度较高的$E$和$\expval*{x^2}$数据之后，我们可以据此计算所有$\expval*{x^m p^n}$值。
+在Mathematica中直接列出所有的$\expval*{\comm{O}{H}} = 0$并使用\texttt{Solve}求解是非常缓慢的，采用如下方法可以较快地获得任意$m, n$的$\expval*{x^m p^n}$。
+注意到，$x^n$和$H$的对易子就是$x^n$和$p^2$的对易子，其正规序形式$p$的次数最高为1；$x^n p$和$H$的对易子中$p$的次数最高的项由$x^n p$和$p^2$的对易子贡献，$p$的次数最高为2……如此重复，$x^m p^n$和$H$的对易子的正规排序形式中，$p$的次数最高为$n+1$。
+因此，可以使用\eqref{eq:recursive-nonlinear-sdp-relation}计算出所有的$\expval*{x^m}$型期望值，然后使用这些数据连同$\expval*{\comm{H}{x^m}} = 0$给出的约束条件，计算出所有的$\expval*{x^m p}$型期望值，然后引入$\expval*{\comm{H}{x^m p}} = 0$型约束条件，计算所有的$\expval*{x^m p^2}$型期望值……如此重复，即可计算出次数小于某个截断的所有的$\langle x^m p^n \rangle$期望值。
+\prettyref{fig:oscillator-expectation}展示了一些这样计算出的期望值。应注意，如果要使用这些数据做其它SDP程序的基准测试，必须取更多的小数点后位数。
 
 \section{线性SDP优化}
 
@@ -591,6 +603,12 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 % 见2022.4.7的oscillator-simple-prototype\labbook.md
 将容差参数\texttt{eps\_rel}从默认值\num{1e-5}缩小至\num{1e-10}后，$L=5$时的线性SDP未能完成。在经过了80000000个迭代之后，能量到达5.3690，此时系统能量仍然在前述和收紧约束有关的缓慢振荡中。
 
+在共形bootstrap中，常规的64位浮点数有时无法满足精度要求，即舍入误差可能在计算过程中放大，导致一个点是否在可行域中无法正确判断，从而大小合理的容差难以达到；放松容差要求，则可能出现优化不充分的情况。
+因此，支持任意精度的优化算法是必要的\cite{conformal-sdp}。为了检查是否在本例中出现了这种情况，而可以将$L=2, 3$的优化问题中的浮点数精度人为调小，观察计算收敛性。
+不幸的是，JuMP目前不支持调整浮点数精度%
+\footnote{见此处的讨论：\url{https://discourse.julialang.org/t/use-low-precision-float-type-in-jump/80332}。}%
+，因此眼下调整浮点数精度需要重写代码，由于时间因素，非简谐振子的线性SDP中的收敛性问题来自何处的讨论只能留给未来的研究了。
+
 \chapter{Hubbard模型的数值bootstrap}
 
 \section{一维Hubbard模型的数值bootstrap}
@@ -611,7 +629,7 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 \begin{equation}
     l(O) \coloneqq n + \sum_{i=1}^n \left\| x_{i} \right\|_1 \leq K
 \end{equation}
-的算符被纳入我们考虑的算符空间，
+的算符被纳入我们考虑的算符空间。
 
 \subsection{等式约束和半正定约束的符号计算}
 

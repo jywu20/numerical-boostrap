@@ -206,7 +206,6 @@
 \clist_map_inline:nn
   {
     { no-math           } { fontspec },
-    { perpage           } { footmisc },
     { amsmath, thmmarks } { ntheorem }
   }
   { \PassOptionsToPackage #1 }

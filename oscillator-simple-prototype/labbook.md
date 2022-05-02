@@ -3747,3 +3747,24 @@ x square expectation:   0.30679061044843814
 - 7000000迭代时已经到达1.54
 - 20000迭代附近，已经达到25，但是出现震荡
 - 50000迭代后差不多10
+
+## 2022.5.1
+
+复制`jump-oscillator-4-small-scale.jl`为`jump-oscillator-4-small-scale-float16.jl`，其中将COSMO调成Float16。
+
+报告错误
+```
+ERROR: MathOptInterface.UnsupportedAttribute{MathOptInterface.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}}: Attribute MathOptInterface.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}() is not supported by the model.
+```
+推测是因为约束中存在`Float64`的值，而COSMO不自动转化这些值。
+
+```
+julia> g * xpopstr_expected_real_imag_parts(xpopstr_index(4, 0), :real)
+re(x^4 p^0)
+
+julia> typeof(ans)
+GenericAffExpr{Float64,VariableRef}
+```
+这里`g`的类型是`Float16`；看来JuMP默认会把所有东西都变成Float64.
+
+去julia discourse上面提问了……
