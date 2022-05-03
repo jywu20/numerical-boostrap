@@ -57,6 +57,7 @@
 \usepackage{cancel}
 \usepackage{color}
 \usepackage{array}
+\usepackage{verbatim}
 \usepackage{multirow}
 \usepackage{tabularx}
 \usepackage{extarrows}
@@ -141,7 +142,7 @@ TODO
 
 凝聚态物理中的传统量子多体方法从电子在周期性势场中产生的能带结构出发，通过费曼图微扰地处理库仑相互作用；大体上说，这种范式对应于朗道费米液体理论及其修正\cite{mahan2013many}。
 在强关联体系中，费米液体图像失效，在量子多体理论中体现为有相互作用格林函数和无相互作用格林函数无法建立绝热演化的关系，LW泛函出现多值性等现象\cite{Gunnarsson_2017}。
-已有多种数值方法可用于求解强关联系统。对自旋模型，可使用世界线蒙特卡洛、随机级数展开，对电子模型，可使用行列式蒙特卡洛，不过这些方法均可能存在符号问题，即在容易想到的基底下，不同系统构型的权重是复数而不是实数，从而无法通过马尔可夫链抽样\cite{sign_problem}。
+已有多种数值方法可用于不借助微扰论求解强关联系统。对自旋模型，可使用世界线蒙特卡洛、随机级数展开，对电子模型，可使用行列式蒙特卡洛，不过这些方法均可能存在符号问题，即在容易想到的基底下，不同系统构型的权重是复数而不是实数，从而无法通过马尔可夫链抽样\cite{sign_problem}。
 张量网络方法是近年来发展较快的一种方法，通过构造能够容纳系统基态的纠缠结构的张量网络波函数拟设，通过变分法来获得系统基态。
 一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
 
@@ -554,7 +555,7 @@ $O = x^s$的约束条件我们已经得到，它是
 
 \subsection{构建优化问题}
 
-我们使用JuMP\cite{DunningHuchetteLubin2017}和COSMO\cite{Garstka_2021}构建并求解优化问题\eqref{eq:oscillator-linear-sdp}。
+我们使用JuMP 0.22.3\cite{DunningHuchetteLubin2017}和COSMO 0.8.5\cite{Garstka_2021}构建并求解优化问题\eqref{eq:oscillator-linear-sdp}。
 JuMP是一个优化器前端，可以通过\eqref{eq:oscillator-linear-sdp}这样的记号，高可读性地构建优化问题，而无需手动将\eqref{eq:oscillator-linear-sdp}中的约束组装成系数矩阵再传给优化器。
 COSMO是一个大规模凸优化问题求解器，适用于线性SDP问题。
 
@@ -577,7 +578,13 @@ COSMO是一个大规模凸优化问题求解器，适用于线性SDP问题。
 
 由于已经有了非线性SDP计算出的数据，非简谐振子线性SDP程序的调试将变得容易很多，因为可以直接检查非线性SDP的计算结果是否满足线性SDP程序中的各种约束，从而检查程序是否正确。
 
-\subsection{计算结果与收敛性问题}
+在完成线性SDP的程序开发后，使用\texttt{primal\_feasibility\_report}函数可以检查一个特定的数据点是否在可行域中，以及如果不在可行域中，各个约束被违反了多少。
+我们可以将Mathematica中的计算结果\prettyref{fig:oscillator-expectation}导出为一个Julia的\texttt{Dict}对象，将它传给\texttt{primal\_feasibility\_report}。
+结果发现，在$L=5$时，等式约束被违反的数值的量级是\num{1e-11}，其主要来源是导出数据时的舍入误差。
+% 见oscillator-simple-prototype/labbook.md的2022.3.26的记录
+目前JuMP和COSMO尚未配合得足够好，无法直接通过\texttt{primal\_feasibility\_report}检查$M$矩阵的半正定性，但是直接根据\prettyref{fig:oscillator-expectation}，在线性SDP程序中计算$M$矩阵，发现$L=5$时，它有负本征值，但其量级最大在\num{6e-3}，而最大的本征值量级为\num{1e5}，于是可以认为线性SDP程序对M矩阵的计算也是正确的。
+
+\subsection{计算结果与收敛性问题}\label{sec:convergence-problem}
 
 \input{linear-sdp-oscillator-result.tex}
 
@@ -607,7 +614,7 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 因此，支持任意精度的优化算法是必要的\cite{conformal-sdp}。为了检查是否在本例中出现了这种情况，而可以将$L=2, 3$的优化问题中的浮点数精度人为调小，观察计算收敛性。
 不幸的是，JuMP目前不支持调整浮点数精度%
 \footnote{见此处的讨论：\url{https://discourse.julialang.org/t/use-low-precision-float-type-in-jump/80332}。}%
-，因此眼下调整浮点数精度需要重写代码，由于时间因素，非简谐振子的线性SDP中的收敛性问题来自何处的讨论只能留给未来的研究了。
+，因此眼下调整浮点数精度需要将代码重写为稍微低层一些的MathOptInterface\cite{legat2021mathoptinterface}代码，由于时间因素，非简谐振子的线性SDP中的收敛性问题来自何处的讨论只能留给未来的研究了。
 
 \chapter{Hubbard模型的数值bootstrap}
 
@@ -619,22 +626,46 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
     \centering
     \input{1d-lattice-indexing.tex}
     \caption{一维简单晶格的格点编号方案}
+    \label{fig:1d-lattice-index}
 \end{figure}
 
 我们遵从\parencite{han_manybody}中的做法，使用以下标准来截断算符空间：我们以正规排序的形如
 \begin{equation}
     O = c^\dagger_{{x}_1 \sigma_1} c^\dagger_{x_2 \sigma_2} \cdots c^\dagger_{x_m \sigma_m} c_{x_{m+1} \sigma_{m+1}} \cdots c_{x_{n} \sigma_n}
+    \label{eq:hubbard-operator-form}
 \end{equation}
 算符乘积为基底，只有满足
 \begin{equation}
     l(O) \coloneqq n + \sum_{i=1}^n \left\| x_{i} \right\|_1 \leq K
+    \label{eq:operator-space-criteria}
 \end{equation}
-的算符被纳入我们考虑的算符空间。
+的算符被纳入我们考虑的算符空间。为了避免重复计数，我们将每个格点赋予一个编号（见\prettyref{fig:1d-lattice-index}；由于），并且要求\eqref{eq:hubbard-operator-form}的产生算符和湮灭算符部分中，从左往右格点编号均依次增大。
+这么定义正规排序的原因是这是后面做符号计算使用的QuantumAlgebra.jl包（见\prettyref{sec:symbolic-hubbard}）定义正规排序的方法。可以通过如下代码验证这一点：
+\begin{verbatim}
+    julia> normal_form(c(1) * c(2))
+    c(1) c(2)
 
-\subsection{等式约束和半正定约束的符号计算}
+    julia> normal_form(cdag(1) * cdag(2))
+    c†(1) c†(2)
+\end{verbatim}
+
+注意到，由于$O = O_1 O_2$，我们有
+\begin{equation}
+    l(O) = l(O_1) + l(O_2),
+\end{equation}
+因此，可以首先构造出满足$l(O) \leq K$的所有湮灭算符乘积，然后将$c$替换成$c^\dagger$就得到了满足$l(O) \leq K$的所有产生算符乘积，两者的乘积中包含所有满足$l(O) \leq K$的产生湮灭算符乘积。
+这就完成了截断过的算符空间的构造。
+
+在构造满足$l(O) \leq K$的所有产生算符乘积时，我们当然不可能遍历无数个格点，也不能够遍历任意长的产生湮灭算符乘积，不过\eqref{eq:operator-space-criteria}显然意味着
+\begin{equation}
+    \max \| x_i \|_1 \leq K - 1, \quad n \leq K.
+    \label{eq:inequality-hubbard-opstr}
+\end{equation}
+因此，可以如下搜索满足条件\eqref{eq:operator-space-criteria}的所有湮灭算符乘积：我们列出所有满足$\abs*{x_i} \leq K - 1$的格点$x_i$，在每个格点上放置如下四种状态之一：没有算符，有一个自旋向上的湮灭算符，有一个自旋向下的湮灭算符，同时有自旋向上和向下的湮灭算符，然后筛去不满足\eqref{eq:operator-space-criteria}的情况即可。
+
+\subsection{等式约束和半正定约束的符号计算}\label{sec:symbolic-hubbard}
 
 我们使用QuantumAlgebra.jl包\cite{Sanchez-Barquilla2020,QuantumAlgebra.jl}自动完成费米子算符的对易关系和正规排序计算。
-
 
 \subsection{DMRG基准测试}
 
@@ -646,7 +677,15 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
     \centering
     \input{2d-square-lattice-indexing.tex}
     \caption{二维正方晶格的格点编号方案}
+    \label{fig:site-index-2d}
 \end{figure}
+
+我们还是以\eqref{eq:operator-space-criteria}为截断算符空间的标准。如何搜索满足这个条件的算符需要一些额外的说明。
+在二维情况下，直接暴力枚举满足\eqref{eq:inequality-hubbard-opstr}是非常低效的，因为涉及到的格点数目大体上为$K^2$量级，于是需要遍历$4^{K^2}$量级的湮灭算符乘积。
+为了保证构成$H$的算符出现在截断后的算符空间中，至少需要$K=4$，于是需要遍历\num{4e9}个算符，而且随着$K$增大指数增长。
+我们使用深度优先搜索来简化计算，在\prettyref{fig:site-index-2d}中按照格点编号从小到大的顺序，依次放置以下四种算符组合之一：没有算符，有一个自旋向上的湮灭算符，有一个自旋向下的湮灭算符，同时有自旋向上和向下的湮灭算符。
+一旦发现$l(O) \leq K$条件不满足，立即“剪枝”，并且切换到下一个算符组合。
+如此可以大大加速算符空间的搜索速度。
 
 \chapter{总结与展望}
 
