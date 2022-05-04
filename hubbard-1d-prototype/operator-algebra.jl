@@ -112,7 +112,7 @@ begin
         end
     end
 
-    hubbard_opstr_zero = zeros(ComplexF64, length(hubbard_opstr_basis))
+    hubbard_opstr_zero = zeros(Float64, length(hubbard_opstr_basis))
 
     function hubbard_opstr_coefficients(opstr)
         res = copy(hubbard_opstr_zero)
@@ -137,7 +137,7 @@ end
 
 #region Construct the M matrix 
 
-hubbard_opstr_normal_order = Matrix{Vector{ComplexF64}}(undef, 
+hubbard_opstr_normal_order = Matrix{Vector{Float64}}(undef, 
     hubbard_opstr_basis_length, hubbard_opstr_basis_length)
 
 # Indices of operators qualified to span the M matrix in `hubbard_opstr_basis`
@@ -146,7 +146,7 @@ M_mat_spanning_opstr_indices = filter(collect(1 : hubbard_opstr_basis_length)) d
     hubbard_opstr_basis_size[opstr_index] ≤ K / 2
 end
 
-M_coefficient = Matrix{Vector{ComplexF64}}(undef, 
+M_coefficient = Matrix{Vector{Float64}}(undef, 
     length(M_mat_spanning_opstr_indices), length(M_mat_spanning_opstr_indices))
 
 for (i, opstr_index_1) in enumerate(M_mat_spanning_opstr_indices)
@@ -188,7 +188,7 @@ if show_hamiltonian
     end
 end
 
-H_constraints_coefficients = Vector{ComplexF64}[]
+H_constraints_coefficients = Vector{Float64}[]
 for opstr_basis_index in 1 : hubbard_opstr_basis_length
     constraint_op = comm(H_hubbard, hubbard_opstr_basis[opstr_basis_index]) |> normal_form
     coefficients = constraint_op |> hubbard_opstr_coefficients
@@ -208,8 +208,8 @@ end
 
 #region Finding operators related with symmetry operations 
 
-N = sum(i -> cdag(i, 1) * c(i, 1) + cdag(i, -1) * c(i, -1), site_list) |> normal_form
-Sz = sum(i -> cdag(i, 1) * c(i, 1) - cdag(i, -1) * c(i, -1), site_list) |> normal_form
+N = sum(i -> cdag(i, 1) * c(i, 1) + cdag(i, -1) * c(i, -1), 1 : length(site_list)) |> normal_form
+Sz = sum(i -> cdag(i, 1) * c(i, 1) - cdag(i, -1) * c(i, -1), 1 : length(site_list)) |> normal_form
 
 particle_number_constraint_ops = map(hubbard_opstr_basis) do op
     comm_res = comm(op, N) |> normal_form

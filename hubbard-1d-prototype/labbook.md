@@ -187,3 +187,146 @@ julia> expect(ψ, "Cdn")
  0.0
 ```
 因此看起来单独一个$c$算符的期望值确实是零。
+
+```
+julia> correlation_matrix(ψ, "Cdagdn", "Cdagdn")
+100×100 Array{Float64,2}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ ⋮                        ⋮                        ⋱  ⋮                        ⋮
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  
+```
+因此两个$c$乘积的期望值确实是零。
+
+在`dmrg.jl`中频繁地出现一些错误：
+- `ERROR: Parity-odd fermionic terms not yet supported by AutoMPO`
+- `ERROR: No block found with QN equal to QN(("Nf",-2,-1),("Sz",0))`
+
+```julia
+opstr_mpo = OpSum()
+opstr_mpo += "Cdagup", 50, "Cdagdn", 50, "Cdn", 50
+inner(ψ, MPO(opstr_mpo, sites), ψ)
+```
+确实给出`ERROR: Parity-odd fermionic terms not yet supported by AutoMPO`。
+
+```julia
+opstr_mpo = OpSum()
+opstr_mpo += "Cdagup", 50, "Cdagdn", 50, "Cdagdn", 50, "Cup", 49
+inner(ψ, MPO(opstr_mpo, sites), ψ)
+```
+给出`No block found with QN equal to QN(("Nf",-2,-1),("Sz",2))`，虽然它显然是零！
+
+```julia
+opstr_mpo = OpSum()
+opstr_mpo += "Cdagup", 50, "Cdagdn", 50, "Cdn", 50, "Cup", 49
+inner(ψ, MPO(opstr_mpo, sites), ψ)
+```
+就不报错。
+
+```julia
+for op in particle_number_constraint_ops
+    println(benchmark_point_dmrg[op])
+end
+
+##
+
+for op in spin_constraint_ops
+    println(benchmark_point_dmrg[op])
+end
+```
+输出的结果全都是零，因此这些约束是正确的。
+
+通过DMRG获得的期望值都是实数；在构造优化问题时，我们可以不必分开虚部和实部，直接上手做。原本区分虚部实部的代码放在`optimization_problem-original.jl`中，我们去处理`optimization_problem.jl`。
+
+报奇怪的错，什么variable not owned之类的。
+
+我们索性一次把benchmark做完吧。
+
+```julia
+(
+    - t * benchmark_point_dmrg[cdag(1,-1) * c(2,-1)] 
+    - t * benchmark_point_dmrg[cdag(1, -1) * c(3, -1)] 
+    - t * benchmark_point_dmrg[cdag(1, 1) * c(2, 1)] 
+    - t * benchmark_point_dmrg[cdag(1, 1) * c(3, 1)] 
+    - U * benchmark_point_dmrg[cdag(1, -1) * cdag(1, 1) * c(1, -1) * c(1, 1)]
+)
+```
+给出`-0.5736684912615906`，这个是正确的。
+
+运行
+```julia
+hubbard_opstr_basis_expected_dmrg_values = map(hubbard_opstr_basis) do op
+    benchmark_point_dmrg[op]
+end
+
+for constraint_coefficients in H_constraints_coefficients
+    println(constraint_coefficients' * hubbard_opstr_basis_expected_dmrg_values)
+end
+```
+得到
+```
+0.0     
+0.0
+0.0
+0.0
+-2.7755575615628914e-17
+0.0
+0.0
+-4.718447854656915e-16
+3.0531133177191805e-16
+0.0
+0.0
+-4.996003610813204e-16
+0.0
+-3.608224830031759e-16
+0.0
+0.0
+0.0
+0.0
+7.216449660063518e-16
+0.0
+0.0
+0.0
+0.0
+```
+因此最大的violation多半是数值舍入误差。
+
+运行
+```julia
+M_dmrg = zeros(length(M_mat_spanning_opstr_indices), length(M_mat_spanning_opstr_indices))
+
+for i in 1 : length(M_mat_spanning_opstr_indices)
+    for j in 1 : length(M_mat_spanning_opstr_indices)
+        M_dmrg[i, j] = M_coefficient[i, j]' * hubbard_opstr_basis_expected_dmrg_values
+    end
+end
+
+eigen(M_dmrg).values
+```
+发现本征值好像都是正的。
+
+这样benchmark应该是没问题的；但是，运行结果仍然是`Status: Dual_infeasible`。
