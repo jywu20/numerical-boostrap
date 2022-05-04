@@ -52,3 +52,138 @@ Stacktrace:
 in expression starting at d:\Projects\numerical-boostrap\hubbard-1d-prototype\operator-algebra.jl:152  
 ```
 看起来这里头的问题是，用于span出M矩阵的算符中选两个做乘积得到的某些算符并不在算符空间中。
+
+# 2022.5.4
+
+将$K=5$时的约束和导致这些约束的算符打印出来：（见`2022-5-3-run-1-res`）
+```
+1     0 = 0
+c†(11)     -c†(21) - c†(31) - 4 c†(1-1) c†(11) c(1-1) = 0
+c†(1-1)     -c†(2-1) - c†(3-1) + 4 c†(1-1) c†(11) c(11) = 0
+c†(1-1) c†(11)     4 c†(1-1) c†(11) - c†(1-1) c†(21) - c†(1-1) c†(31) + c†(11) c†(2-1) + c†(11) c†(3-1) = 0
+c†(31) c(31)     -c†(11) c(31) + c†(31) c(11) + c†(31) c(51) - c†(51) c(31) = 0
+c†(3-1) c(31)     -c†(1-1) c(31) + c†(3-1) c(11) + c†(3-1) c(51) - c†(5-1) c(31) = 0
+c†(31) c(3-1)     -c†(11) c(3-1) + c†(31) c(1-1) + c†(31) c(5-1) - c†(51) c(3-1) = 0
+c†(3-1) c(3-1)     -c†(1-1) c(3-1) + c†(3-1) c(1-1) + c†(3-1) c(5-1) - c†(5-1) c(3-1) = 0
+c†(21) c(21)     -c†(11) c(21) + c†(21) c(11) + c†(21) c(41) - c†(41) c(21) = 0
+c†(2-1) c(21)     -c†(1-1) c(21) + c†(2-1) c(11) + c†(2-1) c(41) - c†(4-1) c(21) = 0
+c†(21) c(2-1)     -c†(11) c(2-1) + c†(21) c(1-1) + c†(21) c(4-1) - c†(41) c(2-1) = 0
+c†(2-1) c(2-1)     -c†(1-1) c(2-1) + c†(2-1) c(1-1) + c†(2-1) c(4-1) - c†(4-1) c(2-1) = 0
+c(11)     c(21) + c(31) - 4 c†(1-1) c(1-1) c(11) = 0
+c†(11) c(11)     c†(11) c(21) + c†(11) c(31) - c†(21) c(11) - c†(31) c(11) = 0
+c†(1-1) c(11)     c†(1-1) c(21) + c†(1-1) c(31) - c†(2-1) c(11) - c†(3-1) c(11) = 0
+c†(1-1) c†(11) c(11)     4 c†(1-1) c†(11) c(11) + c†(1-1) c†(11) c(21) + c†(1-1) c†(11) c(31) - c†(1-1) c†(21) c(11) - c†(1-1) c†(31) c(11) + c†(11) c†(2-1) c(11) + c†(11) c†(3-1) c(11) = 0
+c(1-1)     c(2-1) + c(3-1) + 4 c†(11) c(1-1) c(11) = 0
+c†(11) c(1-1)     c†(11) c(2-1) + c†(11) c(3-1) - c†(21) c(1-1) - c†(31) c(1-1) = 0
+c†(1-1) c(1-1)     c†(1-1) c(2-1) + c†(1-1) c(3-1) - c†(2-1) c(1-1) - c†(3-1) c(1-1) = 0
+c†(1-1) c†(11) c(1-1)     4 c†(1-1) c†(11) c(1-1) + c†(1-1) c†(11) c(2-1) + c†(1-1) c†(11) c(3-1) - c†(1-1) c†(21) c(1-1) - c†(1-1) c†(31) c(1-1) + c†(11) c†(2-1) c(1-1) + c†(11) c†(3-1) c(1-1) = 0
+c(1-1) c(11)     -4 c(1-1) c(11) + c(1-1) c(21) + c(1-1) c(31) - c(11) c(2-1) - c(11) c(3-1) = 0
+c†(11) c(1-1) c(11)     -4 c†(11) c(1-1) c(11) + c†(11) c(1-1) c(21) + c†(11) c(1-1) c(31) - c†(11) c(11) c(2-1) - c†(11) c(11) c(3-1) - c†(21) c(1-1) c(11) - c†(31) c(1-1) c(11) = 0
+c†(1-1) c(1-1) c(11)     -4 c†(1-1) c(1-1) c(11) + c†(1-1) c(1-1) c(21) + c†(1-1) c(1-1) c(31) - c†(1-1) c(11) c(2-1) - c†(1-1) c(11) c(3-1) - c†(2-1) c(1-1) c(11) - c†(3-1) c(1-1) c(11) = 0
+c†(1-1) c†(11) c(1-1) c(11)     c†(1-1) c†(11) c(1-1) c(21) + c†(1-1) c†(11) c(1-1) c(31) - c†(1-1) c†(11) c(11) c(2-1) - c†(1-1) c†(11) c(11) c(3-1) - c†(1-1) c†(21) c(1-1) c(11) - c†(1-1) c†(31) c(1-1) c(11) + c†(11) c†(2-1) c(1-1) c(11) + c†(11) c†(3-1) c(1-1) c(11) = 0
+```
+
+可能出问题的地方包括
+- 离谱的bug导致约束计算错误
+- 老问题：虚部实部分离时乘法出错
+- 太多变量没有出现在约束条件中？
+
+观察是否各个约束都计算正确。以
+```
+c†(1-1) c†(11) c(1-1) c(11)  =>  c†(1-1) c†(11) c(1-1) c(21) + c†(1-1) c†(11) c(1-1) c(31) - c†(1-1) c†(11) c(11) c(2-1) - c†(1-1) c†(11) c(11) c(3-1) - c†(1-1) c†(21) c(1-1) c(11) - c†(1-1) c†(31) c(1-1) c(11) + c†(11) c†(2-1) c(1-1) c(11) + c†(11) c†(3-1) c(1-1) c(11) = 0
+```
+为例，在`2022-5-4.nb`中我们有
+```
+hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "down"}, {c, 2, "up"}] + 
+ hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "down"}, {c, 3, "up"}] - 
+ hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "up"}, {c, 2, "down"}] - 
+ hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "up"}, {c, 3, "down"}] - 
+ hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 2, "up"}, {c, 1, "down"}, {c, 1, "up"}] - 
+ hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 3, "up"}, {c, 1, "down"}, {c, 1, "up"}] + 
+ hubbardOpString[{SuperDagger[c], 1, "up"}, {SuperDagger[c], 2, "down"}, {c, 1, "down"}, {c, 1, "up"}] + 
+ hubbardOpString[{SuperDagger[c], 1, "up"}, {SuperDagger[c], 3, "down"}, {c, 1, "down"}, {c, 1, "up"}]
+```
+
+| | |
+| :------ | :------|
+| `c†(1-1) c†(11) c(1-1) c(21)` | `hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "down"}, {c, 2, "up"}]`|
+| ` c†(1-1) c†(11) c(1-1) c(31)` | `hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "down"}, {c, 3, "up"}]` |
+| `- c†(1-1) c†(11) c(11) c(2-1)` | `-hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "up"}, {c, 2, "down"}]` |
+| `- c†(1-1) c†(11) c(11) c(3-1)` | `- hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 1, "up"}, {c, 1, "up"}, {c, 3, "down"}]` |
+| `- c†(1-1) c†(21) c(1-1) c(11)` | `- hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 2, "up"}, {c, 1, "down"}, {c, 1, "up"}]` |
+| `- c†(1-1) c†(31) c(1-1) c(11)` | `- hubbardOpString[{SuperDagger[c], 1, "down"}, {SuperDagger[c], 3, "up"}, {c, 1, "down"}, {c, 1, "up"}]` |
+| `c†(11) c†(2-1) c(1-1) c(11)` | `hubbardOpString[{SuperDagger[c], 1, "up"}, {SuperDagger[c], 2, "down"}, {c, 1, "down"}, {c, 1, "up"}]` |
+| `c†(11) c†(3-1) c(1-1) c(11)` | `hubbardOpString[{SuperDagger[c], 1, "up"}, {SuperDagger[c], 3, "down"}, {c, 1, "down"}, {c, 1, "up"}]` |
+
+应该是没问题了。
+
+至少现在有一个问题，就是$K=5$时能够跑起来而$K=4$不行，说明$K=4$时，满足$l(O) \leq K / 2$的算符选两个乘起来可能会突破算符空间。这个是很奇怪的。
+
+现在可以做的事情：
+- 添加对称性的功能
+
+关于粒子数算符和自旋算符的$\lang N, O \rang = 0$和$\lang S^z, O \rang = 0$约束，打印出来看一看：
+```julia
+N = sum(i -> cdag(i, 1) * c(i, 1) + cdag(i, -1) * c(i, -1), site_list) |> normal_form
+Sz = sum(i -> cdag(i, 1) * c(i, 1) - cdag(i, -1) * c(i, -1), site_list) |> normal_form
+
+for op in hubbard_opstr_basis
+    println(comm(N, op) |> normal_form)
+end
+
+for op in hubbard_opstr_basis
+    println(comm(Sz, op) |> normal_form)
+end
+```
+发现输出从来不会多于一项——正确。
+
+如下代码
+```julia
+count = 0
+for op in hubbard_opstr_basis
+    res = comm(N, op) |> normal_form
+    if length(res.terms) == 0
+        count += 1
+    end
+end
+println(count)
+```
+给出110，`hubbard_opstr_basis`总共388个，然后`particle_number_constraint_ops`长度为278。一致。
+
+我有点被整糊涂了，比如说site 2湮灭，然后site 1产生，这样的算符期望值是零吗？？？
+
+DMRG的程序是容易写的，但是计算出来的能量和韩希之那篇Hubbard模型的文章中列举的参考数据不相符。在$t = 1, U = 4$时，我得到的单个site的能量是-0.81左右，但是韩希之的文章说是-0.58左右。
+我猜测这是因为没有让总电子数保持为每个site分配一个电子的原因，把图画出来，是`2022-5-4.png`，可以看到明显每个site没有一个电子。
+是否这是能量总体偏低的原因呢？
+
+看来是的，需要加入能量守恒的条件。这么做了以后，我们得到`-56.999029759703596`的总能量，分到每个site上差不多-0.57，正好对上。
+
+运行
+```julia
+plot(expect(ψ,"Nupdn"), legend = false)
+```
+得到`2022-5-4-2.png`。这和韩希之那篇文章上的结果也是一致的。
+
+观察
+```julia
+ plot(correlation_matrix(ψ, "Cdagup", "Cup")[1, 1:20], legend = false)
+```
+会发现$c^\dag_i c_j$在$i \neq j$时也是可以有非零值的。
+
+我们有
+```
+julia> expect(ψ, "Cdn")
+100-element Array{Float64,1}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ ⋮
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+```
+因此看起来单独一个$c$算符的期望值确实是零。

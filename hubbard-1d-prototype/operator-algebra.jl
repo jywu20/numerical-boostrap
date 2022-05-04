@@ -105,10 +105,10 @@ begin
 
     if show_hubbard_opstr_basis
         open(working_path * output_name, "a") do file
-            for opstr in hubbard_opstr_basis
-                println(file, opstr)
+            for (i, opstr) in enumerate(hubbard_opstr_basis)
+                println(file, "hubbard_opstr_basis[$i]  =  ", opstr)
             end
-            println()
+            println(file)
         end
     end
 
@@ -181,13 +181,56 @@ begin
     end
 end
 
-H_constraints_coefficients = Vector{ComplexF64}[]
-for opstr_basis_index in 1 : hubbard_opstr_basis_length
-    coefficients = 
-        comm(H_hubbard, hubbard_opstr_basis[opstr_basis_index]) |> normal_form |> hubbard_opstr_coefficients
-    if coefficients !== nothing
-        push!(H_constraints_coefficients, coefficients)
+if show_hamiltonian
+    open(full_output_name, "a") do file
+        println(file, "H = ", H_hubbard)
+        println(file)
     end
 end
+
+H_constraints_coefficients = Vector{ComplexF64}[]
+for opstr_basis_index in 1 : hubbard_opstr_basis_length
+    constraint_op = comm(H_hubbard, hubbard_opstr_basis[opstr_basis_index]) |> normal_form
+    coefficients = constraint_op |> hubbard_opstr_coefficients
+    if coefficients !== nothing
+        push!(H_constraints_coefficients, coefficients)
+
+        if show_constraints
+            open(full_output_name, "a") do file
+                # Show the constraint and what operator causes it
+                println(file, hubbard_opstr_basis[opstr_basis_index], "  =>  ", constraint_op, " = 0")
+            end
+        end
+    end
+end
+
+#endregion
+
+#region Finding operators related with symmetry operations 
+
+N = sum(i -> cdag(i, 1) * c(i, 1) + cdag(i, -1) * c(i, -1), site_list) |> normal_form
+Sz = sum(i -> cdag(i, 1) * c(i, 1) - cdag(i, -1) * c(i, -1), site_list) |> normal_form
+
+particle_number_constraint_ops = map(hubbard_opstr_basis) do op
+    comm_res = comm(op, N) |> normal_form
+    if length(comm_res.terms) == 1
+        op_val_pair = collect(comm_res.terms)[1]
+        return QuExpr(Dict(op_val_pair[1] => 1))
+    end
+end
+
+filter!(x -> ! isnothing(x), particle_number_constraint_ops)
+particle_number_constraint_ops = convert(Vector{QuExpr}, particle_number_constraint_ops)
+
+spin_constraint_ops = map(hubbard_opstr_basis) do op
+    comm_res = comm(op, Sz) |> normal_form
+    if length(comm_res.terms) == 1
+        op_val_pair = collect(comm_res.terms)[1]
+        return QuExpr(Dict(op_val_pair[1] => 1))
+    end
+end
+
+filter!(x -> ! isnothing(x), spin_constraint_ops)
+spin_constraint_ops = convert(Vector{QuExpr}, spin_constraint_ops)
 
 #endregion

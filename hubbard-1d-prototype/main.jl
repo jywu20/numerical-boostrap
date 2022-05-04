@@ -30,6 +30,7 @@ end
 include("operator-algebra.jl")
 
 open(full_output_name, "a") do file
+    println(file)
     println(file, "Constraints and M matrix assembled.")
 end
 #endregion
