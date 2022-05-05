@@ -38,7 +38,7 @@ begin
     local current_op_str = [:no]
     # For an operator string with r operators, its size is r + ∑_i |x_i|_1, where x_i is the coordinate of 
     # the i-th operator
-    local current_op_str_size = 1
+    local current_op_str_size = 0
     local current_site = 1
 
     # Whether check the maximum iteraton number and the max qualified operator string limit 

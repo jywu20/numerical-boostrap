@@ -455,3 +455,44 @@ end
 
 加入对称性约束以后，$K=9$的能量能够计算到`-0.754`。
 
+现在我们来排除更加咬口的偶数$K$无法正确处理的问题。以$K=4$为例，此时
+```
+julia> qualified_opstr_site_configuration
+20-element Array{Array{Symbol,1},1}:
+ [:no, :no, :no, :no, :no, :no, :no, :no, :no]
+ [:no, :no, :no, :no, :up, :no, :no, :no, :no]
+ [:no, :no, :no, :no, :dn, :no, :no, :no, :no]
+ [:no, :no, :no, :up, :no, :no, :no, :no, :no]
+ [:no, :no, :no, :dn, :no, :no, :no, :no, :no]
+ [:no, :no, :up, :no, :no, :no, :no, :no, :no]
+ [:no, :no, :dn, :no, :no, :no, :no, :no, :no]
+ [:no, :up, :no, :no, :no, :no, :no, :no, :no]
+ [:no, :dn, :no, :no, :no, :no, :no, :no, :no]
+ [:up, :no, :no, :no, :no, :no, :no, :no, :no]
+ [:up, :no, :up, :no, :no, :no, :no, :no, :no]
+ [:up, :no, :dn, :no, :no, :no, :no, :no, :no]
+ [:up, :up, :no, :no, :no, :no, :no, :no, :no]
+ [:up, :dn, :no, :no, :no, :no, :no, :no, :no]
+ [:dn, :no, :no, :no, :no, :no, :no, :no, :no]
+ [:dn, :no, :up, :no, :no, :no, :no, :no, :no]
+ [:dn, :no, :dn, :no, :no, :no, :no, :no, :no]
+ [:dn, :up, :no, :no, :no, :no, :no, :no, :no]
+ [:dn, :dn, :no, :no, :no, :no, :no, :no, :no]
+ [:both, :no, :no, :no, :no, :no, :no, :no, :no]
+```
+并且
+```
+julia> cdag(2,1) * cdag(3,1) in hubbard_opstr_basis
+false
+```
+可以看到，
+```
+[:no, :up, :no, :no, :no, :no, :no, :no, :no]
+```
+后面没有出现
+```
+[:no, :up, :up, :no, :no, :no, :no, :no, :no]
+```
+
+看起来似乎是“什么都没有”的算符长度被算成了1而不是零。排除此错误，发现$K=2n$和$K=2n+1$行为类似。
+目前最好的结果仍然是`-0.754`。
