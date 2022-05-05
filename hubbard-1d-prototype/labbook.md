@@ -330,3 +330,78 @@ eigen(M_dmrg).values
 发现本征值好像都是正的。
 
 这样benchmark应该是没问题的；但是，运行结果仍然是`Status: Dual_infeasible`。
+
+换了一下SCS也说不feasible。
+
+# 2022.5.5
+
+至少存在两个问题。
+- 首先是`⟨1⟩`是1这个事实好像从来没有被体现出来过，可能这个是SCS之前提示unbounded的一个原因
+- 其次是存在`0 == 0.0`这样的空约束
+
+第二个问题似乎是因为某些约束是只关于那些由于对称性，期望值就是零的算符的。例如：
+```
+julia> H_constraints_coefficients[2]' * hubbard_opstr_basis_expected
+0
+```
+
+在解决了第一个问题之后，我们第一次成功地完成了优化：
+```
+------------------------------------------------------------------
+          COSMO v0.8.5 - A Quadratic Objective Conic Solver       
+                         Michael Garstka
+                University of Oxford, 2017 - 2022
+------------------------------------------------------------------
+
+Problem:  x ∈ R^{249},
+          constraints: A ∈ R^{574x249} (635 nnz),
+          matrix size to factor: 823x823,
+          Floating-point precision: Float64
+Sets:     ZeroSe of dim: 384
+          DensePsdConeTriangl of dim: 190 (19x19)
+Settings: ϵ_abs = 1.0e-05, ϵ_rel = 1.0e-05,
+          ϵ_prim_inf = 1.0e-04, ϵ_dual_inf = 1.0e-04,
+          ρ = 0.1, σ = 1e-06, α = 1.6,
+          max_iter = 10000,
+          scaling iter = 10 (on),
+          check termination every 25 iter,
+          check infeasibility every 40 iter,
+          KKT system solver: QDLDL
+Acc:      Anderson Type2{QRDecomp},
+          Memory size = 15, RestartedMemory,
+          Safeguarded: true, tol: 2.0
+Setup Time: 22.12ms
+
+Iter:   Objective:      Primal Res:     Dual Res:       Rho:
+1       -9.1610e+01     1.7436e+01      2.4000e+00      1.0000e-01
+25      -1.5198e+00     4.0724e-01      3.3926e-03      1.0000e-01
+50      -1.5112e+00     3.9729e-02      4.3331e-02      1.4659e+00
+75      -1.4139e+00     5.8403e-04      1.6583e-03      1.4659e+00
+100     -1.4142e+00     3.4482e-09      3.5617e-07      1.4659e+00
+
+------------------------------------------------------------------
+>>> Results
+Status: Solved
+Iterations: 140 (incl. 40 safeguarding iter)
+Optimal objective: -1.414
+Runtime: 0.117s (117.0ms)
+```
+能量非常不理想，但是输出结果`2022-5-3-run-1`中，$S^z_i$是正确的。（$n_i$怎么算正确我不知道）
+
+$K=6$还是遇到了某个地方$M$矩阵中涉及的算符多于算符空间这一诡异现象。$K=7$时能量为
+```
+Iter:   Objective:      Primal Res:     Dual Res:       Rho:
+1       -3.0573e+01     6.7786e+00      2.4000e+00      1.0000e-01
+25      -1.1683e+00     3.1424e-02      4.3395e-03      1.0000e-01
+50      -1.1081e+00     3.8381e-03      2.0490e-04      1.0000e-01
+75      -1.1019e+00     8.8231e-04      1.8142e-04      1.0000e-01
+100     -1.1028e+00     4.1745e-05      2.6707e-06      1.0000e-01
+125     -1.1028e+00     3.2389e-06      3.8150e-07      9.4809e-01
+
+------------------------------------------------------------------
+>>> Results
+Status: Solved
+Iterations: 130 (incl. 5 safeguarding iter)
+Optimal objective: -1.103
+Runtime: 1.049s (1049.0ms)
+```

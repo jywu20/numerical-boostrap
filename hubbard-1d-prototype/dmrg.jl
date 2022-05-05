@@ -35,8 +35,6 @@ E, ψ, sites = let
     E, ψ, sites
 end
 
-##
-
 benchmark_point_dmrg = Dict{QuExpr, Float64}()
 
 benchmark_point_dmrg[hubbard_opstr_basis[1]] = 1.0

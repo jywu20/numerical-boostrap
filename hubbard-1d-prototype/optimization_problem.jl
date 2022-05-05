@@ -8,11 +8,12 @@ set_optimizer_attributes(model, "max_iter" => max_iter)
 # real variables
 
 hubbard_opstr_basis_expected = Vector(undef, hubbard_opstr_basis_length)
-for opstr_idx in 1 : hubbard_opstr_basis_length
+hubbard_opstr_basis_expected[1] = 1.0
+for opstr_idx in 2 : hubbard_opstr_basis_length
     op = hubbard_opstr_basis[opstr_idx]
     op_string_form = string(op)
     if ! (op in particle_number_constraint_ops) && ! (op in spin_constraint_ops)
-        hubbard_opstr_basis_expected[opstr_idx] = @variable(model, base_name = op_string_form)
+        hubbard_opstr_basis_expected[opstr_idx] = @variable(model, base_name = "⟨$op_string_form⟩")
     else
         hubbard_opstr_basis_expected[opstr_idx] = 0.0
     end
@@ -27,7 +28,9 @@ function coefficients_to_variable_ref(constraint::Vector)
 end
 
 for constraint_coefficients in H_constraints_coefficients
-    @constraint(model, coefficients_to_variable_ref(constraint_coefficients) == 0)
+    if constraint_coefficients != hubbard_opstr_zero
+        @constraint(model, coefficients_to_variable_ref(constraint_coefficients) == 0)
+    end
 end
 
 @variable(model, 

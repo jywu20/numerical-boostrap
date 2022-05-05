@@ -1,4 +1,4 @@
-final_expected_real_value(op) = complex_to_mat(op |> normal_form |> hubbard_opstr_coefficients)[1, 1]
+final_expected_real_value(op) = op |> normal_form |> hubbard_opstr_coefficients |> coefficients_to_variable_ref
 
 if ! no_optimization
     open(full_output_name, "a") do file

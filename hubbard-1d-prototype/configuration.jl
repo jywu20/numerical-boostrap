@@ -4,7 +4,7 @@
 #const output_name = "2022-4-30-run-1-res"
 
 const working_path = "D:\\Projects\\numerical-boostrap\\hubbard-1d-prototype\\"
-const output_name = "2022-5-3-run-1-res"
+const output_name = "2022-5-4-run-1-res"
 
 const full_output_name = working_path * output_name
 
@@ -29,11 +29,13 @@ U = 4.0
 t = 1.0
 
 # l(O) ≤ K cutoff
-K = 5
+K = 7
 site_num = 2K + 1
 
 # When this flag is `true`, no actual optimization will be done. For debugging only.
 no_optimization = false 
+# Do a DMRG benchmark. For debugging only
+dmrg_benchmark = false 
 max_iter = 10000
 
 #endregion
