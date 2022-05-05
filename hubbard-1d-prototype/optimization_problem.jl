@@ -27,7 +27,10 @@ function coefficients_to_variable_ref(constraint::Vector)
     res
 end
 
-for constraint_coefficients in H_constraints_coefficients
+for constraint_coefficients in [
+    H_constraints_coefficients..., 
+    translational_constraint_coefficients..., 
+    reflectional_constraints_coefficients...]
     if constraint_coefficients != hubbard_opstr_zero
         @constraint(model, coefficients_to_variable_ref(constraint_coefficients) == 0)
     end

@@ -29,7 +29,7 @@ U = 4.0
 t = 1.0
 
 # l(O) ≤ K cutoff
-K = 7
+K = 5 
 site_num = 2K + 1
 
 # When this flag is `true`, no actual optimization will be done. For debugging only.

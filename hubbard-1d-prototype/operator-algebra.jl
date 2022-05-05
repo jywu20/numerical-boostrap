@@ -233,6 +233,70 @@ end
 filter!(x -> ! isnothing(x), spin_constraint_ops)
 spin_constraint_ops = convert(Vector{QuExpr}, spin_constraint_ops)
 
+function hubbard_opstr_translate(op, Δx)
+    opstr_string = string(op)
+    opstr_string = replace(opstr_string, "†" => "dag")
+    opstr_each_site_strings = split(opstr_string)
 
+    opstr_factors = QuExpr[]
+    for str in opstr_each_site_strings
+        str = str[1 : end - 2]
+        spin = 1
+
+        if str[end] == '-'
+            str = str[1 : end - 1]
+            head, site_idx = split(str, "(")
+            spin = -1 
+        else 
+            head, site_idx = split(str, "(")
+            spin = 1
+        end
+
+        if ! haskey(inverse_list, site_list[parse(Int, site_idx)] + Δx)
+            return nothing
+        end
+        i = inverse_list[site_list[parse(Int, site_idx)] + Δx]
+        
+        if head == "c"
+            push!(opstr_factors, c(i, spin))
+        else 
+            push!(opstr_factors, cdag(i, spin))
+        end
+    end
+
+    prod(opstr_factors)
+end
+
+Tx = map(site_list) do i
+    if i + 1 ∉ site_list
+        return (
+            cdag(inverse_list[i], ↑) * c(length(site_list), ↑)
+            + cdag(inverse_list[i], ↓) * c(length(site_list), ↓)
+        )
+    end
+    (
+        cdag(inverse_list[i], ↑) * c(inverse_list[i + 1], ↑) 
+        + cdag(inverse_list[i], ↓) * c(inverse_list[i + 1], ↓)
+    )
+end |> sum
+
+translational_constraint_coefficients = map(hubbard_opstr_basis) do op
+    comm(Tx, op) |> normal_form |> hubbard_opstr_coefficients
+end 
+
+filter!(translational_constraint_coefficients) do c
+    c !== nothing
+end
+
+σi = map(site_list) do i
+    (
+        cdag(inverse_list[i], ↑) * c(inverse_list[- i], ↑) 
+        + cdag(inverse_list[i], ↓) * c(inverse_list[- i], ↓)
+    )
+end |> sum
+
+reflectional_constraints_coefficients = map(hubbard_opstr_basis) do op
+    comm(σi, op) |> normal_form |> hubbard_opstr_coefficients
+end 
 
 #endregion

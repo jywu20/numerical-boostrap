@@ -421,3 +421,37 @@ Iterations: 775
 Optimal objective: -0.9759
 Runtime: 19.874s (19873.69ms)
 ```
+
+
+尝试引入平移约束，之前写的代码
+```julia
+translational_clusters = Vector{Int}[]
+
+let remaining_ops_indices = collect(2 : hubbard_opstr_basis_length) 
+    while ! isempty(remaining_ops_indices)
+        current_op = remaining_ops_indices[1]
+        translational_indices = Int[]
+        for Δx in - 2K : 2K
+            translated_op = hubbard_opstr_translate(hubbard_opstr_basis[current_op], Δx)
+            
+            if translated_op === nothing
+                continue
+            end
+
+            translated_op_idx = findfirst(x -> x == translated_op, hubbard_opstr_basis)
+            if translated_op_idx !== nothing
+                push!(translational_indices, translated_op_idx)
+            end
+        end
+        sort!(translational_indices)
+        push!(translational_clusters, translational_indices)
+        filter!(x -> x ∉ translational_indices, remaining_ops_indices)
+    end
+end
+```
+并不好用，因为这会导致`c(41) c(31)`这样，排在前面的算符的格点编号大于排在后面的算符，从而不在基底中，但是的确可以用对称性划归到另一个算符中的算符没有被划归。
+
+看起来，还是应该拿平移变换的生成元来做。
+
+加入对称性约束以后，$K=9$的能量能够计算到`-0.754`。
+
