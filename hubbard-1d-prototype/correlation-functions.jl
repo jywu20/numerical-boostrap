@@ -4,8 +4,8 @@ if ! no_optimization
     open(full_output_name, "a") do file
         #region ⟨n_i⟩
     
-        n_i_var = (cdag(1, ↑) * c(1, ↑) + cdag(1, ↓) * c(1, ↓)) |> final_expected_real_value
-        println(file, "Expected ⟨n_i⟩:  $(value(n_i_var))")
+        n_i_var = (cdag(1, ↑) * c(1, ↑) * cdag(1, ↓) * c(1, ↓)) |> final_expected_real_value
+        println(file, "Expected ⟨n_i↑ n_i↓⟩:  $(value(n_i_var))")
         println(file)
     
         #endregion
