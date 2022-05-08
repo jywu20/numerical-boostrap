@@ -19,7 +19,7 @@ for opstr_idx in 2 : hubbard_opstr_basis_length
     end
 end
 
-function coefficients_to_variable_ref(constraint::Vector)
+function coefficients_to_variable_ref(constraint::AbstractVector)
     res = 0
     for (i, c) in enumerate(constraint)
         res += c * hubbard_opstr_basis_expected[i]
@@ -35,6 +35,9 @@ for constraint_coefficients in [
         @constraint(model, coefficients_to_variable_ref(constraint_coefficients) == 0)
     end
 end
+
+total_particle_number_constraint = coefficients_to_variable_ref(hubbard_opstr_coefficients(cdag(1, ↑) * c(1, ↑) + cdag(1, ↓) * c(1, ↓)))
+@constraint(model, total_particle_number_constraint == 1)
 
 @variable(model, 
     M[1 : length(M_mat_spanning_opstr_indices), 1 : length(M_mat_spanning_opstr_indices)], PSD)

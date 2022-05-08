@@ -44,9 +44,9 @@ begin
     # Whether check the maximum iteraton number and the max qualified operator string limit 
     local check_max_iter_opstr_num = true
     # To avoid out of memory error, we set a max qualified operator string limit.
-    local max_qualified_opstr_num = 100000
+    local max_qualified_opstr_num = 1000000
     # Tp avoid running for too long
-    local max_search_num = 100000
+    local max_search_num = 1000000
 
     local finished = false
     local search_count = 0

@@ -4,7 +4,7 @@
 #const output_name = "2022-4-30-run-1-res"
 
 const working_path = "D:\\Projects\\numerical-boostrap\\hubbard-1d-prototype\\"
-const output_name = "2022-5-4-run-1-res"
+const output_name = "2022-5-8-run-2-res"
 
 const full_output_name = working_path * output_name
 
