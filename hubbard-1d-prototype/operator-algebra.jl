@@ -198,6 +198,11 @@ if show_hamiltonian
     end
 end
 
+open(full_output_name, "a") do file
+    println(file, "Constraints caused by H:")
+    println(file)
+end
+
 H_constraints_coefficients = SparseVector{Float64, Int64}[]
 for opstr_basis_index in 1 : hubbard_opstr_basis_length
     constraint_op = comm(H_hubbard, hubbard_opstr_basis[opstr_basis_index]) |> normal_form
@@ -290,12 +295,34 @@ Tx = map(site_list) do i
     )
 end |> sum
 
+if show_constraints
+    open(full_output_name, "a") do file
+        println(file)
+        println(file)
+        println(file, "Constraints caused by translational symmetry:")
+    end
+end
+
 translational_constraint_coefficients = map(hubbard_opstr_basis) do op
-    comm(Tx, op) |> normal_form |> hubbard_opstr_coefficients
+    cons_ops = comm(Tx, op) |> normal_form 
+    if show_constraints
+        open(full_output_name, "a") do file
+            println(file, op, "  =>  ", cons_ops, " = 0")
+        end
+    end
+    cons_ops |> hubbard_opstr_coefficients
 end 
 
 filter!(translational_constraint_coefficients) do c
     c !== nothing
+end
+
+if show_constraints
+    open(full_output_name, "a") do file
+        println(file)
+        println(file)
+        println(file, "Constraints caused by reflectional symmetry:")
+    end
 end
 
 σi = map(site_list) do i
@@ -306,7 +333,13 @@ end
 end |> sum
 
 reflectional_constraints_coefficients = map(hubbard_opstr_basis) do op
-    comm(σi, op) |> normal_form |> hubbard_opstr_coefficients
+    cons_ops = comm(σi, op) |> normal_form 
+    if show_constraints
+        open(full_output_name, "a") do file
+            println(file, op, "  =>  ", cons_ops, " = 0")
+        end
+    end
+    cons_ops |> hubbard_opstr_coefficients
 end 
 
 #endregion

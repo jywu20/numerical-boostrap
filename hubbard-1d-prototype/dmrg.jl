@@ -90,3 +90,50 @@ let
         end
     end
 end
+
+#region 
+
+jump_benchmark_point = Dict{VariableRef, Float64}()
+for (opstr_idx, op) in enumerate(hubbard_opstr_basis)
+    optimization_var = hubbard_opstr_basis_expected[opstr_idx]
+    if typeof(optimization_var) == Float64
+        # println(optimization_var, " ", benchmark_point_dmrg[op])
+        continue
+    end
+    push!(jump_benchmark_point, optimization_var => benchmark_point_dmrg[op])
+end
+
+for (i, opstr_index_1) in enumerate(M_mat_spanning_opstr_indices)
+    for (j, opstr_index_2) in enumerate(M_mat_spanning_opstr_indices)
+        opstr_1 = hubbard_opstr_basis[opstr_index_1]
+        opstr_2 = hubbard_opstr_basis[opstr_index_2]
+
+        Mij = normal_form(opstr_1' * opstr_2)
+        
+        res = 0.0
+        for (term_label, coefficient) in Mij.terms
+            term_label = QuExpr(Dict(term_label => 1.0))
+            res += benchmark_point_dmrg[term_label] * coefficient
+        end
+
+        push!(jump_benchmark_point, M[i, j] => res)
+    end
+end
+
+if feasibility_check
+    feasibility_report = primal_feasibility_report(model, jump_benchmark_point)
+
+    M_dmrg = map(M) do optimize_var
+        jump_benchmark_point[optimize_var]
+    end
+
+    M_dmrg_spectrum = eigen(M_dmrg).values
+end
+
+function dmrg_value(op)
+    value(op |> hubbard_opstr_coefficients |> coefficients_to_variable_ref) do optimize_var
+        jump_benchmark_point[optimize_var]
+    end
+end
+
+#endregion

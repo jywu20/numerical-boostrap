@@ -15,6 +15,4 @@ end
 
 if dmrg_benchmark
     include("dmrg.jl")
-
-    
 end

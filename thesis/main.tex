@@ -663,17 +663,19 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 \end{equation}
 因此，可以如下搜索满足条件\eqref{eq:operator-space-criteria}的所有湮灭算符乘积：我们列出所有满足$\abs*{x_i} \leq K - 1$的格点$x_i$，在每个格点上放置如下四种状态之一：没有算符，有一个自旋向上的湮灭算符，有一个自旋向下的湮灭算符，同时有自旋向上和向下的湮灭算符，然后筛去不满足\eqref{eq:operator-space-criteria}的情况即可。
 
-\subsection{等式约束和半正定约束的符号计算}\label{sec:symbolic-hubbard}
+\subsection{等式约束和半正定约束的构建}\label{sec:symbolic-hubbard}
 
 我们使用QuantumAlgebra.jl包\cite{Sanchez-Barquilla2020,QuantumAlgebra.jl}自动完成费米子算符的对易关系和正规排序计算。
+
+在完成所有对易关系和正则排序计算后，应当使用
 
 \subsection{DMRG基准测试}
 
 为确保程序
 
-\subsection{结果}
+\subsection{计算结果}
 
-可能多少有些出人意外的，一维Hubbard模型的收敛性要明显好过。
+可能多少有些出人意外的，在本文测试的所有$K$值中，主要的性能瓶颈都在于；一维Hubbard模型的收敛性要明显好过。
 
 \section{二维Hubbard模型的数值bootstrap}
 

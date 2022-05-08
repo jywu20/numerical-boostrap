@@ -27,20 +27,36 @@ function coefficients_to_variable_ref(constraint::AbstractVector)
     res
 end
 
-for constraint_coefficients in [
-    H_constraints_coefficients..., 
-    translational_constraint_coefficients..., 
-    reflectional_constraints_coefficients...]
+if no_geometric_symmetry
+    all_constraints = H_constraints_coefficients
+else
+    all_constraints = [
+        H_constraints_coefficients..., 
+        translational_constraint_coefficients..., 
+        reflectional_constraints_coefficients...]
+end
+
+for constraint_coefficients in all_constraints
     if constraint_coefficients != hubbard_opstr_zero
         @constraint(model, coefficients_to_variable_ref(constraint_coefficients) == 0)
     end
 end
 
-total_particle_number_constraint = coefficients_to_variable_ref(hubbard_opstr_coefficients(cdag(1, ↑) * c(1, ↑) + cdag(1, ↓) * c(1, ↓)))
-@constraint(model, total_particle_number_constraint == 1)
+for i in 1 : length(site_list)
+    if ! (cdag(i, ↑) * c(i, ↑) in hubbard_opstr_basis)
+        break
+    end
+    total_particle_number_constraint = coefficients_to_variable_ref(hubbard_opstr_coefficients(cdag(i, ↑) * c(i, ↑) + cdag(i, ↓) * c(i, ↓)))
+    @constraint(model, total_particle_number_constraint == 1)
+end
 
-@variable(model, 
-    M[1 : length(M_mat_spanning_opstr_indices), 1 : length(M_mat_spanning_opstr_indices)], PSD)
+if ! feasibility_check 
+    @variable(model, 
+        M[1 : length(M_mat_spanning_opstr_indices), 1 : length(M_mat_spanning_opstr_indices)], PSD)
+else
+    @variable(model, 
+        M[1 : length(M_mat_spanning_opstr_indices), 1 : length(M_mat_spanning_opstr_indices)])
+end
 
 # Here i and j are indices of O_i and O_j which define M_{ij} = ⟨O_i O_j⟩
 for i in 1 : length(M_mat_spanning_opstr_indices)

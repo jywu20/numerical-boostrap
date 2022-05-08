@@ -17,3 +17,4 @@ references/*.pdf
 *.snm
 *.xdv
 !oscillator-simple-prototype/*.out
+!hubbard-1d-prototype/*.out
