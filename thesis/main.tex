@@ -568,13 +568,14 @@ COSMO是一个大规模凸优化问题求解器，适用于线性SDP问题。
 由于\eqref{eq:oscillator-linear-sdp}中的$M$矩阵包含复数，在JuMP中构建优化问题时，需要把它的每一个矩阵元$M_{ij}$替换为
 \begin{equation}
     \Re(M_{ij}) \pmqty{1 & 0 \\ 0 & 1} + \Im(M_{ij}) \pmqty{0 & -1 \\ 1 & 0}.
+    \label{eq:complex-to-real}
 \end{equation}
 我们可以在JuMP中声明一个边长为$2(L+1)^2$的半正定矩阵变量，然后使用\texttt{@constraint}宏将$M_{ij}$和$\{\expval*{O_i}\}$联系起来。
 由于在大部分线性SDP求解器中，被声明为半正定的矩阵变量一定是对称的%
 \footnote{可以运行几次迭代，然后用\texttt{value.(M)}检查此时的\texttt{M}的值。计算其本征值，会发现有绝对值很小的负值，但是比较它和它的转置，会发现两者完全相同。}%
 ，将$M_{ij}$的每个矩阵元都和$\{\expval*{O_i}\}$联系起来之后，$\expval*{O^\dagger} = \expval*{O}^*$的约束就自动被施加了。
 
-\subsection{使用非线性SDP为线性SDP做基准测试}
+\subsection{使用非线性SDP为线性SDP做基准测试}\label{sec:oscillator-benchmark}
 
 由于已经有了非线性SDP计算出的数据，非简谐振子线性SDP程序的调试将变得容易很多，因为可以直接检查非线性SDP的计算结果是否满足线性SDP程序中的各种约束，从而检查程序是否正确。
 
@@ -662,16 +663,50 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
     \label{eq:inequality-hubbard-opstr}
 \end{equation}
 因此，可以如下搜索满足条件\eqref{eq:operator-space-criteria}的所有湮灭算符乘积：我们列出所有满足$\abs*{x_i} \leq K - 1$的格点$x_i$，在每个格点上放置如下四种状态之一：没有算符，有一个自旋向上的湮灭算符，有一个自旋向下的湮灭算符，同时有自旋向上和向下的湮灭算符，然后筛去不满足\eqref{eq:operator-space-criteria}的情况即可。
+我们记所有满足此条件的算符构成的集合为$\mathcal{C}$，它张成的空间就是我们在bootstrap中考虑的算符空间。
 
 \subsection{等式约束和半正定约束的构建}\label{sec:symbolic-hubbard}
 
-我们使用QuantumAlgebra.jl包\cite{Sanchez-Barquilla2020,QuantumAlgebra.jl}自动完成费米子算符的对易关系和正规排序计算。
+我们使用QuantumAlgebra.jl 1.1.0包\cite{Sanchez-Barquilla2020,QuantumAlgebra.jl}自动完成费米子算符的对易关系和正规排序计算。
+调用QuantumAlgebra.jl包，并调用\texttt{@fermion\_ops}宏声明湮灭算符\texttt{c}后，即可使用\texttt{c(args...)}和\texttt{cdag(args...)}两个函数得到标签为\texttt{args}的湮灭算符和产生算符。
+根据\prettyref{fig:1d-lattice-index}为格点编号，并使用\texttt{1}表示自旋向上的算符，\texttt{-1}表示自旋向下的算符。
+例如，取原点为1号格点，则$c^\dagger_{x = 1, \uparrow}$在程序中对应\texttt{cdag(2,1)}。%
+\footnote{
+    由于Julia支持unicode变量名，更加规范的做法本应是将自旋向上就使用$\uparrow$表示。然而，目前的QuantumAlgebra.jl版本将传递给它的标签中能够做合法的变量名（包括字符串）的东西都看成抽象的、值可变的指标，其结果是没有办法区分\texttt{cdag(i,↑)}和\texttt{cdag(i,↓)}。
+    我们不得不使用整数来表示自旋标签（浮点数目前不受支持）。
+}%
 
-在完成所有对易关系和正则排序计算后，应当使用
+本例中的等式约束来自哈密顿量$H$、总自旋$S^z$、总粒子数$N$、平移对称性、空间反演对称性。前三个对称性导致的约束通过计算对易关系得到：我们构造一个容纳了$\mathcal{C}$中出现的所有格点的格子上的近似哈密顿量、总自旋、总粒子数，使得它们和$\mathcal{C}$中任何一个算符的对易子都等于后者和真正的$H, S^z, N$的对易子，然后使用QuantumAlgebra.jl包计算对易子即可。
+平移对称性和空间反演对称性原则上也可以通过对易子计算得到，但是此处应注意，平移操作的生成元不是
+\[
+    \sum_{i, \sigma} c^\dagger_{i \sigma} c_{i + 1, \sigma},
+\]
+空间反演对称操作也不是
+\[
+    \sum_{i, \sigma} c^\dagger_{i \sigma} c_{-i, \sigma}.
+\]
+这两个算符和含有超过两个算符的产生湮灭算符乘积的对易子是不正确的。因此，直接修改QuantumAlgebra.jl算符上的格点标签，将5变成3，3变成1，1变成2……以及将3变成2，5变成4……然后计算格点变换前后的算符的差，是得到平移对称性约束和空间反演对称性约束方程的最简单的方法。
+
+在完成所有对易关系和正则排序计算后，可以将其中的产生湮灭算符乘积替换为相应的JuMP优化变量。
+与非简谐振子的情况不同，本例中所有算符期望值都是实的%
+\footnote{
+    在粒子数表象中思考问题即可看清楚这一点：无论是$c^\dagger_{i \sigma} c_{i + 1, \sigma}$还是$n_{i \uparrow} n_{i \downarrow}$都是实矩阵，哈密顿量中又不存在复数，因此整个哈密顿量都是实的，其本征值也是实的，并且$c^\dagger \cdots c^\dagger c \cdots c$也是实矩阵，从而其期望值也是实的。
+
+    量子力学问题涉及不可数无穷维算符，并且动量算符不是实的，因此不能保证算符期望值是实的，因此在构建线性SDP问题时反而需要\eqref{eq:complex-to-real}的额外工序。
+}%
+，从而无需将算符的虚部声明为优化变量，也无需做\eqref{eq:complex-to-real}变换。
+
+由于$S^z$和$N$产生的约束条件全部体现为不满足自旋和粒子数守恒的一个单独的产生湮灭算符乘积的期望值为零，我们可以不声明和这些算符的期望值有关的优化变量，而直接用零填充它们占据的位置。
+另一个无需声明JuMP变量而直接用数值填充的变量期望值是恒等算符的期望值；如果恒等算符的期望值被声明为一个JuMP变量，那么全部$\expval*{\comm{O}{H}} = 0$等式约束就都是线性的而非仿射的，从而可以往全部JuMP变量上乘一个正数而保持所有约束成立，导致总能量无下界。
+
+我们仍然需要引入一个额外的约束：系统中的总电子数。由于系统具有平移对称性，可以将每个格点上的$\expval*{n_i}$变量替换为平摊到各个格点上的电子数期望值；在半填充的情况下，即为1。
 
 \subsection{DMRG基准测试}
 
-为确保程序
+我们需要确保前述程序是正确的，换而言之，需要确定我们传递给求解器的bootstrap问题真的是一维Hubbard模型的线性SDP问题。
+测试其正确性的方法和\prettyref{sec:oscillator-benchmark}中是一样的，都是检查使用其它方式计算出的关于有待bootstrap的模型的数据是否符合我们传递给求解器的约束。
+一维体系的DMRG计算已经非常成熟，本文使用ITensors.jl 0.2.9\cite{itensor,itensor-lib}，使用其提供的\texttt{Electron}型张量指标、\texttt{MPO}函数、自带的产生湮灭算符定义，即可将一维Hubbard模型在有限格点上的哈密顿量自动转化为矩阵乘积算符，然后完成DMRG计算。
+取一段100个格点的一维格子，在其上运行保证量子数守恒（为了确保系统中填充的电子数正确）的\texttt{Electron}型张量指标，即可计算得到张量乘积态拟设下的近似基态，将\prettyref{fig:1d-lattice-index}的1号格点取在中间部分，计算$\mathcal{C}$中各个算符的期望值（注意，保证量子数守恒的DMRG中，被$S^z$和$N$引入的约束要求为零的算符均没有定义），即可得到用于基准测试的数据，重复\prettyref{sec:oscillator-benchmark}中的操作，即可完成对一维Hubbard模型线性SDP程序的基准测试。
 
 \subsection{计算结果}
 
