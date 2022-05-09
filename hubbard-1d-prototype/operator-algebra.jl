@@ -282,18 +282,39 @@ function hubbard_opstr_translate(op, Δx)
     prod(opstr_factors)
 end
 
-Tx = map(site_list) do i
-    if i + 1 ∉ site_list
-        return (
-            cdag(inverse_list[i], ↑) * c(length(site_list), ↑)
-            + cdag(inverse_list[i], ↓) * c(length(site_list), ↓)
-        )
+function hubbard_opstr_reflect(op)
+    opstr_string = string(op)
+    opstr_string = replace(opstr_string, "†" => "dag")
+    opstr_each_site_strings = split(opstr_string)
+
+    opstr_factors = QuExpr[]
+    for str in opstr_each_site_strings
+        str = str[1 : end - 2]
+        spin = 1
+
+        if str[end] == '-'
+            str = str[1 : end - 1]
+            head, site_idx = split(str, "(")
+            spin = -1 
+        else 
+            head, site_idx = split(str, "(")
+            spin = 1
+        end
+
+        if ! haskey(inverse_list, - site_list[parse(Int, site_idx)])
+            return nothing
+        end
+        i = inverse_list[- site_list[parse(Int, site_idx)]]
+        
+        if head == "c"
+            push!(opstr_factors, c(i, spin))
+        else 
+            push!(opstr_factors, cdag(i, spin))
+        end
     end
-    (
-        cdag(inverse_list[i], ↑) * c(inverse_list[i + 1], ↑) 
-        + cdag(inverse_list[i], ↓) * c(inverse_list[i + 1], ↓)
-    )
-end |> sum
+
+    prod(opstr_factors)
+end
 
 if show_constraints
     open(full_output_name, "a") do file
@@ -303,8 +324,12 @@ if show_constraints
     end
 end
 
-translational_constraint_coefficients = map(hubbard_opstr_basis) do op
-    cons_ops = comm(Tx, op) |> normal_form 
+translational_constraint_coefficients = map(hubbard_opstr_basis[2:end]) do op
+    translated_op = hubbard_opstr_translate(op, 1)
+    if translated_op === nothing
+        return
+    end
+    cons_ops = op - translated_op
     if show_constraints
         open(full_output_name, "a") do file
             println(file, op, "  =>  ", cons_ops, " = 0")
@@ -325,15 +350,8 @@ if show_constraints
     end
 end
 
-σi = map(site_list) do i
-    (
-        cdag(inverse_list[i], ↑) * c(inverse_list[- i], ↑) 
-        + cdag(inverse_list[i], ↓) * c(inverse_list[- i], ↓)
-    )
-end |> sum
-
-reflectional_constraints_coefficients = map(hubbard_opstr_basis) do op
-    cons_ops = comm(σi, op) |> normal_form 
+reflectional_constraints_coefficients = map(hubbard_opstr_basis[2:end]) do op
+    cons_ops = op - hubbard_opstr_reflect(op)
     if show_constraints
         open(full_output_name, "a") do file
             println(file, op, "  =>  ", cons_ops, " = 0")
@@ -341,5 +359,9 @@ reflectional_constraints_coefficients = map(hubbard_opstr_basis) do op
     end
     cons_ops |> hubbard_opstr_coefficients
 end 
+
+filter!(reflectional_constraints_coefficients) do c
+    c !== nothing
+end
 
 #endregion
