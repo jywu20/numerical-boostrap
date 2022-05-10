@@ -106,6 +106,7 @@
 
 \renewcommand{\Re}{\mathrm{Re}}
 \renewcommand{\Im}{\mathrm{Im}}
+\newcommand{\pair}[1]{\langle #1 \rangle}
 
 % 前置部分包含目录、中英文摘要以及符号表等
 \frontmatter
@@ -142,7 +143,7 @@ TODO
 
 凝聚态物理中的传统量子多体方法从电子在周期性势场中产生的能带结构出发，通过费曼图微扰地处理库仑相互作用；大体上说，这种范式对应于朗道费米液体理论及其修正\cite{mahan2013many}。
 在强关联体系中，费米液体图像失效，在量子多体理论中体现为有相互作用格林函数和无相互作用格林函数无法建立绝热演化的关系，LW泛函出现多值性等现象\cite{Gunnarsson_2017}。
-已有多种数值方法可用于不借助微扰论求解强关联系统。对自旋模型，可使用世界线蒙特卡洛、随机级数展开，对电子模型，可使用行列式蒙特卡洛，不过这些方法均可能存在符号问题，即在容易想到的基底下，不同系统构型的权重是复数而不是实数，从而无法通过马尔可夫链抽样\cite{sign_problem}。
+已有多种数值方法可用于不借助微扰论求解强关联系统。对自旋模型，可使用世界线蒙特卡洛、随机级数展开，对电子模型，可使用行列式蒙特卡洛（DQMC），不过这些方法均可能存在符号问题，即在容易想到的基底下，不同系统构型的权重是复数而不是实数，从而无法有效地通过马尔可夫链抽样\cite{sign_problem}。
 张量网络方法是近年来发展较快的一种方法，通过构造能够容纳系统基态的纠缠结构的张量网络波函数拟设，通过变分法来获得系统基态。
 一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
 
@@ -237,6 +238,17 @@ TODO
 因此，数值bootstrap给出的能量数值值必定小于等于能量真实值。
 传统的最优化方法给出的则是能量的\emph{上界}。相互比较两种方法的结果，可以将系统基态能量的可能范围确定得非常小。
 
+实际上，在使用传统方法得到能量上界之后，我们还能够进一步确定能量以外的物理量的上下界\cite{han_manybody}。设$E_\text{lb}$是通过bootstrap方法确定的能量下界，而$E_\text{ub}$是通过张量网络方法获得的能量上界，则真实的基态密度矩阵给出的$\expval{H}$显然在这两者之间，即$\rho_0$在集合
+\[
+    \{ \rho | \trace \rho = 1, \quad E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub} \}
+\]
+中，于是，物理量$O$的基态期望值上下界由
+\begin{equation}
+    \min_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho \leq \expval*{O}_{\rho_0} \leq \max_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho
+    \label{eq:operator-bound}
+\end{equation}
+给出。
+
 \subsection{数值bootstrap的若干应用}
 
 由于bootstrap不依赖于哈密顿量中各项的大小，它显然是处理非微扰问题的有力武器。
@@ -253,9 +265,12 @@ TODO
 
 \section{关于本文}
 
-本文将在\prettyref{sec:nonlinear-sdp-oscillator}中复现\parencite{han_matrix}的工作。
+本文将在\prettyref{chap:oscillator}中复现\parencite{han_matrix}的工作，分别在\prettyref{sec:nonlinear-sdp-oscillator}和\prettyref{sec:linear-sdp-oscillator}中使用非线性SDP和线性SDP方法求解非简谐振子，并用前者为后者做基准测试。
+非简谐振子可以通过常规的求解薛定谔方程的方法容易的解决，同时又是一个典型的非微扰系统，因此非常适合用作非微扰方法的玩具模型。
 
-\chapter{一维非简谐振子的数值bootstrap}
+\prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维Hubbard模型。Hubbard模型是最为简单的强关联电子模型，
+
+\chapter{一维非简谐振子的数值bootstrap}\label{chap:oscillator}
 
 \section{一维非简谐振子——一个$0+1$维非微扰场论}
 
@@ -266,7 +281,7 @@ TODO
 可以看成一个$0+1$维的$\phi^4$量子场论。它常常被用作量子力学中微扰论的例子，但实际上可以证明，其基态能量的微扰级数是发散的\cite{PhysRev.184.1231}。
 这个发散可以看成$\phi^4$量子场论中的发散的一个特例。大部分量子场论中，相互作用均导致的微扰级数在最好的情况下也是渐进级数\cite{Jackiw_effective}。%
 \footnote{此处所说的是朴素地将物理量展开成关于耦合常数$g$的幂次的级数后，会发现这个级数不收敛。在量子场论中这个级数的每一项都可能不收敛，因为动量积分时发生紫外发散。后一种不收敛和此处的讨论没有直接关系。
-然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，并且确实可以在非简谐振子中重复，它在非简谐振子中的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
+然而，\emph{重整化微扰论}——在微扰级数中引入抵消项，物理地看，是使用修饰后的耦合常数取代裸的耦合常数——可以用于消除紫外发散，并且可以在非简谐振子中重复，它在非简谐振子中的收敛性确实在\parencite{Bender-1970uz}中讨论过，结论是，很不幸，它仍然是发散的。}
 
 由于一维非简谐振子归根到底是一个量子力学模型，可以通过求解离散定态薛定谔方程的方法精确地处理它。
 它和$3+1$维多体问题的相似性又意味着，用于一般的多体问题的方法也可以用在它上面。
@@ -502,7 +517,7 @@ $O = x^s$的约束条件我们已经得到，它是
 因此，可以使用\eqref{eq:recursive-nonlinear-sdp-relation}计算出所有的$\expval*{x^m}$型期望值，然后使用这些数据连同$\expval*{\comm{H}{x^m}} = 0$给出的约束条件，计算出所有的$\expval*{x^m p}$型期望值，然后引入$\expval*{\comm{H}{x^m p}} = 0$型约束条件，计算所有的$\expval*{x^m p^2}$型期望值……如此重复，即可计算出次数小于某个截断的所有的$\langle x^m p^n \rangle$期望值。
 \prettyref{fig:oscillator-expectation}展示了一些这样计算出的期望值。应注意，如果要使用这些数据做其它SDP程序的基准测试，必须取更多的小数点后位数。
 
-\section{线性SDP优化}
+\section{线性SDP优化}\label{sec:linear-sdp-oscillator}
 
 本节讨论如何使用线性SDP实施非简谐振子的数值bootstrap。在\prettyref{sec:nonlinear-sdp-oscillator}中，我们能够分析第一激发态处的物理量，而在线性SDP中我们只能讨论基态性质。
 然而，由于非线性SDP在大规模问题上是不可行的（见\prettyref{sec:numerical-boostrap-intro}的讨论），线性SDP对凝聚态体系基本上是唯一的选择。
@@ -617,7 +632,21 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 \footnote{见此处的讨论：\url{https://discourse.julialang.org/t/use-low-precision-float-type-in-jump/80332}。}%
 ，因此眼下调整浮点数精度需要将代码重写为稍微低层一些的MathOptInterface\cite{legat2021mathoptinterface}代码，由于时间因素，非简谐振子的线性SDP中的收敛性问题来自何处的讨论只能留给未来的研究了。
 
-\chapter{Hubbard模型的数值bootstrap}
+\chapter{Hubbard模型的数值bootstrap}\label{chap:hubbard}
+
+\section{Hubbard模型简介}
+
+本章讨论Hubbard模型
+\begin{equation}
+    H = - t \sum_{\pair{\vb*{i}, \vb*{j}}, \sigma} c^\dagger_{\vb*{i} \sigma} c_{\vb*{j} \sigma} + U \sum_{\vb*{i}} n_{\vb*{i} \uparrow} n_{\vb*{j} \downarrow}
+\end{equation}
+的线性SDP数值bootstrap。Hubbard模型是一个格点强关联电子模型，描述了一个声子作用可忽略，费米面附近只有一条可以使用紧束缚模型描述的能带，原位（on-site）库伦排斥最为重要，长距离库伦排斥不重要的系统。
+在能带半填充，$U$较大时，Hubbard模型退化为海森堡模型，其中电子定域而无法自由移动，从而电荷自由度（即电子数自由度）不再是低能自由度，只有每个格点上的自旋自由度是基本自由度。
+从能带论的角度，这可以理解为强烈的相互作用导致出现能带劈裂，费米能级落在禁带上，从而体系成为Mott绝缘体。
+因此，Hubbard模型对铁磁学显然非常重要。
+此外，掺杂（从而费米能级位置发生变动）的Hubbard模型可能能够从完全的排斥相互作用出发产生电子配对，从而也是高温超导的可能机制之一。\cite{fradkin2013field}
+
+
 
 \section{一维Hubbard模型的数值bootstrap}
 
@@ -708,9 +737,20 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 一维体系的DMRG计算已经非常成熟，本文使用ITensors.jl 0.2.9\cite{itensor,itensor-lib}，使用其提供的\texttt{Electron}型张量指标、\texttt{MPO}函数、自带的产生湮灭算符定义，即可将一维Hubbard模型在有限格点上的哈密顿量自动转化为矩阵乘积算符，然后完成DMRG计算。
 取一段100个格点的一维格子，在其上运行保证量子数守恒（为了确保系统中填充的电子数正确）的\texttt{Electron}型张量指标，即可计算得到张量乘积态拟设下的近似基态，将\prettyref{fig:1d-lattice-index}的1号格点取在中间部分，计算$\mathcal{C}$中各个算符的期望值（注意，保证量子数守恒的DMRG中，被$S^z$和$N$引入的约束要求为零的算符均没有定义），即可得到用于基准测试的数据，重复\prettyref{sec:oscillator-benchmark}中的操作，即可完成对一维Hubbard模型线性SDP程序的基准测试。
 
+在使用DMRG做基准测试时应注意DMRG不严格保证平移和镜像对称性的成立，因此，来自这两个对称性的约束将被违反得较为厉害，这并非说明优化问题构建有误。
+
 \subsection{计算结果}
 
-可能多少有些出人意外的，在本文测试的所有$K$值中，主要的性能瓶颈都在于；一维Hubbard模型的收敛性要明显好过。
+% 2022.5.9的hubbard-1d-prototype\labbook.md
+可能多少有些出人意外的，一维Hubbard模型的线性SDP的收敛性要明显好过非简谐振子；本文测试的所有情况——最高到$K=12$——下，求解器均迅速地收敛了。
+$K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了计算；$K=12$时约有70万个优化变量，但是20分钟内计算也完成了。事实上，本例使用的程序的主要的耗时在于线性SDP之前，将QuantumAlgebra.jl中的算符转化成JuMP约束的步骤。
+尚不清楚为什么一维Hubbard模型的线性SDP的收敛性更加好，但是可以确定这和一维Hubbard模型基态期望值全部是实数有关：如果我们忽视这个条件，而为每个$\mathcal{C}$中算符的期望值的实部和虚部分别声明变量，并且使用\eqref{eq:complex-to-real}构造$M$矩阵，那么即使对一个较小规模的问题（如$K=6$），COSMO求解器一开始就会报告“not feasible”。
+
+\input{hubbard-1d-energy-double-occ-table.tex}
+
+计算结果展示如\prettyref{tbl:hubbard-1d-linear-sdp}。由于时间所限，本文没有做\eqref{eq:operator-bound}，因此表中的双占据算符期望值只是普通的数值值，不保证是上界或是下界。
+可以看到线性SDP给出的结果是精确解的下界，并且提升$K$可以收紧下界；双占据数值值可以较为精确地计算。$U$较大时，数值bootstrap给出的下界较紧。
+直观地看，这应该是因为$U$较大时，电子倾向于定域，从而只有较为局域的算符有较大的期望值；由于涉及长距离跃迁的算符无法通过\eqref{eq:operator-space-criteria}的筛选，在$U$较大时，不需要将$K$取得很大，$\mathcal{C}$中的算符就足够完成一次较为精确的bootstrap。
 
 \section{二维Hubbard模型的数值bootstrap}
 

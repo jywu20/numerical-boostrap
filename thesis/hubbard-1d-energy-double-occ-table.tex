@@ -1,0 +1,21 @@
+% data from oscillator-simple-prototype/2022-1-20.nb
+
+\begin{table}
+    \caption{不同$K$下的一维Hubbard模型的线性SDP结果，其中的精确解取自\parencite{han_manybody}的表1}
+    \label{tbl:hubbard-1d-linear-sdp}
+    \centering
+    \begin{tabular}{cccccc}
+        \toprule
+        \multicolumn{2}{c}{$n_i=1$}                                 & $U=4$   & $U=6$   & $U=8$   & $U=10$  \\
+        \midrule
+        \multirow{2}{*}{$K=10$} & $E$                               & -0.6202 & -0.4580 & -0.3574 & -0.2913  \\
+                                & $n_{i \uparrow} n_{i \downarrow}$ &  0.1071 &  0.0639 &  0.0406 &  0.0275 \\
+        \midrule
+        \multirow{2}{*}{$K=12$} & $E$                               & -0.6049 & -0.4466 & -0.3486 &         \\
+                                & $n_{i \uparrow} n_{i \downarrow}$ &  0.1027 &  0.0618 &  0.0394 &         \\
+        \midrule
+        \multirow{2}{*}{精确解}  & $E$                               & -0.5737 & -0.4201 & -0.3275 & -0.2672  \\
+                                & $n_{i \uparrow} n_{i \downarrow}$ &  0.1002 &  0.0582 &  0.0366 &  0.0248  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
