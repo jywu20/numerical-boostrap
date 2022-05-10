@@ -644,11 +644,18 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 在能带半填充，$U$较大时，Hubbard模型退化为海森堡模型，其中电子定域而无法自由移动，从而电荷自由度（即电子数自由度）不再是低能自由度，只有每个格点上的自旋自由度是基本自由度。
 从能带论的角度，这可以理解为强烈的相互作用导致出现能带劈裂，费米能级落在禁带上，从而体系成为Mott绝缘体。
 因此，Hubbard模型对铁磁学显然非常重要。
-此外，掺杂（从而费米能级位置发生变动）的Hubbard模型可能能够从完全的排斥相互作用出发产生电子配对，从而也是高温超导的可能机制之一。\cite{fradkin2013field}
+此外，掺杂（从而费米能级位置发生变动）的Hubbard模型可能能够从完全的排斥相互作用出发产生电子配对，从而也是高温超导的可能机制之一。
+总之，Hubbard模型的简单性以及它的丰富物理含义让它成为了研究强关联电子系统的基础\cite{fradkin2013field}。
 
+DMRG方法可以在开边界条件下以相当高的精度计算各种一维强关联格点系统\cite{Schollw_ck_2011}，
+此外，使用Bethe拟设可以严格求解一维Hubbard模型以及其它若干强关联电子模型\cite{PhysRevLett.20.1445,korepin1994exactly}。
+这些工作使得一维Hubbard模型成为了测试量子多体方法适用性的理想玩具模型。一维Hubbard模型也可以用于粗略地复现一维铜基超导体$\mathrm{Sr}_{2} \mathrm{CuO}_{3}$链、聚二乙炔等一维系统，虽然已知的类似Hubbard模型的系统往往涉及不止一条能带（由于Peierls转变），并且重要的库仑相互作用通道都不只原位库伦排斥。
+在\prettyref{sec:one-dimensional-hubbard}中，我们尝试复现\parencite{han_manybody}中关于一维Hubbard模型的部分。
 
+二维Hubbard模型的数值研究具有更加直接的物理意义（例如，它的相图和铜基超导体类似，在掺杂时存在赝能隙\cite{2d-hubbard-numerical}），也更具挑战性。一些二维系统——包括Hubbard模型——仍然可以使用DMRG方法非常有效地处理，但计算开销较大\cite{Stoudenmire_2012}。
+朴素地对Hubbard模型做DQMC模拟会遇到符号问题，需要通过选择适当的基底等方式去除\cite{pgp-sign}。
 
-\section{一维Hubbard模型的数值bootstrap}
+\section{一维Hubbard模型的数值bootstrap}\label{sec:one-dimensional-hubbard}
 
 \subsection{算符空间截断}
 
