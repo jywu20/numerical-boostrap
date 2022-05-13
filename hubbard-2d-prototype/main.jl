@@ -14,6 +14,9 @@ end
 open(full_output_name, "w") do file
     println(file, "2D square lattice Hubbard model bootstrap")
     println(file, "Configuration loaded.")
+    println(file, "t  =  $t")
+    println(file, "U  =  $U")
+    println(file, "K  =  $K")
     println(file, "")
 end
 #endregion

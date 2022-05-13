@@ -50,6 +50,18 @@ begin
         push!(qualified_opstr_create_half, current_create_half)
         push!(qualified_opstr_annihilate_half, current_annihilate_half)
     end
+
+    if show_operator_labels
+        open(working_path * output_name, "a") do file
+            for opstr in qualified_opstr_create_half
+                println(file, opstr)
+            end
+
+            for opstr in qualified_opstr_annihilate_half
+                println(file, opstr)
+            end
+        end
+    end
     #endregion
 
     #region Imposing the l(O) ≤ K constrint
@@ -60,9 +72,9 @@ begin
         Iterators.product(qualified_opstr_create_half, qualified_opstr_annihilate_half) |> collect), 
         length(qualified_opstr_create_half)^2)
 
-    local hubbard_opstr_size(opstr) = begin
+    hubbard_opstr_size(opstr) = begin
         if opstr == []
-            return 0.0
+            return 0
         end
         sum(map(op -> site_norm_1_from_center[op[2]], opstr)) + length(opstr)
     end
@@ -165,8 +177,18 @@ for (i, opstr_index_1) in enumerate(M_mat_spanning_opstr_indices)
         opstr_2 = hubbard_opstr_basis[opstr_index_2]
 
         Mij = normal_form(opstr_1' * opstr_2)
+        if show_M_matrix
+            open(working_path * output_name, "a") do file
+                println(file, "M[$i, $j]  =  $Mij")
+            end
+        end
+
         M_coefficient[i, j] = hubbard_opstr_coefficients(Mij)
     end
+end
+
+open(working_path * output_name, "a") do file
+    println(file)
 end
 
 #endregion
@@ -301,10 +323,46 @@ function hubbard_opstr_reflect(op)
             spin = 1
         end
 
-        if ! haskey(inverse_list, - site_list[parse(Int, site_idx)])
+        inverse_site = - site_list[parse(Int, site_idx)]
+        if ! haskey(inverse_list, inverse_site)
             return nothing
         end
-        i = inverse_list[- site_list[parse(Int, site_idx)]]
+        i = inverse_list[inverse_site]
+        
+        if head == "c"
+            push!(opstr_factors, c(i, spin))
+        else 
+            push!(opstr_factors, cdag(i, spin))
+        end
+    end
+
+    prod(opstr_factors)
+end
+
+function hubbard_opstr_rotate(op)
+    opstr_string = string(op)
+    opstr_string = replace(opstr_string, "†" => "dag")
+    opstr_each_site_strings = split(opstr_string)
+
+    opstr_factors = QuExpr[]
+    for str in opstr_each_site_strings
+        str = str[1 : end - 2]
+        spin = 1
+
+        if str[end] == '-'
+            str = str[1 : end - 1]
+            head, site_idx = split(str, "(")
+            spin = -1 
+        else 
+            head, site_idx = split(str, "(")
+            spin = 1
+        end
+
+        rotated_site = [0 -1; 1 0] * site_list[parse(Int, site_idx)]
+        if ! haskey(inverse_list, rotated_site)
+            return nothing
+        end
+        i = inverse_list[rotated_site]
         
         if head == "c"
             push!(opstr_factors, c(i, spin))
@@ -379,6 +437,20 @@ reflectional_constraints_coefficients = map(hubbard_opstr_basis[2:end]) do op
 end 
 
 filter!(reflectional_constraints_coefficients) do c
+    c !== nothing
+end
+
+rotational_constraints_coefficients = map(hubbard_opstr_basis[2:end]) do op
+    cons_ops = op - hubbard_opstr_rotate(op)
+    if show_constraints
+        open(full_output_name, "a") do file
+            println(file, op, "  =>  ", cons_ops, " = 0")
+        end
+    end
+    cons_ops |> hubbard_opstr_coefficients
+end 
+
+filter!(rotational_constraints_coefficients) do c
     c !== nothing
 end
 

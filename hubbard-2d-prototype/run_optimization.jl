@@ -12,7 +12,3 @@ if ! no_optimization
         println(file)
     end
 end
-
-if dmrg_benchmark
-    include("dmrg.jl")
-end

@@ -27,7 +27,7 @@
     %
     font-size    = -4,
     bib-backend  = bibtex,
-    bib-resource = {main.bib},
+    bib-resource = {main.bib}
   },
   info = {
       title            = {数值Bootstrap及其在凝聚态物理中的应用},
@@ -265,10 +265,12 @@ TODO
 
 \section{关于本文}
 
-本文将在\prettyref{chap:oscillator}中复现\parencite{han_matrix}的工作，分别在\prettyref{sec:nonlinear-sdp-oscillator}和\prettyref{sec:linear-sdp-oscillator}中使用非线性SDP和线性SDP方法求解非简谐振子，并用前者为后者做基准测试。
+本文在\prettyref{chap:oscillator}中复现了\parencite{han_matrix}的工作，分别在\prettyref{sec:nonlinear-sdp-oscillator}和\prettyref{sec:linear-sdp-oscillator}中使用非线性SDP和线性SDP方法求解了非简谐振子，并用定态薛定谔方程做基准测试。
 非简谐振子可以通过常规的求解薛定谔方程的方法容易的解决，同时又是一个典型的非微扰系统，因此非常适合用作非微扰方法的玩具模型。
+线性SDP、非线性SDP、定态薛定谔方程求解三者的结果互相对照，表明数值bootstrap技术能够非常精确地定量分析非简谐振子。
 
-\prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维Hubbard模型。Hubbard模型是最为简单的强关联电子模型，
+\prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维和二维Hubbard模型。Hubbard模型是最为简单的强关联电子模型，是各种量子多体方法的首选测试目标。
+计算结果表明，数值bootstrap可以无视$U$而较为精确
 
 \chapter{一维非简谐振子的数值bootstrap}\label{chap:oscillator}
 
@@ -761,7 +763,7 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 
 \section{二维Hubbard模型的数值bootstrap}
 
-\subsection{算符空间的选取和截断}
+\subsection{优化问题的构造}
 
 \begin{figure}
     \centering
@@ -770,12 +772,20 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
     \label{fig:site-index-2d}
 \end{figure}
 
+二维Hubbard模型的数值bootstrap方法大体上和一维Hubbard模型一致。
 我们还是以\eqref{eq:operator-space-criteria}为截断算符空间的标准。如何搜索满足这个条件的算符需要一些额外的说明。
 在二维情况下，直接暴力枚举满足\eqref{eq:inequality-hubbard-opstr}是非常低效的，因为涉及到的格点数目大体上为$K^2$量级，于是需要遍历$4^{K^2}$量级的湮灭算符乘积。
 为了保证构成$H$的算符出现在截断后的算符空间中，至少需要$K=4$，于是需要遍历\num{4e9}个算符，而且随着$K$增大指数增长。
 我们使用深度优先搜索来简化计算，在\prettyref{fig:site-index-2d}中按照格点编号从小到大的顺序，依次放置以下四种算符组合之一：没有算符，有一个自旋向上的湮灭算符，有一个自旋向下的湮灭算符，同时有自旋向上和向下的湮灭算符。
 一旦发现$l(O) \leq K$条件不满足，立即“剪枝”，并且切换到下一个算符组合。
 如此可以大大加速算符空间的搜索速度。
+
+二维Hubbard模型的对称性除了\prettyref{sec:symbolic-hubbard}中提到的对称性以外，还包括$C_4$旋转对称性。
+这一对称性可以通过类似于平移对称性的方式，通过将QuantumAlgebra.jl算符上的坐标标签修改为旋转\SI{90}{\degree}后的坐标标签来施加。
+
+\subsection{计算结果}
+
+
 
 \chapter{总结与展望}
 

@@ -5,20 +5,6 @@ if ! no_optimization
         optimize_var => value(optimize_var)
     end |> Dict
 
-    if dmrg_benchmark
-        open(full_output_name, "a") do file
-            println(file, "variable  DMRG benchmark value    bootstrap value    relative error ")
-            for optimize_var in keys(jump_benchmark_point)
-                dmrg_value = jump_benchmark_point[optimize_var]
-                bootstrap_value = solution_point[optimize_var]
-                relative_err = abs((dmrg_value - bootstrap_value) / max(abs(dmrg_value), abs(bootstrap_value)))
-                println(file, "$optimize_var    $dmrg_value    $bootstrap_value     $relative_err")
-            end
-            println(file)
-            println(file)
-        end
-    end
-
     open(full_output_name, "a") do file
         #region ⟨n_i⟩
     

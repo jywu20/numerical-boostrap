@@ -168,4 +168,12 @@ begin
     end
 end
 
+if show_operator_labels
+    open(working_path * output_name, "a") do file
+        for opstr in qualified_opstr_site_configuration
+            println(file, opstr)
+        end
+    end
+end
+
 #endregion
