@@ -761,6 +761,8 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 可以看到线性SDP给出的结果是精确解的下界，并且提升$K$可以收紧下界；双占据数值值可以较为精确地计算。$U$较大时，数值bootstrap给出的下界较紧。
 直观地看，这应该是因为$U$较大时，电子倾向于定域，从而只有较为局域的算符有较大的期望值；由于涉及长距离跃迁的算符无法通过\eqref{eq:operator-space-criteria}的筛选，在$U$较大时，不需要将$K$取得很大，$\mathcal{C}$中的算符就足够完成一次较为精确的bootstrap。
 
+相比\parencite{han_manybody}中的结果，$K$值相同时，\prettyref{tbl:hubbard-1d-linear-sdp}中给出的下界更加宽松。由于本文使用的程序通过了DMRG的基准测试，推测这是由于两者的实现细节不同。这些有待未来进一步研究。
+
 \section{二维Hubbard模型的数值bootstrap}
 
 \subsection{优化问题的构造}
@@ -785,10 +787,13 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 
 \subsection{计算结果}
 
+\input{hubbard-2d-energy-double-occ-table.tex}
 
+显然，二维数值bootstrap涉及比一维更多的算符，从而内存空间是一个主要的计算瓶颈。由于时间关系，本文未能完成较大规模的二维Hubbard模型数值bootstrap计算，目前获得的结果如\prettyref{tbl:hubbard-2d-linear-sdp}。此处获得的下界过于宽松，但双占据相对准确。更精确的二维Hubbard模型的计算有待进一步研究。
 
 \chapter{总结与展望}
 
+本文回顾了数值bootstrap技术的形式理论
 
 % 后置部分包含参考文献、声明页（自动生成）等
 \backmatter

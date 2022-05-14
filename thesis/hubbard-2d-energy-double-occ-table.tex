@@ -1,0 +1,18 @@
+% data obtained by running hubbard-2d-prototype\main.jl.
+
+\begin{table}
+    \caption{$K = 8$时的二维Hubbard模型的线性SDP结果，参考值取自\parencite{han_manybody}的表2和表3}
+    \label{tbl:hubbard-2d-linear-sdp}
+    \centering
+    \begin{tabular}{cccccc}
+        \toprule
+        \multicolumn{2}{c}{$n_i=1$}                                 & $U=2$   & $U=4$   & $U=6$   & $U=8$  \\
+        \midrule
+        \multirow{2}{*}{$K=8$}     & $E$                               & -1.3164 & -1.0491 & -0.8626 & -0.7276  \\
+                                    & $n_{i \uparrow} n_{i \downarrow}$ &  0.1602 &  0.1105 &  0.0784 &  0.0576  \\
+        \midrule
+        \multirow{2}{*}{DMRG参考值}  & $E$                               & -1.176(1) & -0.8605(5) & -0.6565(1) & -0.5241(1)  \\
+                                    & $n_{i \uparrow} n_{i \downarrow}$ &  0.188(1) &  0.126(1) &  0.0809(3) &  0.0539(1)  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
