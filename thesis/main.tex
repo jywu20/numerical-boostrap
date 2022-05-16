@@ -119,11 +119,23 @@
 % \listoftables
 
 \begin{abstract}
-TODO
+    数值bootstrap方法是一种新兴的数值方法，是共形bootstrap方法在一般的哈密顿量上的推广，通过物理量期望值之间的约束关系和正定性条件计算体系能量下界和其它物理量的近似值。
+    本文回顾了数值bootstrap方法的形式理论和已经报道的应用，介绍了它相比已有的非微扰数值方法的优势，复现了\parencite{han_matrix}中非简谐振子的非线性SDP数值bootstrap并自行完成了其线性SDP，并与定态薛定谔方程比较，验证了其正确性，并发现了高精度计算时的收敛性问题；复现了\parencite{han_manybody}中一维和二维Hubbard模型的线性SDP数值bootstrap，观察了其精度和Hubbard $U$参数和电子填充数目的关系，并定性分析了其原因；展望了数值bootstrap方法未来可能的发展和在其它模型上的广阔前景。
 \end{abstract}
 
 \begin{abstract*}
-TODO
+    As a generalization of conformal bootstrap to generic Hamiltonians, numerical bootstrap is an emerging 
+    numerical method which calculates a lower bound of the energy and approximations of observables
+    from constraints between quantum operators and the positivity condition.
+    This thesis reviews its formalism and reported applications and its advantages compared to existing 
+    non-perturbative approaches. The nonlinear SDP numerical bootstrap of the anharmonic oscillator in 
+    \parencite{han_matrix} is reproduced, and a linear SDP simulation of the anharmonic oscillator is 
+    also performed, with the convergence problem with a large operator space discovered, both of which 
+    are benchmarked with stationary Schr\"{o}dinger equation. The linear SDP numerical bootstrap in 
+    \parencite{han_manybody} is also produced, both for 1D and 2D Hubbard model. The correlation between 
+    the precision and the Hubbard local repulsion parameter $U$ and electron filling is discussed and 
+    qualitatively analyzed. The prospective developments of numerical bootstrap and its possible applications
+    on other models are also discussed.
 \end{abstract*}
 
 % 主体部分是论文的核心
@@ -269,8 +281,11 @@ TODO
 非简谐振子可以通过常规的求解薛定谔方程的方法容易的解决，同时又是一个典型的非微扰系统，因此非常适合用作非微扰方法的玩具模型。
 线性SDP、非线性SDP、定态薛定谔方程求解三者的结果互相对照，表明数值bootstrap技术能够非常精确地定量分析非简谐振子。
 
-\prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维和二维Hubbard模型。Hubbard模型是最为简单的强关联电子模型，是各种量子多体方法的首选测试目标。
-计算结果表明，数值bootstrap可以无视$U$而较为精确
+\prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维和二维Hubbard模型，并使用DMRG和一维Hubbard模型的精确解做了基准测试。Hubbard模型是最为简单的强关联电子模型，是各种量子多体方法的首选测试目标。
+计算结果表明，对无掺杂，即一个格点平均有一个电子的Hubbard模型，数值bootstrap可以在不同大小的$U$下较为精确地计算双占据期望值并给出基态能量下界，在$U$较大时，精度更好，可能是由于此时电子巡游性不强，使用较为局域的算符能够较好地捕捉电子的行为。
+对空穴掺杂的情况，数值bootstrap的精度有所下降，可能同样是因为此时电子巡游性较强。
+
+最后，\prettyref{chap:future}总结了本文取得的进展以及遇到的问题，并展望了未来可能的研究方向，包括非简谐振子的线性SDP的收敛性问题、在更多的模型上实施数值bootstrap、如何更为经济地选取算符空间和约束、如何扩大计算规模等。
 
 \chapter{一维非简谐振子的数值bootstrap}\label{chap:oscillator}
 
@@ -656,6 +671,7 @@ DMRG方法可以在开边界条件下以相当高的精度计算各种一维强�
 
 二维Hubbard模型的数值研究具有更加直接的物理意义（例如，它的相图和铜基超导体类似，在掺杂时存在赝能隙\cite{2d-hubbard-numerical}），也更具挑战性。一些二维系统——包括Hubbard模型——仍然可以使用DMRG方法非常有效地处理，但计算开销较大\cite{Stoudenmire_2012}。
 朴素地对Hubbard模型做DQMC模拟会遇到符号问题，需要通过选择适当的基底等方式去除\cite{pgp-sign}。
+我们在\prettyref{sec:hubbard-2d}中将讨论二维Hubbard模型的数值bootstrap。
 
 \section{一维Hubbard模型的数值bootstrap}\label{sec:one-dimensional-hubbard}
 
@@ -730,7 +746,9 @@ DMRG方法可以在开边界条件下以相当高的精度计算各种一维强�
 \footnote{
     在粒子数表象中思考问题即可看清楚这一点：无论是$c^\dagger_{i \sigma} c_{i + 1, \sigma}$还是$n_{i \uparrow} n_{i \downarrow}$都是实矩阵，哈密顿量中又不存在复数，因此整个哈密顿量都是实的，其本征值也是实的，并且$c^\dagger \cdots c^\dagger c \cdots c$也是实矩阵，从而其期望值也是实的。
 
-    量子力学问题涉及不可数无穷维算符，并且动量算符不是实的，因此不能保证算符期望值是实的，因此在构建线性SDP问题时反而需要\eqref{eq:complex-to-real}的额外工序。
+    量子力学问题涉及不可数无穷维算符，因此一个实的哈密顿量完全可以有复的本征态——如平面波等散射态。
+    即使束缚态波函数是实的，由于动量算符不是实的，不能保证算符空间中所有的算符期望值都是实的——实际上，在非简谐振子中，含有奇数个动量算符的$x^m p^n$算符的期望值如果非零（一些这样的算符的期望值是零，$\expval*{p}=0$，否则厄米性不满足），就是纯虚数。
+    因此在构建线性SDP问题时反而需要\eqref{eq:complex-to-real}的额外工序。
 }%
 ，从而无需将算符的虚部声明为优化变量，也无需做\eqref{eq:complex-to-real}变换。
 
@@ -748,11 +766,15 @@ DMRG方法可以在开边界条件下以相当高的精度计算各种一维强�
 
 在使用DMRG做基准测试时应注意DMRG不严格保证平移和镜像对称性的成立，因此，来自这两个对称性的约束将被违反得较为厉害，这并非说明优化问题构建有误。
 
-\subsection{计算结果}
+\subsection{计算结果}\label{sec:hubbard-1d-result}
 
 % 2022.5.9的hubbard-1d-prototype\labbook.md
-可能多少有些出人意外的，一维Hubbard模型的线性SDP的收敛性要明显好过非简谐振子；本文测试的所有情况——最高到$K=12$——下，求解器均迅速地收敛了。
+可能多少有些出人意外的，一维Hubbard模型的线性SDP的收敛性要明显好过非简谐振子；本文测试的所有情况——最高到$K=12$——下，求解器均迅速地收敛了。%
+\footnote{
+    本节使用的程序的执行入口见\url{https://github.com/wujinq/numerical-boostrap/blob/main/hubbard-1d-prototype/main.jl}和\url{https://github.com/wujinq/numerical-boostrap/blob/main/hubbard-1d-doped-prototype/main.jl}。
+}%
 $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了计算；$K=12$时约有70万个优化变量，但是20分钟内计算也完成了。事实上，本例使用的程序的主要的耗时在于线性SDP之前，将QuantumAlgebra.jl中的算符转化成JuMP约束的步骤。
+在本文使用的程序中，$K=12$时，COSMO开始计算之前的步骤需要耗费一天左右的计算时间。
 尚不清楚为什么一维Hubbard模型的线性SDP的收敛性更加好，但是可以确定这和一维Hubbard模型基态期望值全部是实数有关：如果我们忽视这个条件，而为每个$\mathcal{C}$中算符的期望值的实部和虚部分别声明变量，并且使用\eqref{eq:complex-to-real}构造$M$矩阵，那么即使对一个较小规模的问题（如$K=6$），COSMO求解器一开始就会报告“not feasible”。
 
 \input{hubbard-1d-energy-double-occ-table.tex}
@@ -763,7 +785,12 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 
 相比\parencite{han_manybody}中的结果，$K$值相同时，\prettyref{tbl:hubbard-1d-linear-sdp}中给出的下界更加宽松。由于本文使用的程序通过了DMRG的基准测试，推测这是由于两者的实现细节不同。这些有待未来进一步研究。
 
-\section{二维Hubbard模型的数值bootstrap}
+\input{hubbard-1d-doped-energy-double-occ-table.tex}
+
+由于数值bootstrap方法不需要做配分函数采样，不存在符号问题，因此使用数值bootstrap技术还可以较为容易地研究掺杂的Hubbard模型，即每个格点上平摊到的电子数不是1的情况，这只需要将\prettyref{sec:symbolic-hubbard}结尾提到的单格点电子数约束加以修改即可做到。
+\prettyref{tbl:hubbard-1d-doped-linear-sdp}给出了空穴掺杂（即电子填充数目比半填充更低）的Hubbard模型的数值bootstrap和DMRG结果的比较，其中平均每个格点填充半个电子。相较于\prettyref{tbl:hubbard-1d-linear-sdp}，计算精度有所下降，这可能同样是因为$\mathcal{C}$选取了较为局域的算符：空穴掺杂的Hubbard模型中电子的巡游性更强，应该使用局域性不那么强的算符来探测。
+
+\section{二维Hubbard模型的数值bootstrap}\label{sec:hubbard-2d}
 
 \subsection{优化问题的构造}
 
@@ -785,15 +812,60 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 二维Hubbard模型的对称性除了\prettyref{sec:symbolic-hubbard}中提到的对称性以外，还包括$C_4$旋转对称性。
 这一对称性可以通过类似于平移对称性的方式，通过将QuantumAlgebra.jl算符上的坐标标签修改为旋转\SI{90}{\degree}后的坐标标签来施加。
 
-\subsection{计算结果}
+\subsection{计算结果}\label{sec:hubbard-2d-result}
 
 \input{hubbard-2d-energy-double-occ-table.tex}
 
-显然，二维数值bootstrap涉及比一维更多的算符，从而内存空间是一个主要的计算瓶颈。由于时间关系，本文未能完成较大规模的二维Hubbard模型数值bootstrap计算，目前获得的结果如\prettyref{tbl:hubbard-2d-linear-sdp}。此处获得的下界过于宽松，但双占据相对准确。更精确的二维Hubbard模型的计算有待进一步研究。
+显然，二维数值bootstrap涉及比一维更多的算符，从而内存空间是一个主要的计算瓶颈。由于时间关系，本文未能完成较大规模的二维Hubbard模型数值bootstrap计算，目前获得的结果如\prettyref{tbl:hubbard-2d-linear-sdp}。此处获得的下界过于宽松，但双占据相对准确。更精确的二维Hubbard模型的计算有待进一步研究。%
+\footnote{
+    本节使用的程序的执行入口见\url{https://github.com/wujinq/numerical-boostrap/blob/main/hubbard-2d-prototype/main.jl}。
+}%
 
-\chapter{总结与展望}
+\chapter{总结与展望}\label{chap:future}
 
-本文回顾了数值bootstrap技术的形式理论
+本文回顾了数值bootstrap技术的形式理论，完成了非简谐振子的线性SDP和非线性SDP数值bootstrap，以及一维和二维Hubbard模型的数值bootstrap，并使用其它数值方法做了基准测试，其中非简谐振子的线性SDP、掺杂一维Hubbard模型的线性SDP未见已有文献报道。
+数值bootstrap无符号问题，能够给出系统能量严格下界，可以计算算符空间$\mathcal{C}$中的全部算符的期望值，从而原则上可以较为精确地计算任意多点关联函数，根据\eqref{eq:operator-bound}可以和张量网络方法配合获取任意物理量的期望值的上下界，并且完全不依赖哈密顿量中涉及的自由度的类型，这些特征意味着数值bootstrap方法在解决非微扰物理问题上有非常巨大的潜力。
+
+本章将回顾前文中遇到的问题，并讨论未来可能的研究方向。
+
+\section{非简谐振子的线性SDP的收敛性问题}
+
+非简谐振子的线性SDP未见文献报道，一方面可能因为非线性SDP可以非常简洁地解决此问题，一方面可能就是因为收敛性问题。
+定位\prettyref{sec:convergence-problem}中提到的收敛性问题的根源，并且检查它是否在其它类型的问题中也有出现是必要的。
+可能的因素包括\prettyref{sec:convergence-problem}中提到的浮点数精度不足，以及\prettyref{sec:hubbard-1d-result}中提到的\eqref{eq:complex-to-real}构造引入收敛性问题的可能性。
+前一种可能性需要通过调整求解器精度加以验证。就后一种可能性，一种验证方式是，对$x$-$p$自由度的系统同样可以定义（玻色型）产生湮灭算符，非简谐振子的基态波函数是实的，从而在粒子数表象中$\expval*{(a^\dagger)^m a^n}$也是实的，因此我们可以将\prettyref{chap:hubbard}中的方法套用到使用产生湮灭算符的语言表述的非简谐振子上，做一个纯实数，不包含\eqref{eq:complex-to-real}构造的线性SDP的数值bootstrap。
+如果这样收敛性良好，那说明\eqref{eq:complex-to-real}构造是不利于收敛性的，在未来的线性SDP计算中应该避免。
+
+\section{算符空间和约束的选取}\label{sec:operator-space-constraint}
+
+从\prettyref{fig:ground-state-e-x2-plot}可以看出，在非简谐振子问题中决定了能量下界的约束实际上只有一个——不同约束导致的可行域边界的连接点是不光滑的，而能量最小值点显然没有取在某个不光滑的点上。
+这提示我们，为了获得基态能量，实际上并不需要全部的等式约束。如果有方法能够判断出在一个问题中，给基态能量下界设下限制的约束条件主要是什么，那么计算效率可以大大提高，因为本文考虑的Hubbard模型的线性SDP的性能瓶颈似乎主要在优化问题\emph{之前}（\prettyref{sec:hubbard-1d-result}）。
+未来可以在不同的模型中撤去一些约束，观察剩下的约束的数值bootstrap的精度是否有显著下降，从而获知哪些约束对数值bootstrap是重要的。
+一种可能的思路是在使用DMRG或其它张量网络方法做基准测试时，观察哪些约束被张量网络解违反得最为厉害——这些约束更加不容易满足，因此直觉上，可能会对系统能量施加更强的约束。
+
+如何选择算符空间同样是需要注意的。\prettyref{sec:hubbard-1d-result}中的结果暗示Hubbard模型中的算符空间的选取需要适合电子的巡游行为，如果要捕捉到电子的巡游行为，就需要使用更加非局域的算符。
+同样，张量网络方法基准测试也可能能够帮助这方面的分析：可以先取一个很大的算符空间，观察哪些算符的张量网络估计值较大，就使用这些算符组建$\mathcal{C}$而后进行数值bootstrap。
+
+
+\section{扩大计算规模和提高精度}
+
+本文在\prettyref{sec:one-dimensional-hubbard}和\prettyref{sec:hubbard-2d}中的计算均没有达到\parencite{han_manybody}的精度，并且\prettyref{sec:hubbard-2d-result}中提到了二维Hubbard模型的数值bootstrap面临内存瓶颈。
+如何克服这些瓶颈，追求更高的计算精度也是非常有必要考虑的问题。
+
+除了\prettyref{sec:operator-space-constraint}中提到的丢弃无用的约束和算符以外，也需要进一步设法加快搜索满足$\mathcal{C}$的条件的算符、计算对易子、构建优化问题的速度。
+后两者中，不同算符对应的约束条件彼此不相干，在问题规模大时可以考虑并行。
+虽然\prettyref{sec:one-dimensional-hubbard}和\prettyref{sec:hubbard-2d}中线性SDP计算速度已经足够好了，不能排除问题规模进一步扩大时，类似于非简谐振子的收敛性问题出现，或者现有的求解器效率不佳，届时可能需要手动实现为数值bootstrap专门优化的求解器。
+
+\section{将数值bootstrap用在更多模型上}
+
+本文仅仅讨论了非简谐振子和Hubbard模型，即只讨论了量子力学中的坐标和动量以及费米子这两类自由度。
+非微扰物理体系还涉及更多可能的自由度：自旋，t-J模型中的无双占据态的费米子，玻色子……原则上，只需要指定每种自由度涉及的算符代数以及哈密顿量，即可自动地完成数值bootstrap。
+
+张量网络方法对待研究的系统的波函数结构有所预设，蒙特卡洛方法预设配分函数中不同构型的权重均有足够大的实部，如何修改波函数拟设或是改动辅助场类型来适合待研究的系统是不透明的。
+数值bootstrap中不存在这样的预设，影响计算精度的因素较为透明地体现在算符空间和等式约束的选取上，通过增大算符空间可以系统地提升计算精度，这为研究范围极其广阔的凝聚态强关联系统提供了一种新的手段。
+不同格点上的Hubbard模型\cite{Ye_2019,PhysRevB.90.081105}和海森堡模型\cite{anderson1973resonating,kagome,Liu_2022}被预言能够产生不同的新奇物态，如类似于高温超导中的赝能隙、各种类型的自旋液体、解禁闭量子相变等，这些模型原则上都可以使用数值bootstrap研究，和已有的数值方法相互印证。
+
+ITensor库将常见的物理自由度对应的张量网络中的张量指标事先实现好，用户只需要调用接口即可\cite{itensor-indices}，未来可能可以开发一个类似的数值bootstrap库，用于简化搜索满足条件的算符、建立算符空间，将$\mathcal{C}$中的算符编号，构建优化问题等重复性操作。
 
 % 后置部分包含参考文献、声明页（自动生成）等
 \backmatter
@@ -803,6 +875,6 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 
 \chapter{致\quad 谢}
 
-\chapter{附\quad 录}
+%\chapter{附\quad 录}
 
 \end{document}

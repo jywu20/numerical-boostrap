@@ -1,0 +1,18 @@
+% data from oscillator-simple-prototype/2022-1-20.nb
+
+\begin{table}
+    \caption{不同$K$下的$n=0.5$的掺杂的一维Hubbard模型的线性SDP结果，DMRG结果来自本人使用ITensor的计算}
+    \label{tbl:hubbard-1d-doped-linear-sdp}
+    \centering
+    \begin{tabular}{cccccc}
+        \toprule
+        \multicolumn{2}{c}{$n_i=0.5$}                                 & $U=4$   & $U=6$   & $U=8$   & $U=10$  \\
+        \midrule
+        \multirow{2}{*}{$K=12$} & $E$                               & -0.7830 & -0.7593 & -0.7444 & -0.7342  \\
+                                & $n_{i \uparrow} n_{i \downarrow}$ &  0.0168 &  0.0102 &  0.0068 &  0.0048  \\
+        \midrule
+        \multirow{2}{*}{DMRG}  & $E$                               & -0.7534 & -0.7243 & -0.7059 & -0.6939  \\
+                                & $n_{i \uparrow} n_{i \downarrow}$ &  0.0189 &  0.0114 &  0.0075 &  0.0052  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
