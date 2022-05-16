@@ -131,7 +131,7 @@
     non-perturbative approaches. The nonlinear SDP numerical bootstrap of the anharmonic oscillator in 
     \parencite{han_matrix} is reproduced, and a linear SDP simulation of the anharmonic oscillator is 
     also performed, with the convergence problem with a large operator space discovered, both of which 
-    are benchmarked with stationary Schr\"{o}dinger equation. The linear SDP numerical bootstrap in 
+    are benchmarked with the stationary Schr\"{o}dinger equation. The linear SDP numerical bootstrap in 
     \parencite{han_manybody} is also produced, both for 1D and 2D Hubbard model. The correlation between 
     the precision and the Hubbard local repulsion parameter $U$ and electron filling is discussed and 
     qualitatively analyzed. The prospective developments of numerical bootstrap and its possible applications
@@ -160,7 +160,7 @@
 一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
 
 本文讨论的bootstrap技术是一种新兴的非微扰方法\cite{han_matrix,bhattacharya2021,kazakov2021analytic,han_manybody}。
-与前述的常规数值方法不同，bootstrap技术不直接处理波函数、算符、（离散）路径积分这些对象，而是通过在待求解的物理量期望值之间建立\emph{解析}的等式和不等式关系，据此它们的取值范围。
+与前述的常规数值方法不同，bootstrap技术不处理波函数、算符、（离散）路径积分这些用于计算物理量期望值但不直接对应于实验测量值的对象，而是通过在待求解的物理量期望值之间建立解析的等式和不等式关系，据此它们的取值范围。
 通过这种方法，不需要使用正则量子化或是路径积分的语言，我们即可“凭空”求解一个体系。
 
 \section{Bootstrap技术示例：共形Bootstrap}
@@ -194,7 +194,7 @@
 
 实际问题中会遇到的模型大多不像CFT那样容易做bootstrap：我们没有像\eqref{eq:two-point-conformal}和
 \eqref{eq:three-point-conformal}这么强的对关联函数的约束条件，一般情况下也不能解析地将高阶关联函数转化为低阶关联函数的多项式。
-然而，这不意味着bootstrap的思想和一些计算手段不能够适用于非CFT的体系：我们不强求像\eqref{eq:two-point-conformal}和\eqref{eq:three-point-conformal}这样把一个关联函数化简为几个数，但总是可以使用对称性等约束大大缩减一个关联函数所包含的数据；在仅仅由体系的哈密顿量决定的密度矩阵（如能量本征态或是热平衡态）上，我们有
+然而，这不意味着bootstrap的思想和一些计算手段不能够适用于非CFT的体系：我们不强求像\eqref{eq:two-point-conformal}和\eqref{eq:three-point-conformal}这样把一个关联函数化简为几个数，从而将一个系统化简为离散的一组数，但总是可以使用对称性等约束大大缩减确定一个系统需要的数据；在仅仅由体系的哈密顿量决定的密度矩阵（如能量本征态或是热平衡态）上，我们有
 \begin{equation}
     \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}},
     \label{eq:h-constraint}
@@ -874,6 +874,12 @@ ITensor库将常见的物理自由度对应的张量网络中的张量指标事�
 \printbibliography
 
 \chapter{致\quad 谢}
+
+我首先要感谢戚扬老师。戚老师的课程和讨论班让我对凝聚态物理产生了很强的兴趣。
+我对本文中提到的数值方法——DQMC，DMRG，ITensor库，数值bootstrap本身——的第一次接触都是在和戚老师的讨论中获得的。
+感谢我的室友和同学：舒畅，王逸舟，赵星祺，郭家祺，王思源，于鑫阳，邵一陆，很幸运大学四年能够认识如此有趣的诸位。
+感谢\LaTeX 大师曾祥东学长，感谢他的毕业论文模板——没有这份模板，本文的排版将会非常令人头疼。
+感谢我的父母，一句“不要有后顾之忧”，是我在物理道路上继续前进的最大底气。
 
 %\chapter{附\quad 录}
 
