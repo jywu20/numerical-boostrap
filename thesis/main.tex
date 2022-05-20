@@ -120,7 +120,7 @@
 
 \begin{abstract}
     数值bootstrap方法是一种新兴的数值方法，是共形bootstrap方法在一般的哈密顿量上的推广，通过物理量期望值之间的约束关系和正定性条件计算体系能量下界和其它物理量的近似值。
-    本文回顾了数值bootstrap方法的形式理论和已经报道的应用，介绍了它相比已有的非微扰数值方法的优势，复现了\parencite{han_matrix}中非简谐振子的非线性SDP数值bootstrap并自行完成了其线性SDP，并与定态薛定谔方程比较，验证了其正确性，并发现了高精度计算时的收敛性问题；复现了\parencite{han_manybody}中一维和二维Hubbard模型的线性SDP数值bootstrap，观察了其精度和Hubbard $U$参数和电子填充数目的关系，并定性分析了其原因；展望了数值bootstrap方法未来可能的发展和在其它模型上的广阔前景。
+    本文回顾了数值bootstrap方法的形式理论和已经报道的应用，介绍了它相比已有的非微扰数值方法的优势，复现了\parencite{han_matrix}中非简谐振子的非线性SDP（半正定规划，semidefinite programming）数值bootstrap并完成了其线性SDP，并与定态薛定谔方程比较，验证了其正确性，并发现了高精度计算时的收敛性问题；复现了\parencite{han_manybody}中一维和二维Hubbard模型的线性SDP数值bootstrap，观察了其精度和Hubbard $U$参数和电子填充数目的关系，并定性分析了其原因；展望了数值bootstrap方法未来可能的发展和在其它模型上的广阔前景。
 \end{abstract}
 
 \begin{abstract*}
@@ -128,7 +128,7 @@
     numerical method which calculates a lower bound of the energy and approximations of observables
     from constraints between quantum operators and the positivity condition.
     This thesis reviews its formalism and reported applications and its advantages compared to existing 
-    non-perturbative approaches. The nonlinear SDP numerical bootstrap of the anharmonic oscillator in 
+    non-perturbative approaches. The nonlinear SDP (semidefinite programming) numerical bootstrap of the anharmonic oscillator in 
     \parencite{han_matrix} is reproduced, and a linear SDP simulation of the anharmonic oscillator is 
     also performed, with the convergence problem with a large operator space discovered, both of which 
     are benchmarked with the stationary Schr\"{o}dinger equation. The linear SDP numerical bootstrap in 
@@ -780,7 +780,10 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 \input{hubbard-1d-energy-double-occ-table.tex}
 
 计算结果展示如\prettyref{tbl:hubbard-1d-linear-sdp}。由于时间所限，本文没有做\eqref{eq:operator-bound}，因此表中的双占据算符期望值只是普通的数值值，不保证是上界或是下界。
-可以看到线性SDP给出的结果是精确解的下界，并且提升$K$可以收紧下界；双占据数值值可以较为精确地计算。$U$较大时，数值bootstrap给出的下界较紧。
+可以看到线性SDP给出的结果是精确解的下界，并且提升$K$可以收紧下界；双占据数值值可以较为精确地计算。$U$较大时，数值bootstrap给出的下界较紧。%
+\footnote{
+    但也应注意，$U$较大时能量绝对值快速下降，从而绝对误差的缩小并不导致相对误差的缩小。但能量由于可以移动任意的零点，此处计算相对误差是否有意义是一个问题。如何估算数值bootstrap的精确性是一个有待探讨的话题。
+}%
 直观地看，这应该是因为$U$较大时，电子倾向于定域，从而只有较为局域的算符有较大的期望值；由于涉及长距离跃迁的算符无法通过\eqref{eq:operator-space-criteria}的筛选，在$U$较大时，不需要将$K$取得很大，$\mathcal{C}$中的算符就足够完成一次较为精确的bootstrap。
 
 相比\parencite{han_manybody}中的结果，$K$值相同时，\prettyref{tbl:hubbard-1d-linear-sdp}中给出的下界更加宽松。由于本文使用的程序通过了DMRG的基准测试，推测这是由于两者的实现细节不同。这些有待未来进一步研究。
@@ -839,8 +842,8 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 \section{算符空间和约束的选取}\label{sec:operator-space-constraint}
 
 从\prettyref{fig:ground-state-e-x2-plot}可以看出，在非简谐振子问题中决定了能量下界的约束实际上只有一个——不同约束导致的可行域边界的连接点是不光滑的，而能量最小值点显然没有取在某个不光滑的点上。
-这提示我们，为了获得基态能量，实际上并不需要全部的等式约束。如果有方法能够判断出在一个问题中，给基态能量下界设下限制的约束条件主要是什么，那么计算效率可以大大提高，因为本文考虑的Hubbard模型的线性SDP的性能瓶颈似乎主要在优化问题\emph{之前}（\prettyref{sec:hubbard-1d-result}）。
-未来可以在不同的模型中撤去一些约束，观察剩下的约束的数值bootstrap的精度是否有显著下降，从而获知哪些约束对数值bootstrap是重要的。
+这提示我们，为了获得基态能量，实际上并不需要全部的约束。如果有方法能够判断出在一个问题中，给基态能量下界设下限制的约束条件主要是什么，那么计算效率可以大大提高，因为本文考虑的Hubbard模型的线性SDP的性能瓶颈似乎主要在优化问题\emph{之前}（\prettyref{sec:hubbard-1d-result}）。
+未来可以在不同的模型中撤去一些约束，观察剩下的约束的数值bootstrap的精度是否有显著下降，从而获知哪些等式约束对数值bootstrap是重要的；类似的，可以人为缩小$M$矩阵的规模，观察数值bootstrap的精度，从而获知哪些算符给出的正定性约束是至关重要的。
 一种可能的思路是在使用DMRG或其它张量网络方法做基准测试时，观察哪些约束被张量网络解违反得最为厉害——这些约束更加不容易满足，因此直觉上，可能会对系统能量施加更强的约束。
 
 如何选择算符空间同样是需要注意的。\prettyref{sec:hubbard-1d-result}中的结果暗示Hubbard模型中的算符空间的选取需要适合电子的巡游行为，如果要捕捉到电子的巡游行为，就需要使用更加非局域的算符。
