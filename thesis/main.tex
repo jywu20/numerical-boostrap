@@ -160,7 +160,7 @@
 一维有能隙系统基本上可以使用张量乘积态非常精确地处理（称为DMRG），高维系统的张量网络方法也有很大进展（如PEPS），不过在设计合理的波函数拟设和提高效率方面仍有挑战\cite{orus2019tensor}。
 
 本文讨论的bootstrap技术是一种新兴的非微扰方法\cite{han_matrix,bhattacharya2021,kazakov2021analytic,han_manybody}。
-与前述的常规数值方法不同，bootstrap技术不处理波函数、算符、（离散）路径积分这些用于计算物理量期望值但不直接对应于实验测量值的对象，而是通过在待求解的物理量期望值之间建立解析的等式和不等式关系，据此它们的取值范围。
+与前述的常规数值方法不同，bootstrap技术不处理波函数、算符、（离散）路径积分这些用于计算物理量期望值但不直接对应于实验测量值的对象，而是通过在待求解的物理量期望值之间建立解析的等式和不等式关系，据此确定它们的取值范围。
 通过这种方法，不需要使用正则量子化或是路径积分的语言，我们即可“凭空”求解一个体系。
 
 \section{Bootstrap技术示例：共形Bootstrap}
@@ -264,7 +264,7 @@
 \subsection{数值bootstrap的若干应用}
 
 由于bootstrap不依赖于哈密顿量中各项的大小，它显然是处理非微扰问题的有力武器。
-已有若干关于不同体系的数值bootstrap研究出现，如关于难以微扰解决的单粒子量子力学问题和矩阵模型\cite{han_matrix,bhattacharya2021,kazakov2021analytic}以及强关联电子模型\cite{han_manybody}。
+已有若干关于不同体系的数值bootstrap研究出现，涉及的体系包括难以微扰解决的单粒子量子力学问题和矩阵模型\cite{han_matrix,bhattacharya2021,kazakov2021analytic}以及强关联电子模型\cite{han_manybody}。
 
 文献\parencite{bhattacharya2021}使用了以$E$和$\expval*{x^2}$为优化变量、暴力搜索的单粒子量子力学非线性SDP，捕捉到了二势阱模型中的非微扰瞬子效应，并与通过稀薄瞬子假设计算出的基态能量比较，直观展示了稀薄瞬子假设的成立条件；验证了互为对偶的超对称量子力学哈密顿量的谱的确是一致的；验证了$O(N)$向量模型的低能部分在强耦合极限下，基态能量和耦合常数的分数幂次关系，并确认其与解析结果一致。
 \parencite{kazakov2021analytic}开发了一套处理矩阵模型的数值bootstrap中的矩阵自由度在大$N$极限下满足的非线性约束
@@ -278,7 +278,7 @@
 \section{关于本文}
 
 本文在\prettyref{chap:oscillator}中复现了\parencite{han_matrix}的工作，分别在\prettyref{sec:nonlinear-sdp-oscillator}和\prettyref{sec:linear-sdp-oscillator}中使用非线性SDP和线性SDP方法求解了非简谐振子，并用定态薛定谔方程做基准测试。
-非简谐振子可以通过常规的求解薛定谔方程的方法容易的解决，同时又是一个典型的非微扰系统，因此非常适合用作非微扰方法的玩具模型。
+非简谐振子可以通过常规的求解薛定谔方程的方法容易地解决，同时又是一个典型的非微扰系统，因此非常适合用作非微扰方法的玩具模型。
 线性SDP、非线性SDP、定态薛定谔方程求解三者的结果互相对照，表明数值bootstrap技术能够非常精确地定量分析非简谐振子。
 
 \prettyref{chap:hubbard}章复现了\parencite{han_manybody}的工作，使用线性SDP方法求解一维和二维Hubbard模型，并使用DMRG和一维Hubbard模型的精确解做了基准测试。Hubbard模型是最为简单的强关联电子模型，是各种量子多体方法的首选测试目标。
@@ -413,7 +413,7 @@ $O = x^s$的约束条件我们已经得到，它是
 至此我们已经构造完成了关于非简谐振子的诸$\expval*{x^n}$的非线性SDP问题，它是
 \begin{equation}
     \begin{aligned}
-        &\min E, \quad \text{s.t.} \expval*{x^n} = 0 \quad \text{for odd $n$}, \\
+        &\min E, \quad \text{s.t.} \quad \expval*{x^n} = 0 \quad \text{for odd $n$}, \\
         &\quad M_{ij} = \expval{x^{i + j}}, \quad M \geq 0, \\
         &\quad E = 2 \expval*{x^2} + 3 g \expval*{x^4} , \\
         &\quad 4 t E \expval*{x^{t-1}} + t(t-1)(t-2) \expval*{x^{t-3}} - 4 (t+1) \expval*{x^{t+1}} - 4g(t+2) \expval*{x^{t+3}} = 0.
@@ -565,7 +565,7 @@ $O = x^s$的约束条件我们已经得到，它是
 这可以保证$\{x^m p^n\}$中的每个算符都出现在$M$矩阵中，不至于浪费优化变量。
 显然，$M$矩阵的边长为$(L+1)^2$。
 
-此时没有类似\eqref{eq:recursive-nonlinear-sdp-relation}这样较为精简的递推公式，$c_{ij}^k$和$h_j^k$的计算需要自动进行。
+此时没有类似\eqref{eq:recursive-nonlinear-sdp-relation}这样较为精简的递推公式，$c_{ij}^k$和$h_j^k$的计算需要计算机来完成。
 我们取$\{O_i\}$为$\{x^m p^n\}$，并将其张成的空间设为$\mathcal{C}$。我们对$\{x^m p^n\}$施加如下截断：要求
 \begin{equation}
     0 \leq m, n \leq 2 L,
@@ -666,7 +666,7 @@ $L=2, 3, 4$的问题中，均有出现能量振荡的现象，这本身是正常
 
 DMRG方法可以在开边界条件下以相当高的精度计算各种一维强关联格点系统\cite{Schollw_ck_2011}，
 此外，使用Bethe拟设可以严格求解一维Hubbard模型以及其它若干强关联电子模型\cite{PhysRevLett.20.1445,korepin1994exactly}。
-这些工作使得一维Hubbard模型成为了测试量子多体方法适用性的理想玩具模型。一维Hubbard模型也可以用于粗略地复现一维铜基超导体$\mathrm{Sr}_{2} \mathrm{CuO}_{3}$链、聚二乙炔等一维系统，虽然已知的类似Hubbard模型的系统往往涉及不止一条能带（由于Peierls转变），并且重要的库仑相互作用通道都不只原位库伦排斥。
+这些工作使得一维Hubbard模型成为了测试量子多体方法适用性的理想玩具模型。一维Hubbard模型也可以用于粗略地复现一维铜基超导体$\mathrm{Sr}_{2} \mathrm{CuO}_{3}$链、聚二乙炔等一维系统，虽然已知的类似Hubbard模型的系统往往涉及不止一条能带（由于Peierls转变），并且重要的库仑相互作用通道不仅仅有原位库伦排斥。
 在\prettyref{sec:one-dimensional-hubbard}中，我们尝试复现\parencite{han_manybody}中关于一维Hubbard模型的部分。
 
 二维Hubbard模型的数值研究具有更加直接的物理意义（例如，它的相图和铜基超导体类似，在掺杂时存在赝能隙\cite{2d-hubbard-numerical}），也更具挑战性。一些二维系统——包括Hubbard模型——仍然可以使用DMRG方法非常有效地处理，但计算开销较大\cite{Stoudenmire_2012}。
@@ -694,7 +694,7 @@ DMRG方法可以在开边界条件下以相当高的精度计算各种一维强�
     l(O) \coloneqq n + \sum_{i=1}^n \left\| x_{i} \right\|_1 \leq K
     \label{eq:operator-space-criteria}
 \end{equation}
-的算符被纳入我们考虑的算符空间。为了避免重复计数，我们将每个格点赋予一个编号（见\prettyref{fig:1d-lattice-index}；由于），并且要求\eqref{eq:hubbard-operator-form}的产生算符和湮灭算符部分中，从左往右格点编号均依次增大。
+的算符被纳入我们考虑的算符空间。为了避免重复计数，我们将每个格点赋予一个编号（见\prettyref{fig:1d-lattice-index}；由于格点无限大，需要使用这种左一个右一个的方式编号），并且要求\eqref{eq:hubbard-operator-form}的产生算符和湮灭算符部分中，从左往右格点编号均依次增大。
 这么定义正规排序的原因是这是后面做符号计算使用的QuantumAlgebra.jl包（见\prettyref{sec:symbolic-hubbard}）定义正规排序的方法。可以通过如下代码验证这一点：
 \begin{verbatim}
     julia> normal_form(c(1) * c(2))
@@ -782,7 +782,7 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 计算结果展示如\prettyref{tbl:hubbard-1d-linear-sdp}。由于时间所限，本文没有做\eqref{eq:operator-bound}，因此表中的双占据算符期望值只是普通的数值值，不保证是上界或是下界。
 可以看到线性SDP给出的结果是精确解的下界，并且提升$K$可以收紧下界；双占据数值值可以较为精确地计算。$U$较大时，数值bootstrap给出的下界较紧。%
 \footnote{
-    但也应注意，$U$较大时能量绝对值快速下降，从而绝对误差的缩小并不导致相对误差的缩小。但能量由于可以移动任意的零点，此处计算相对误差是否有意义是一个问题。如何估算数值bootstrap的精确性是一个有待探讨的话题。
+    但也应注意，$U$较大时能量绝对值快速下降，从而绝对误差的缩小并不导致相对误差的缩小。但能量零点由于可以任意移动，此处计算相对误差是否有意义是一个问题。如何估算数值bootstrap的精确性是一个有待探讨的话题。
 }%
 直观地看，这应该是因为$U$较大时，电子倾向于定域，从而只有较为局域的算符有较大的期望值；由于涉及长距离跃迁的算符无法通过\eqref{eq:operator-space-criteria}的筛选，在$U$较大时，不需要将$K$取得很大，$\mathcal{C}$中的算符就足够完成一次较为精确的bootstrap。
 
@@ -868,7 +868,7 @@ $K=10$时有约11万个优化变量，但是求解器在几分钟内就完成了
 数值bootstrap中不存在这样的预设，影响计算精度的因素较为透明地体现在算符空间和等式约束的选取上，通过增大算符空间可以系统地提升计算精度，这为研究范围极其广阔的凝聚态强关联系统提供了一种新的手段。
 不同格点上的Hubbard模型\cite{Ye_2019,PhysRevB.90.081105}和海森堡模型\cite{anderson1973resonating,kagome,Liu_2022}被预言能够产生不同的新奇物态，如类似于高温超导中的赝能隙、各种类型的自旋液体、解禁闭量子相变等，这些模型原则上都可以使用数值bootstrap研究，和已有的数值方法相互印证。
 
-ITensor库将常见的物理自由度对应的张量网络中的张量指标事先实现好，用户只需要调用接口即可\cite{itensor-indices}，未来可能可以开发一个类似的数值bootstrap库，用于简化搜索满足条件的算符、建立算符空间，将$\mathcal{C}$中的算符编号，构建优化问题等重复性操作。
+ITensor库将常见的物理自由度对应的张量网络中的张量指标事先实现好，用户只需要调用接口即可\cite{itensor-indices}，未来可能可以开发一个类似的数值bootstrap库，用于简化搜索满足条件的算符，建立算符空间，将$\mathcal{C}$中的算符编号，构建优化问题等重复性操作。
 
 % 后置部分包含参考文献、声明页（自动生成）等
 \backmatter
