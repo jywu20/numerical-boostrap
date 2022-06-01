@@ -16,5 +16,6 @@ references/*.pdf
 *.nav
 *.snm
 *.xdv
+*.vrb
 !oscillator-simple-prototype/*.out
 !hubbard-1d-prototype/*.out
