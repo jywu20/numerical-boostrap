@@ -23,6 +23,7 @@
 
 \newcommand{\pair}[1]{\langle #1 \rangle}
 \DeclareMathOperator{\ee}{e}
+\DeclareMathOperator{\ii}{i}
 
 %Information to be included in the title page:
 \title{Numerical bootstrap}
@@ -38,18 +39,52 @@
 \frame{\titlepage}
 
 \begin{frame}
+\frametitle{Numerical methods for strongly correlated systems}
+
+\textbf{Strongly correlated systems}
+
+\begin{itemize}
+    \item Fermi liquid: interaction correction of Fermi gas
+    \item Strongly correlated systems: something non-perturbative happens
+\end{itemize}
+
+\textbf{Numerical approaches}
+
+\begin{itemize}
+    \item DQMC: discrete path integral and discrete Hubbard-Stratonovich transformation
+    \item DMRG (MERA, PEPS): tensor network wave function ansatz
+    \item Diagrammatic Monte-Carlo: stochastic summation of Feynman diagrams
+    \item DMFT: self-energy correction + impurity model
+\end{itemize}
+
+\textbf{What's in common:} All with unobservable objects, be it the path integral or wave function or Feynman diagram or \dots 
+%$\Rightarrow$ no hint about what goes wrong when they fail
+
+\end{frame}
+
+\begin{frame}
 \frametitle{Introduction}
 
 \textbf{What's bootstrap}
 
 \begin{itemize}
-    \item A quantum theory = expectations of all Hermitian operators; 
-    Hamiltonian/Lagrangian $\Leftrightarrow$ ``probability distribution''
-    \item Constraint on the system $\Rightarrow$ relation between different $\expval{O}$'s (``\concept{data}'');
-    independent $\expval{O}$'s $\Leftrightarrow$ parameters in the model
-    \item Inequality constraint (e.g. positivity of $\expval{O^\dagger O}$) $\Rightarrow$ allowed 
-    range of $\expval{O}$'s
-    \item Solving a class of problems without mentioning explicitly the wave function/path integral: 
+    \item A model = expectations of all operators
+    \begin{itemize}
+        \item Hamiltonian/Lagrangian $\Leftrightarrow$ ``probability distribution''
+        \item independent $\expval{O}$'s $\Leftrightarrow$ parameters in the model (``\concept{data}'')
+    \end{itemize}
+    
+    \item Probability distribution $\Rightarrow$ Equality constraint on $\{\expval{O}\}$ without carrying out substantial calculation
+    \begin{itemize}
+        \item Trivial example: Wick theorem
+        \item Conformal symmetry 
+    \end{itemize}
+    \item Inequality constraint $\Rightarrow$ allowed range of $\expval{O}$'s
+    \begin{itemize}
+        \item Positivity of $\expval{O^\dagger O}$
+        \item Relaxed equational constraints
+    \end{itemize}
+    \item Obtaining estimation of physical quantities without the wave function/path integral (``out of nothing''): 
     hence the name \emph{bootstrap}
 \end{itemize}
 
@@ -75,7 +110,7 @@
     \end{equation}
     Higher order correlation functions: OPEs. 
     \item Independent parameters: $\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$
-    \item Inequality constraints (self-consistent conditions): determining the range of parameters
+    \item Self-consistent conditions: determining the range of parameters
 \end{itemize}
 
 \end{frame}
@@ -86,12 +121,17 @@
 \textbf{How to perform bootstrap for a generic system?}    
 
 \begin{itemize}
-    \item Correlation functions cannot be determined by countably infinite parameters: 
+    \item The data: Correlation functions cannot be reduced to countably infinite parameters: 
     no $\{\Delta_{\mathcal{O}}, l_{\mathcal{O}}, f_{\mathcal{A} \mathcal{B} \mathcal{C}}\}$.
     
-    \textbf{Solution} Store $\{\expval{O_1(x_1) O_2(x_2) \cdots O_n (x_n)}\}$ separately. 
+    \textbf{Solution} Store the normal-ordered $\{\expval{O_i}\}$ set (a basis of the operator space) with a cutoff. This is the data.
     Using equational constraints to reduce the size of data.
-    See next slide.
+
+    Example:
+    \begin{equation}
+        \expval*{p x^3} = \expval*{x^3 p} - 3 \ii \expval*{x^2}.
+    \end{equation}
+    Data used: $\{ \expval*{x^3 p}, \expval*{x^2} \} \in \{\expval*{x^m p^n}\}$
 \end{itemize}
 
 \end{frame}
@@ -102,23 +142,26 @@
 \textbf{How to perform bootstrap for a generic system?}  
 
 \begin{itemize}
-    \item How to get relations between correlation functions
+    \item The equality constraints
 
-    \textbf{Solution} Expanding each operator to a linear combination of normal ordered operators. (poor man's OPE)
-    
-    Density matrix is determined solely by $H$, then 
+    \textbf{Solution} $\rho = \ee^{- \beta H} / Z$, $\comm{\rho}{H} = 0$, then for all operators $O$
+    \[
+        \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}},
+    \]
     \begin{equation}
-        \expval*{O H} = \trace (\rho(H) O H) = \trace(H \rho(H) O) = \trace(\rho(H) H O)  = \expval*{H {O}}
+        \expval*{\comm{O}{H}} = 0
     \end{equation}
-    for all operators $O$. Similarly, suppose $C$ is a symmetry of the system, we have 
+    Similarly, suppose $C$ is a symmetry of the system, we have 
     \begin{equation}
-        \expval{OC} = \expval{CO}.
+        \expval*{\comm{O}{C}} = 0.
     \end{equation}
-    For energy eigenstates (i.e with definite $E$), we have 
+    There are linear constraints w.r.t the operator basis $\{O_i\}$.
+
+    For energy eigenstates (i.e with definite but unknown $E$), we have 
     \begin{equation}
         \expval{O H} = E \expval{O}, \quad E = \expval{H}.
     \end{equation}
-    Thus we break higher order correlation functions into lower order ones.
+    This is a nonlinear constraint.
 \end{itemize}
 
 \end{frame}
@@ -126,63 +169,58 @@
 \begin{frame}
 \frametitle{Bootstrap for generic systems}
 
+\textbf{Example of equality constraint} Suppose $H = x^2 + p^2 + x^4$, then 
+\[
+    \expval*{\comm{H}{xp}} = 0
+\]    
+gives linear constraint
+\begin{equation}
+    \expval*{p^2} - \expval*{x^2} - 2 \expval*{x^4} = 0,
+\end{equation}
+and 
+\[
+    \expval*{xp \cdot H} = E \expval*{xp}
+\]
+gives nonlinear constraint
+\begin{equation}
+    \begin{aligned}
+        \expval*{xp^3} + \expval*{x^3 p} - 2 \ii \expval*{x^2} + \expval*{x^5 p} - 4 \ii \expval*{x^4} \\
+        - \expval*{xp} \expval*{x^2} - \expval*{xp} \expval*{p^2} - \expval*{xp} \expval*{x^4} = 0.
+    \end{aligned}
+\end{equation}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
 \begin{itemize}
-    \item The equality constraints used together with the positivity constraint 
+    \item The equality constraints together with the positivity constraint $\expval*{O^\dagger O} \geq 0$
+    for every $O$ defines a feasible domain.
+    \item This is an \concept{semidefinite programming (SDP)} problem: 
     \begin{equation}
-        \expval*{O^\dagger O} \geq 0
-    \end{equation}
-    for every $O$ defines an allowed region -- the feasible domain for the following optimization.
-    \item To get ground state information, minimize $\expval*{H}$ globally.
-    \item To get information about excited states, find local minima of $\expval*{H}$.
+        M_{ij} = \expval*{O_i^\dagger O_j} = \sum_k c^k_{ij} \expval*{O_k}, \quad M \geq 0.
+    \end{equation} 
 \end{itemize} 
 
-\begin{center}
-    \input{bootstrap-illustration-allowed-region.tex}
-\end{center}
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Bootstrap for generic systems}
-
-\textbf{The procedure of numerical bootstrap}   
-
-Input data:
-\begin{itemize}
-    \item $N$ basis operators $\{O_i\}$, normal ordered with a length cutoff
-    \item Data of equality constraints: Hamiltonian, symmetry, etc.
-    \item Commutation rules, normal ordering rules, etc. so that $O_i O_j$ can be expanded in terms of $\{O_i\}$
-    \item Hamiltonian $H = \sum_i c_i O_i$
-\end{itemize}
-
-Building the optimization problem:
-\begin{enumerate}
-    \item Declare $N$ variables $\{X_i\}$, $X_i = \expval*{O_i}$ after optimization
-    \item Impose equality constraints on $\{X_i\}$ according to e.g. $\expval*{\comm{H}{O}} = 0$ 
-    \item Imposing semidefinite constraint on $M_{ij} = \expval*{O_i^\dagger O_j}$ (expanded into linear combination of $\{X_i\}$), so that after optimization $\expval*{O^\dagger O} \geq 0$ for every $O$
-    \item Optimize $\sum_i c_i X_i$
-\end{enumerate}
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Bootstrap for generic systems}
-
-\textbf{Why we need numerical bootstrap}
-
-\begin{itemize}
-    \item Because it doesn't fail with strong non-perturbative effects.\footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
-    \item Because if done correctly, it gives the \emph{lower} bound of ground state energy
+\begin{columns}
+    
+\begin{column}{0.5\textwidth}
     \begin{itemize}
-        \item Density matrix = linear functional $\mathcal{F}$ from operators to numbers
-        \item Predicted $E_0$ = $\min_{\mathcal{F} \text{constrained}} \mathcal{F}[H]$
-        \item Real ground state also constrained $\Rightarrow$ real $E_0 > $ predicted $E_0$
-        \item Upper and lower bounds for all physical quantities:
-        \begin{equation}
-            \min_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho \leq \expval*{O}_{\rho_0} \leq \max_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho
-        \end{equation}
+        \item $\expval*{\comm{O}{C}} = 0$: \concept{linear SDP}, convex feasible domain, 
+        $\min \expval*{H} \Leftrightarrow$ ground state information
+        \item $\expval*{OH} = \expval*{H} \expval*{O}$: \concept{nonlinear SDP}, nonconvex feasible domain; 
+        a connected component = an eigenstate (or a continuous spectrum)
     \end{itemize}
-\end{itemize}    
+\end{column}
+
+\begin{column}{0.5\textwidth}
+    \begin{center}
+        \input{bootstrap-illustration-allowed-region.tex}
+    \end{center}    
+\end{column}
+
+\end{columns}
 
 \end{frame}
 
@@ -190,20 +228,6 @@ Building the optimization problem:
 \frametitle{Bootstrap for generic systems}
 
 \textbf{Some technical aspects of the problem}
-
-When building the optimization problem: 
-\begin{itemize}
-    \item A little symbolic calculation required
-    \item Auto normal ordering of $O_i O_j$ given the operator algebra
-    \item Auto commutator: $\comm{A}{B}$ = normal ordered $AB$ - normal ordered $BA$ 
-\end{itemize}
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Bootstrap for generic systems}
-
-Optimization problem and algorithm: \concept{semidefinite programming (SDP)}
 
 \begin{columns}
     \begin{column}{0.6\textwidth}
@@ -229,6 +253,48 @@ Optimization problem and algorithm: \concept{semidefinite programming (SDP)}
 \end{frame}
 
 \begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{The procedure of numerical bootstrap}   
+
+Input data:
+\begin{itemize}
+    \item $N$ basis operators $\{O_i\}$, normal ordered with a length cutoff
+    \item Commutation rules, normal ordering rules, etc. so that $O_i O_j$ can be expanded in terms of $\{O_i\}$
+    \item Data of equality constraints: Hamiltonian, symmetry, etc.
+\end{itemize}
+
+Building the optimization problem:
+\begin{enumerate}
+    \item Declare $N$ variables $\{X_i\}$, $X_i = \expval*{O_i}$ after optimization
+    \item Impose equality constraints on $\{X_i\}$ according to e.g. $\expval*{\comm{H}{O}} = 0$ 
+    \item Imposing semidefinite constraint on $M_{ij} = \expval*{O_i^\dagger O_j}$ (expanded into linear combination of $\{X_i\}$)
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Bootstrap for generic systems}
+
+\textbf{Why we need numerical bootstrap}
+
+\begin{itemize}
+    \item Because it doesn't fail with strong non-perturbative effects.\footnote{\href{https://arxiv.org/abs/2108.11416}{arXiv 2108.11416}}
+    \item Because if done correctly, it gives the \emph{lower} bound of ground state energy
+    \begin{itemize}
+        \item Density matrix = linear functional $\mathcal{F}$ from operators to numbers
+        \item Predicted $E_0$ = $\min_{\mathcal{F} \text{constrained}} \mathcal{F}[H]$
+        \item Real ground state also constrained $\Rightarrow$ real $E_0 \geq $ predicted $E_0$
+        \item Upper and lower bounds for all physical quantities:
+        \begin{equation}
+            \min_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho \leq \expval*{O}_{\rho_0} \leq \max_{E_\text{lb} \leq \expval*{H}_\rho \leq E_\text{ub}} \expval{O}_\rho
+        \end{equation}
+    \end{itemize}
+\end{itemize}    
+
+\end{frame}
+
+\begin{frame}
 \frametitle{Examples}
 
 \textbf{Anharmonic oscillator and Hubbard model}
@@ -242,14 +308,14 @@ Optimization problem and algorithm: \concept{semidefinite programming (SDP)}
 \begin{itemize}
     \item Non-perturbative: instanton effect
     \item Solved in a similar way of the anharmonic oscillator
-    \item The dilute instanton approximation works when two wells are well separated.
+    \item Dilute instanton approximation works with two wells well separated
 \end{itemize}
 
 \textbf{Matrix model}\footnote{See \href{https://arxiv.org/pdf/2108.04830.pdf}{arXiv 2108.04830} and \href{https://arxiv.org/abs/2004.10212}{arXiv 2004.10212}}
 
 \begin{itemize}
-    \item Impossible to solve otherwise
-    \item A specific case associated with $M$-theory\footnote{\href{https://arxiv.org/abs/hep-th/9610043}{arXiv hep-th 9610043}}
+    \item Hard to solve otherwise
+    %\item A specific case associated with $M$-theory\footnote{\href{https://arxiv.org/abs/hep-th/9610043}{arXiv hep-th 9610043}}
     \item (Inherent) nonlinear constraints
     \begin{itemize}
         \item Relaxed bootstrap in Sec.~4 in \href{https://arxiv.org/pdf/2108.04830.pdf}{arXiv 2108.04830}
@@ -268,8 +334,8 @@ The anharmonic oscillator\footnote{The example is provided in \href{https://arxi
 \end{equation}
 
 \begin{itemize}
-    \item Symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
-    \item Deriving equality constraints:
+    \item Equality constraints from symmetry: $x \to -x$ $\Rightarrow$ $\expval*{x^n} = 0$ with odd $n$
+    \item Equality constraints from Hamiltonian:
     \begin{itemize}
         \item $\mathcal{O}=x^{s}$ and $\mathcal{O}=x^{t} p$ in $\langle[H, \mathcal{O}]\rangle=0$ 
         \item $\mathcal{O}=x^{t-1}$ in $\langle\mathcal{O} H\rangle=E\langle\mathcal{O}\rangle$
@@ -282,8 +348,8 @@ The anharmonic oscillator\footnote{The example is provided in \href{https://arxi
                 &\quad -4 g(t+2)\left\langle x^{t+3}\right\rangle=0 
             \end{aligned}
         \end{equation}
-    \item Only independent variables: $\expval*{x^2}$ and $E$, so nonlinear SDP is possible
-    \item SDP constraint: $M_{ij} = \expval*{x^{i+j}}, M \geq 0$
+    \item Only independent variables: $\{\expval*{x^2}, E\}$, so nonlinear SDP is possible
+    \item SDP constraint: $M_{ij} = \expval*{x^{i+j}}, M \geq 0, 0 \leq i, j \leq K$
 \end{itemize}
 
 \end{frame}
@@ -588,6 +654,17 @@ is probably the most important strongly correlated electronic model.
     \end{itemize}
     
 \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Conclusion}
+
+\begin{itemize}
+    \item Verify the result of nonlinear SDP bootstrap for anharmonic oscillator
+    \item Linear SDP for anharmonic oscillator and convergence problem
+    \item Linear SDP for Hubbard model, 1D, 1D doped and 2D, and error analysis
+\end{itemize}    
 
 \end{frame}
 
